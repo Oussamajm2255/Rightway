@@ -3,6 +3,252 @@
 .livraison-detail {
   max-width: 1100px;
   margin: 0 auto;
+  padding: var(--space-6);
+}
+
+/* ===== Status Badges (lifecycle) ===== */
+.badge-status-pending {
+  background: var(--status-pending-bg);
+  color: var(--status-pending-text);
+}
+
+.badge-status-info {
+  background: var(--status-info-bg);
+  color: var(--status-info-text);
+}
+
+.badge-status-active {
+  background: var(--status-active-bg);
+  color: var(--status-active-text);
+}
+
+.badge-status-warning {
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
+}
+
+.badge-status-closed {
+  background: var(--status-closed-bg);
+  color: var(--status-closed-text);
+}
+
+/* ===== Detail ===== */
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.detail-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+
+.detail-card h3 {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-uppercase);
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-2);
+}
+
+.detail-value {
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-md);
+  margin: 0 0 0.125rem;
+}
+
+.detail-sub {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin: 0.1rem 0;
+}
+
+.detail-section {
+  margin-top: var(--space-6);
+}
+
+.detail-section h2 {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  margin: 0 0 var(--space-4);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  letter-spacing: var(--tracking-tight);
+}
+
+/* ===== Status Timeline ===== */
+.status-timeline {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: var(--space-6);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow-x: auto;
+}
+
+.timeline-step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.timeline-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-full);
+  background: var(--color-border-strong);
+  transition: all var(--transition-base);
+  flex-shrink: 0;
+}
+
+.timeline-dot.active {
+  background: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(15, 59, 44, 0.15);
+}
+
+.timeline-dot.done {
+  background: var(--color-success);
+}
+
+.timeline-line {
+  width: 32px;
+  height: 2px;
+  background: var(--color-border-strong);
+  border-radius: 1px;
+  transition: background var(--transition-base);
+}
+
+.timeline-line.done {
+  background: var(--color-success);
+}
+
+.timeline-label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+.timeline-step.current .timeline-label {
+  color: var(--color-primary);
+  font-weight: var(--weight-semibold);
+}
+
+.timeline-date {
+  font-size: 0.625rem;
+  color: var(--color-text-tertiary);
+  display: block;
+}
+
+/* ===== Alert Card ===== */
+.alert-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  background: var(--color-warning-bg);
+  border: 1px solid var(--color-warning-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.alert-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--color-warning);
+  color: #fff;
+}
+
+.alert-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.alert-body strong {
+  display: block;
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  margin-bottom: 0.125rem;
+}
+
+.alert-body p {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* ===== Yellow Banner ===== */
+.yellow-banner {
+  background: var(--color-warning-bg);
+  border: 1px solid var(--color-warning-border);
+  color: var(--color-warning);
+  padding: 0.5625rem var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  margin-bottom: var(--space-4);
+}
+
+/* ===== Page Container ===== */
+.page-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-6);
+}
+
+/* ===== Back button style ===== */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .livraisons-page,
+  .livraison-detail {
+    padding: var(--space-4);
+  }
+
+  .alert-card {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .status-timeline {
+    padding: var(--space-3);
+    gap: 0;
+  }
+
+  .timeline-line {
+    width: 16px;
+  }
+}
+/* ===== Livraisons Shared Styles ===== */
+.livraisons-page,
+.livraison-detail {
+  max-width: 1100px;
+  margin: 0 auto;
   padding: 1.5rem;
 }
 

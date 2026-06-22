@@ -104,7 +104,19 @@ function LivraisonDetailPage() {
     }
   }
 
-  if (loading) return <div className="page-container"><div className="loading-state">Chargement...</div></div>;
+  if (loading) {
+    return (
+      <div className="livraison-detail">
+        <div className="page-header">
+          <div><h1 className="page-title skeleton skeleton-heading" /></div>
+        </div>
+        <div className="detail-grid">
+          <div className="skeleton skeleton-card" />
+          <div className="skeleton skeleton-card" />
+        </div>
+      </div>
+    );
+  }
   if (error) return <div className="page-container"><div className="error-banner">{error}</div></div>;
   if (!livraison) return <div className="page-container"><div className="empty-state">Livraison introuvable.</div></div>;
 
@@ -123,8 +135,11 @@ function LivraisonDetailPage() {
 
   return (
     <div className="livraison-detail">
-      <button className="btn btn-sm btn-outline" onClick={() => navigate('/livraisons')} style={{ marginBottom: '1rem' }}>
-        ← Retour
+      <button className="btn btn-ghost btn-sm" onClick={() => navigate('/livraisons')} style={{ marginBottom: 'var(--space-4)' }}>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
+          <path d="M9 2.5L4.5 7l4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        Retour aux livraisons
       </button>
 
       <div className="page-header">
@@ -137,10 +152,32 @@ function LivraisonDetailPage() {
 
       {success && <div className="success-banner">{success}</div>}
 
+      {/* Status Timeline */}
+      <div className="status-timeline">
+        {[
+          { label: 'Créé', date: livraison.created_at, done: true },
+          { label: 'Confirmé', date: livraison.confirmed_by_commercial_at, done: !!livraison.confirmed_by_commercial_at },
+          { label: 'En cours', date: null, done: isEnCours || isEnRetour || isCloture },
+          { label: 'Retour', date: livraison.end_declared_at, done: isEnRetour || isCloture },
+          { label: 'Clôturé', date: livraison.closed_at, done: isCloture },
+        ].map((s, i, arr) => (
+          <span key={s.label} className={`timeline-step ${s.done ? 'current' : ''}`}>
+            <span className={`timeline-dot ${s.done ? (isCloture || (i < arr.length - 1 && arr[i+1].done) ? 'done' : 'active') : ''}`} />
+            <span className="timeline-label">{s.label}</span>
+            {i < arr.length - 1 && <span className={`timeline-line ${arr[i+1].done ? 'done' : ''}`} />}
+          </span>
+        ))}
+      </div>
+
       {/* Commercial: En attente → Confirm sortie */}
       {isEnAttente && isAssignedCommercial && (
         <div className="alert-card">
-          <div className="alert-icon">📋</div>
+          <div className="alert-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
+              <rect x="3" y="3" width="18" height="18" rx="3" />
+              <path d="M9 12l2 2 4-4" />
+            </svg>
+          </div>
           <div className="alert-body">
             <strong>Bon de sortie en attente</strong>
             <p>Ce bon de sortie nécessite votre confirmation. Vérifiez les produits et les quantités, puis confirmez.</p>
@@ -154,7 +191,13 @@ function LivraisonDetailPage() {
       {/* Commercial: En cours → Terminer button */}
       {isEnCours && isAssignedCommercial && !showTerminer && (
         <div className="alert-card">
-          <div className="alert-icon">🚚</div>
+          <div className="alert-icon" style={{ background: 'var(--color-primary)' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
+              <path d="M2 17h16M6 17V6l4-4h8v15" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="7" cy="20" r="2" />
+              <circle cx="17" cy="20" r="2" />
+            </svg>
+          </div>
           <div className="alert-body">
             <strong>Livraison en cours</strong>
             <p>Déclarez la fin de la livraison lorsque vous avez terminé votre tournée.</p>
@@ -167,8 +210,13 @@ function LivraisonDetailPage() {
 
       {/* Commercial: En cours → access sales page */}
       {isEnCours && isAssignedCommercial && (
-        <div className="alert-card" style={{ borderColor: 'var(--color-primary)', background: '#f0fdf4' }}>
-          <div className="alert-icon">💰</div>
+        <div className="alert-card" style={{ background: 'var(--color-success-bg)', borderColor: 'var(--color-success-border)' }}>
+          <div className="alert-icon" style={{ background: 'var(--color-success)' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 6v6l4 2" />
+            </svg>
+          </div>
           <div className="alert-body">
             <strong>Déclarer les ventes</strong>
             <p>Accédez à l'écran de déclaration des ventes en temps réel.</p>
@@ -184,7 +232,6 @@ function LivraisonDetailPage() {
         <div className="detail-section">
           <h2>Bon de Retour</h2>
 
-          {/* Yellow banner for pending */}
           {!adminConfirmed && isAdmin && (
             <div className="yellow-banner">En attente de votre confirmation.</div>
           )}
@@ -204,11 +251,11 @@ function LivraisonDetailPage() {
                 <tr>
                   <th>Code</th>
                   <th>Article</th>
-                  <th>Qté Sortie</th>
-                  <th>Qté Vendue</th>
-                  <th>Qté Retour</th>
+                  <th style={{ textAlign: 'center' }}>Qté Sortie</th>
+                  <th style={{ textAlign: 'center' }}>Qté Vendue</th>
+                  <th style={{ textAlign: 'center' }}>Qté Retour</th>
                   <th>PU TTC</th>
-                  <th>Montant Vendu</th>
+                  <th style={{ textAlign: 'right' }}>Montant Vendu</th>
                 </tr>
               </thead>
               <tbody>
@@ -218,10 +265,10 @@ function LivraisonDetailPage() {
                     <tr key={item.id}>
                       <td className="td-code">{item.product_id}</td>
                       <td>{item.product_name}</td>
-                      <td>{item.qte_chargee}</td>
-                      <td>{item.qte_vendue}</td>
-                      <td className={qte_retour > 0 ? 'td-qty' : ''}>{qte_retour}</td>
-                      <td>{formatDT(item.prix_ttc)}</td>
+                      <td className="td-qty">{item.qte_chargee}</td>
+                      <td className="td-qty">{item.qte_vendue}</td>
+                      <td className={`td-qty ${qte_retour > 0 ? '' : ''}`}>{qte_retour}</td>
+                      <td className="td-price">{formatDT(item.prix_ttc)}</td>
                       <td className="td-price">{formatDT(item.qte_vendue * Number(item.prix_ttc))}</td>
                     </tr>
                   );
@@ -229,23 +276,22 @@ function LivraisonDetailPage() {
               </tbody>
               <tfoot>
                 <tr>
-                  <td colSpan="6"><strong>Total CA</strong></td>
+                  <td colSpan="6" style={{ textAlign: 'right' }}><strong>Total CA</strong></td>
                   <td className="td-price"><strong>{formatDT(ca)}</strong></td>
                 </tr>
                 <tr>
-                  <td colSpan="6">Commission Commerciale (10%)</td>
+                  <td colSpan="6" style={{ textAlign: 'right' }}>Commission Commerciale (10%)</td>
                   <td className="td-price">{formatDT(commission)}</td>
                 </tr>
                 <tr>
-                  <td colSpan="6"><strong>Net à reverser au dépôt</strong></td>
+                  <td colSpan="6" style={{ textAlign: 'right' }}><strong>Net à reverser au dépôt</strong></td>
                   <td className="td-price"><strong>{formatDT(net_a_reverser)}</strong></td>
                 </tr>
               </tfoot>
             </table>
           </div>
 
-          {/* Confirmations */}
-          <div className="detail-grid" style={{ marginTop: '1rem' }}>
+          <div className="detail-grid" style={{ marginTop: 'var(--space-4)' }}>
             <div className="detail-card">
               <h3>Confirmation Admin</h3>
               {adminConfirmed ? (
@@ -264,8 +310,7 @@ function LivraisonDetailPage() {
             </div>
           </div>
 
-          {/* Confirm button for each role */}
-          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
+          <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-4)' }}>
             {isAdmin && !adminConfirmed && (
               <button className="btn btn-primary" onClick={() => setShowConfirmerRetour(true)}>
                 Confirmer le Bon de Retour (Admin)
@@ -283,7 +328,7 @@ function LivraisonDetailPage() {
       {/* Clôture summary */}
       {isCloture && (
         <div className="detail-section">
-          <div className="success-banner" style={{ marginBottom: '1rem' }}>
+          <div className="success-banner" style={{ marginBottom: 'var(--space-4)' }}>
             Livraison clôturée le {new Date(livraison.closed_at).toLocaleString('fr-FR')}
           </div>
           <div className="detail-grid">
@@ -296,10 +341,27 @@ function LivraisonDetailPage() {
 
       {/* Meta cards */}
       <div className="detail-grid">
-        <div className="detail-card"><h3>Commercial</h3><p className="detail-value">{livraison.commercial_name}</p><p className="detail-sub">{livraison.vehicle_name} — {livraison.vehicle_plate}</p></div>
-        <div className="detail-card"><h3>Créé par</h3><p className="detail-value">{livraison.admin_name}</p></div>
-        {livraison.confirmed_by_commercial_at && <div className="detail-card"><h3>Confirmé le</h3><p className="detail-sub">{new Date(livraison.confirmed_by_commercial_at).toLocaleString('fr-FR')}</p></div>}
-        {livraison.end_declared_at && <div className="detail-card"><h3>Terminé le</h3><p className="detail-sub">{new Date(livraison.end_declared_at).toLocaleString('fr-FR')}</p></div>}
+        <div className="detail-card">
+          <h3>Commercial</h3>
+          <p className="detail-value">{livraison.commercial_name}</p>
+          <p className="detail-sub">{livraison.vehicle_name} — {livraison.vehicle_plate}</p>
+        </div>
+        <div className="detail-card">
+          <h3>Créé par</h3>
+          <p className="detail-value">{livraison.admin_name}</p>
+        </div>
+        {livraison.confirmed_by_commercial_at && (
+          <div className="detail-card">
+            <h3>Confirmé le</h3>
+            <p className="detail-sub">{new Date(livraison.confirmed_by_commercial_at).toLocaleString('fr-FR')}</p>
+          </div>
+        )}
+        {livraison.end_declared_at && (
+          <div className="detail-card">
+            <h3>Terminé le</h3>
+            <p className="detail-sub">{new Date(livraison.end_declared_at).toLocaleString('fr-FR')}</p>
+          </div>
+        )}
       </div>
 
       {/* Original items table */}
@@ -307,7 +369,16 @@ function LivraisonDetailPage() {
         <h2>Produits chargés</h2>
         <div className="table-container">
           <table className="data-table">
-            <thead><tr><th>Code</th><th>Produit</th><th>PU TTC</th><th>Qté</th><th>Total</th>{isEnCours || isEnRetour || isCloture ? <th>Vendu</th> : null}</tr></thead>
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Produit</th>
+                <th>PU TTC</th>
+                <th style={{ textAlign: 'center' }}>Qté</th>
+                <th style={{ textAlign: 'right' }}>Total</th>
+                {(isEnCours || isEnRetour || isCloture) && <th style={{ textAlign: 'center' }}>Vendu</th>}
+              </tr>
+            </thead>
             <tbody>
               {livraison.items.map((item) => (
                 <tr key={item.id}>
@@ -320,7 +391,13 @@ function LivraisonDetailPage() {
                 </tr>
               ))}
             </tbody>
-            <tfoot><tr><td colSpan="4"><strong>Total</strong></td><td className="td-price"><strong>{formatDT(computeTotal())}</strong></td>{(isEnCours || isEnRetour || isCloture) && <td></td>}</tr></tfoot>
+            <tfoot>
+              <tr>
+                <td colSpan={4} style={{ textAlign: 'right' }}><strong>Total</strong></td>
+                <td className="td-price"><strong>{formatDT(computeTotal())}</strong></td>
+                {(isEnCours || isEnRetour || isCloture) && <td></td>}
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
@@ -338,7 +415,10 @@ function LivraisonDetailPage() {
             </div>
             {actionError && <div className="login-error">{actionError}</div>}
             <form onSubmit={handleConfirmSortie}>
-              <div className="form-group"><label className="form-label">Mot de passe</label><input type="password" className="form-input" value={password} onChange={(e) => setPassword(e.target.value)} /></div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="sortie-password">Mot de passe</label>
+                <input id="sortie-password" type="password" className="form-input" value={password} onChange={(e) => setPassword(e.target.value)} />
+              </div>
               <div className="modal-actions">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowConfirmSortie(false)}>Annuler</button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? '...' : 'Confirmer'}</button>
@@ -360,7 +440,10 @@ function LivraisonDetailPage() {
             </div>
             {actionError && <div className="login-error">{actionError}</div>}
             <form onSubmit={handleTerminer}>
-              <div className="form-group"><label className="form-label">Mot de passe</label><input type="password" className="form-input" value={password} onChange={(e) => setPassword(e.target.value)} /></div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="terminer-password">Mot de passe</label>
+                <input id="terminer-password" type="password" className="form-input" value={password} onChange={(e) => setPassword(e.target.value)} />
+              </div>
               <div className="modal-actions">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowTerminer(false)}>Annuler</button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? '...' : 'Confirmer'}</button>
@@ -382,7 +465,10 @@ function LivraisonDetailPage() {
             </div>
             {actionError && <div className="login-error">{actionError}</div>}
             <form onSubmit={handleConfirmerRetour}>
-              <div className="form-group"><label className="form-label">Mot de passe</label><input type="password" className="form-input" value={password} onChange={(e) => setPassword(e.target.value)} /></div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="retour-password">Mot de passe</label>
+                <input id="retour-password" type="password" className="form-input" value={password} onChange={(e) => setPassword(e.target.value)} />
+              </div>
               <div className="modal-actions">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowConfirmerRetour(false)}>Annuler</button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? '...' : 'Confirmer'}</button>
@@ -397,13 +483,25 @@ function LivraisonDetailPage() {
         <div className="modal-overlay" onClick={() => setTerminerSummary(null)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
             <h3 className="modal-title">Résumé de la livraison</h3>
-            <div className="table-container" style={{ marginBottom: '1rem' }}>
-              <table className="data-table" style={{ fontSize: '0.82rem' }}>
-                <thead><tr><th>Produit</th><th>Chargé</th><th>Vendu</th><th>Retour</th><th>Montant</th></tr></thead>
+            <div className="table-container" style={{ marginBottom: 'var(--space-4)' }}>
+              <table className="data-table" style={{ fontSize: 'var(--text-sm)' }}>
+                <thead>
+                  <tr>
+                    <th>Produit</th>
+                    <th style={{ textAlign: 'center' }}>Chargé</th>
+                    <th style={{ textAlign: 'center' }}>Vendu</th>
+                    <th style={{ textAlign: 'center' }}>Retour</th>
+                    <th style={{ textAlign: 'right' }}>Montant</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {terminerSummary.summary.map((s) => (
                     <tr key={s.product_id}>
-                      <td>{s.product_name}</td><td>{s.qte_chargee}</td><td>{s.qte_vendue}</td><td>{s.qte_retour}</td><td className="td-price">{formatDT(s.montant_vendu)}</td>
+                      <td>{s.product_name}</td>
+                      <td className="td-qty">{s.qte_chargee}</td>
+                      <td className="td-qty">{s.qte_vendue}</td>
+                      <td className="td-qty">{s.qte_retour}</td>
+                      <td className="td-price">{formatDT(s.montant_vendu)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -412,7 +510,7 @@ function LivraisonDetailPage() {
             <p><strong>CA Total:</strong> {formatDT(terminerSummary.ca_total)}</p>
             <p><strong>Commission (10%):</strong> {formatDT(terminerSummary.commission)}</p>
             <p><strong>Net à reverser:</strong> {formatDT(terminerSummary.net_a_reverser)}</p>
-            <div className="modal-actions" style={{ marginTop: '1rem' }}>
+            <div className="modal-actions" style={{ marginTop: 'var(--space-4)' }}>
               <button className="btn btn-primary" onClick={() => setTerminerSummary(null)}>Fermer</button>
             </div>
           </div>

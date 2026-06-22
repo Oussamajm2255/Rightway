@@ -2,6 +2,18 @@
 .products-page {
   max-width: 1200px;
   margin: 0 auto;
+  padding: var(--space-6);
+}
+
+@media (max-width: 768px) {
+  .products-page {
+    padding: var(--space-4);
+  }
+}
+/* ===== Products Page ===== */
+.products-page {
+  max-width: 1200px;
+  margin: 0 auto;
   padding: 1.5rem;
 }
 

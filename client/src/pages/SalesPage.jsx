@@ -4,7 +4,7 @@ import { apiGet, apiPost } from '../lib/api';
 import './SalesPage.css';
 
 const OFFLINE_QUEUE_KEY = 'rightway_offline_queue';
-const AUTO_SAVE_INTERVAL = 30000; // 30 seconds
+const AUTO_SAVE_INTERVAL = 30000;
 
 function formatDT(value) {
   if (value === null || value === undefined) return '—';
@@ -24,7 +24,6 @@ function SalesPage() {
   const saveTimerRef = useRef(null);
   const lastSavedRef = useRef(null);
 
-  // Online/Offline detection
   useEffect(() => {
     function handleOnline() { setIsOnline(true); syncOfflineQueue(); }
     function handleOffline() { setIsOnline(false); }
@@ -36,7 +35,6 @@ function SalesPage() {
     };
   }, []);
 
-  // Load sales state
   const fetchSales = useCallback(async () => {
     try {
       const data = await apiGet(`/livraisons/${id}/sales`);
@@ -51,7 +49,6 @@ function SalesPage() {
 
   useEffect(() => { fetchSales(); }, [fetchSales]);
 
-  // Auto-save every 30 seconds
   useEffect(() => {
     saveTimerRef.current = setInterval(() => {
       if (Object.keys(pendingChanges).length > 0) {
@@ -155,13 +152,11 @@ function SalesPage() {
     if (!raw) return;
     const queue = JSON.parse(raw);
     if (queue.length === 0) return;
-
     setSyncing(true);
     try {
       const sales = queue
         .filter((q) => q.livraison_id === id)
         .map((q) => ({ product_id: q.product_id, qte_vendue: q.qte_vendue }));
-
       if (sales.length > 0) {
         await apiPost(`/livraisons/${id}/sales/sync`, { sales });
       }
@@ -178,14 +173,29 @@ function SalesPage() {
     navigate(`/livraisons/${id}?action=terminer`);
   }
 
-  if (loading) return <div className="page-container"><div className="loading-state">Chargement...</div></div>;
+  if (loading) {
+    return (
+      <div className="sales-page">
+        <div className="ca-header">
+          <span className="ca-label">CA du jour</span>
+          <span className="ca-value">—</span>
+        </div>
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="skeleton skeleton-card" style={{ marginBottom: 'var(--space-3)', height: '160px' }} />
+        ))}
+      </div>
+    );
+  }
+
   if (error && items.length === 0) return <div className="page-container"><div className="error-banner">{error}</div></div>;
 
   return (
     <div className="sales-page">
-      {/* Offline/Online Banner */}
       {!isOnline && (
         <div className="offline-banner">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 015.17-2.39M10.71 5.05A16 16 0 0122.58 9M1.42 9a15.91 15.91 0 014.7-2.88M8.53 16.11a6 6 0 016.95 0M12 20h.01" />
+          </svg>
           Mode hors-ligne — vos données sont sauvegardées localement
         </div>
       )}
@@ -194,19 +204,17 @@ function SalesPage() {
       )}
       {isOnline && !syncing && lastSavedRef.current && (
         <div className="online-banner">
-          Synchronisé ✓ — Dernière sauvegarde: {lastSavedRef.current.toLocaleTimeString('fr-FR')}
+          Synchronisé — {lastSavedRef.current.toLocaleTimeString('fr-FR')}
         </div>
       )}
 
-      {/* Sticky CA Header */}
       <div className="ca-header">
         <span className="ca-label">CA du jour</span>
         <span className="ca-value">{formatDT(caTotal)}</span>
       </div>
 
-      {error && <div className="error-banner" style={{ marginTop: '0.5rem' }}>{error}</div>}
+      {error && <div className="error-banner" style={{ marginTop: 'var(--space-2)' }}>{error}</div>}
 
-      {/* Product Cards */}
       <div className="sales-cards">
         {items.map((item) => {
           const sold = getPendingQty(item.product_id);
@@ -217,10 +225,8 @@ function SalesPage() {
           return (
             <div key={item.product_id} className={`sale-card ${hasPending ? 'pending' : ''}`}>
               <div className="sale-card-header">
-                <div>
-                  <div className="sale-product-name">{item.product_name}</div>
-                  <div className="sale-product-code">{item.barcode} · {formatDT(item.prix_ttc)}</div>
-                </div>
+                <div className="sale-product-name">{item.product_name}</div>
+                <div className="sale-product-code">{item.barcode} · {formatDT(item.prix_ttc)}</div>
               </div>
 
               <div className="sale-stats">
@@ -247,6 +253,7 @@ function SalesPage() {
                   className="qty-btn large"
                   onClick={() => handleQtyChange(item.product_id, -1)}
                   disabled={sold <= 0}
+                  aria-label="Diminuer la quantité"
                 >−</button>
 
                 <div className="sale-qty-display">{sold}</div>
@@ -255,11 +262,12 @@ function SalesPage() {
                   className="qty-btn large"
                   onClick={() => handleQtyChange(item.product_id, 1)}
                   disabled={sold >= item.qte_chargee}
+                  aria-label="Augmenter la quantité"
                 >+</button>
 
                 {hasPending && (
                   <button
-                    className="btn btn-primary btn-valider"
+                    className="btn-valider"
                     onClick={() => handleValider(item.product_id)}
                   >
                     Valider
@@ -271,9 +279,8 @@ function SalesPage() {
         })}
       </div>
 
-      {/* Terminer Button */}
       <div className="terminer-section">
-        <button className="btn btn-terminer" onClick={handleTerminer}>
+        <button className="btn-terminer" onClick={handleTerminer}>
           Terminer la livraison
         </button>
       </div>

@@ -10,7 +10,7 @@ function formatDT(value) {
 }
 
 function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -26,7 +26,24 @@ function DashboardPage() {
     fetchDashboard();
   }, [user.role]);
 
-  if (loading) return <div className="page-container"><div className="loading-state">Chargement...</div></div>;
+  if (loading) {
+    return (
+      <div className="dashboard-page">
+        <div className="page-header">
+          <div>
+            <h1 className="page-title">Tableau de bord</h1>
+            <p className="page-subtitle">Bienvenue, {user?.full_name}</p>
+          </div>
+        </div>
+        <div className="stats-grid">
+          <div className="skeleton skeleton-card" />
+          <div className="skeleton skeleton-card" />
+          <div className="skeleton skeleton-card" />
+          <div className="skeleton skeleton-card" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-page">
@@ -35,7 +52,6 @@ function DashboardPage() {
           <h1 className="page-title">Tableau de bord</h1>
           <p className="page-subtitle">Bienvenue, {user?.full_name}</p>
         </div>
-        <button className="btn btn-outline-danger" onClick={logout}>Se déconnecter</button>
       </div>
 
       {user.role === 'SUPER_ADMIN' && <SuperAdminDashboard data={data} navigate={navigate} />}
@@ -45,44 +61,69 @@ function DashboardPage() {
   );
 }
 
-function StatCard({ title, value, subtitle, color, onClick }) {
+/* ===== KPI Card ===== */
+function KpiCard({ label, value, color, onClick }) {
   return (
-    <div className={`stat-card ${onClick ? 'clickable' : ''}`} onClick={onClick} style={color ? { borderLeftColor: color } : {}}>
-      <div className="stat-title">{title}</div>
-      <div className="stat-value" style={color ? { color } : {}}>{value}</div>
-      {subtitle && <div className="stat-subtitle">{subtitle}</div>}
+    <div
+      className={`kpi-card ${onClick ? 'kpi-clickable' : ''}`}
+      onClick={onClick}
+      style={color ? { '--kpi-accent': color } : {}}
+    >
+      <div className="kpi-label">{label}</div>
+      <div className="kpi-value">{value}</div>
     </div>
   );
+}
+
+/* ===== Section Header ===== */
+function SectionHeader({ title }) {
+  return <h2 className="section-header">{title}</h2>;
 }
 
 /* ===== SUPER ADMIN ===== */
 function SuperAdminDashboard({ data, navigate }) {
   if (!data) return null;
   return (
-    <div>
+    <>
       <div className="stats-grid">
-        <StatCard title="Utilisateurs actifs" value={data.users_count} onClick={() => navigate('/users')} />
-        <StatCard title="Produits" value={data.products_count} onClick={() => navigate('/products')} />
-        <StatCard title="Livraisons actives" value={data.active_livraisons} color="var(--color-warning)" onClick={() => navigate('/livraisons')} />
-        <StatCard title="CA Total" value={formatDT(data.ca_total)} color="var(--color-primary)" />
+        <KpiCard label="Utilisateurs actifs" value={data.users_count} onClick={() => navigate('/users')} />
+        <KpiCard label="Produits" value={data.products_count} onClick={() => navigate('/products')} />
+        <KpiCard label="Livraisons actives" value={data.active_livraisons} color="var(--color-warning)" onClick={() => navigate('/livraisons')} />
+        <KpiCard label="CA Total" value={formatDT(data.ca_total)} color="var(--color-primary)" />
       </div>
 
       {data.stock_alerts && data.stock_alerts.length > 0 && (
         <div className="detail-section">
-          <h2>Alerte Stock (&lt; 20)</h2>
+          <SectionHeader title="Alerte Stock" />
           <div className="table-container">
             <table className="data-table">
-              <thead><tr><th>Code</th><th>Produit</th><th>Stock</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Produit</th>
+                  <th style={{ textAlign: 'center' }}>Stock</th>
+                </tr>
+              </thead>
               <tbody>
                 {data.stock_alerts.map((a) => (
-                  <tr key={a.id} className="row-alert"><td className="td-code">{a.id}</td><td>{a.name}</td><td className="td-qty qty-low">{a.quantity}</td></tr>
+                  <tr key={a.id} className="row-alert">
+                    <td className="td-code">{a.id}</td>
+                    <td>{a.name}</td>
+                    <td className="td-qty qty-low">{a.quantity}</td>
+                  </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
       )}
-    </div>
+
+      <div className="quick-actions">
+        <button className="btn btn-secondary" onClick={() => navigate('/users')}>Gérer les utilisateurs</button>
+        <button className="btn btn-secondary" onClick={() => navigate('/products')}>Gérer les produits</button>
+        <button className="btn btn-secondary" onClick={() => navigate('/stock')}>Voir le stock</button>
+      </div>
+    </>
   );
 }
 
@@ -90,23 +131,33 @@ function SuperAdminDashboard({ data, navigate }) {
 function AdminDashboard({ data, navigate }) {
   if (!data) return null;
   return (
-    <div>
+    <>
       <div className="stats-grid">
-        <StatCard title="Produits en stock" value={data.stock_products} onClick={() => navigate('/stock')} />
-        <StatCard title="Unités totales" value={data.stock_total_qty} />
-        <StatCard title="Livraisons actives" value={data.active_livraisons} color="var(--color-warning)" onClick={() => navigate('/livraisons')} />
-        <StatCard title="En attente" value={data.pending_livraisons} color="#e65100" onClick={() => navigate('/livraisons')} />
+        <KpiCard label="Produits en stock" value={data.stock_products} onClick={() => navigate('/stock')} />
+        <KpiCard label="Unités totales" value={data.stock_total_qty} />
+        <KpiCard label="Livraisons actives" value={data.active_livraisons} color="var(--color-warning)" onClick={() => navigate('/livraisons')} />
+        <KpiCard label="En attente" value={data.pending_livraisons} color="#E65100" onClick={() => navigate('/livraisons')} />
       </div>
 
       {data.stock_alerts && data.stock_alerts.length > 0 && (
         <div className="detail-section">
-          <h2>Alerte Stock (&lt; 20)</h2>
+          <SectionHeader title="Alerte Stock" />
           <div className="table-container">
             <table className="data-table">
-              <thead><tr><th>Code</th><th>Produit</th><th>Stock</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Produit</th>
+                  <th style={{ textAlign: 'center' }}>Stock</th>
+                </tr>
+              </thead>
               <tbody>
                 {data.stock_alerts.map((a) => (
-                  <tr key={a.id} className="row-alert"><td className="td-code">{a.id}</td><td>{a.name}</td><td className="td-qty qty-low">{a.quantity}</td></tr>
+                  <tr key={a.id} className="row-alert">
+                    <td className="td-code">{a.id}</td>
+                    <td>{a.name}</td>
+                    <td className="td-qty qty-low">{a.quantity}</td>
+                  </tr>
                 ))}
               </tbody>
             </table>
@@ -114,11 +165,15 @@ function AdminDashboard({ data, navigate }) {
         </div>
       )}
 
-      <div className="detail-section" style={{ marginTop: '1rem' }}>
-        <button className="btn btn-primary" onClick={() => navigate('/livraisons/nouvelle')}>+ Nouvelle livraison</button>
-        <button className="btn btn-outline" style={{ marginLeft: '0.75rem' }} onClick={() => navigate('/stock')}>Gérer le stock</button>
+      <div className="detail-section">
+        <div className="quick-actions">
+          <button className="btn btn-primary" onClick={() => navigate('/livraisons/nouvelle')}>
+            + Nouvelle livraison
+          </button>
+          <button className="btn btn-secondary" onClick={() => navigate('/stock')}>Gérer le stock</button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -126,14 +181,19 @@ function AdminDashboard({ data, navigate }) {
 function CommercialDashboard({ data, navigate }) {
   if (!data) return null;
   return (
-    <div>
+    <>
       {/* Pending Bon de Sortie alerts */}
       {data.pending_bons && data.pending_bons.length > 0 && (
         <div className="detail-section">
-          <h2>Bons de sortie en attente</h2>
+          <SectionHeader title="Bons de sortie en attente" />
           {data.pending_bons.map((bon) => (
             <div key={bon.id} className="alert-card" onClick={() => navigate(`/livraisons/${bon.id}`)} style={{ cursor: 'pointer' }}>
-              <div className="alert-icon">📋</div>
+              <div className="alert-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="3" width="18" height="18" rx="3" />
+                  <path d="M9 12l2 2 4-4" />
+                </svg>
+              </div>
               <div className="alert-body">
                 <strong>{bon.reference}</strong>
                 <p>Créé par {bon.admin_name} le {new Date(bon.created_at).toLocaleString('fr-FR')}</p>
@@ -147,33 +207,47 @@ function CommercialDashboard({ data, navigate }) {
       {/* Active livraison */}
       {data.active_livraison && (
         <div className="detail-section">
-          <h2>Livraison en cours</h2>
-          <div className="alert-card" style={{ borderColor: 'var(--color-primary)', background: '#f0fdf4' }}>
-            <div className="alert-icon">🚚</div>
+          <SectionHeader title="Livraison en cours" />
+          <div className="active-livraison-card" style={{ cursor: 'pointer' }} onClick={() => navigate(`/livraisons/${data.active_livraison.id}`)}>
+            <div className="active-livraison-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M2 17h16M6 17V6l4-4h8v15" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="7" cy="20" r="2" />
+                <circle cx="17" cy="20" r="2" />
+              </svg>
+            </div>
             <div className="alert-body">
               <strong>{data.active_livraison.reference}</strong>
               <p>En cours depuis le {new Date(data.active_livraison.created_at).toLocaleString('fr-FR')}</p>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button className="btn btn-primary btn-sm" onClick={() => navigate(`/ventes/${data.active_livraison.id}`)}>Ventes</button>
+              <button className="btn btn-primary btn-sm" onClick={(e) => { e.stopPropagation(); navigate(`/ventes/${data.active_livraison.id}`); }}>
+                Ventes
+              </button>
             </div>
           </div>
         </div>
       )}
 
       {/* Financial summary */}
-      <div className="stats-grid" style={{ marginTop: '1rem' }}>
-        <StatCard title="CA Total" value={formatDT(data.ca_total)} color="var(--color-primary)" />
-        <StatCard title="Commission (10%)" value={formatDT(data.commission)} color="#15803d" />
+      <div className="stats-grid" style={{ marginTop: '0' }}>
+        <KpiCard label="CA Total" value={formatDT(data.ca_total)} color="var(--color-primary)" />
+        <KpiCard label="Commission (10%)" value={formatDT(data.commission)} color="#0D7B4B" />
       </div>
 
       {/* Recent history */}
       {data.recent_livraisons && data.recent_livraisons.length > 0 && (
         <div className="detail-section">
-          <h2>Historique récent</h2>
+          <SectionHeader title="Historique récent" />
           <div className="table-container">
             <table className="data-table">
-              <thead><tr><th>Référence</th><th>Statut</th><th>Date</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>Référence</th>
+                  <th>Statut</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
               <tbody>
                 {data.recent_livraisons.map((l) => (
                   <tr key={l.id} className="clickable-row" onClick={() => navigate(`/livraisons/${l.id}`)}>
@@ -187,7 +261,7 @@ function CommercialDashboard({ data, navigate }) {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 

@@ -2,6 +2,18 @@
 .users-page {
   max-width: 1200px;
   margin: 0 auto;
+  padding: var(--space-6);
+}
+
+@media (max-width: 768px) {
+  .users-page {
+    padding: var(--space-4);
+  }
+}
+/* ===== Users Page ===== */
+.users-page {
+  max-width: 1200px;
+  margin: 0 auto;
   padding: 1.5rem;
 }
 

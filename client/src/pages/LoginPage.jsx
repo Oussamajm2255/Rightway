@@ -35,7 +35,7 @@ function LoginPage() {
     <div className="login-page">
       <div className="login-card">
         <div className="login-header">
-          <h1 className="login-title">Right Way</h1>
+          <h1 className="login-logo">Right Way</h1>
           <p className="login-subtitle">STE RIGHT WAY FOR TRADING</p>
         </div>
 

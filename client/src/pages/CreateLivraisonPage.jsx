@@ -10,7 +10,7 @@ function formatDT(value) {
 
 function CreateLivraisonPage() {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1); // 1=select commercial, 2=select products, 3=preview, 4=confirm
+  const [step, setStep] = useState(1);
   const [commercials, setCommercials] = useState([]);
   const [stock, setStock] = useState([]);
   const [selectedCommercial, setSelectedCommercial] = useState(null);
@@ -55,10 +55,7 @@ function CreateLivraisonPage() {
     const stockItem = stock.find((s) => s.id === productId);
     const max = stockItem ? stockItem.quantity : 0;
     const clamped = Math.min(val, max);
-    setSelectedItems((prev) => ({
-      ...prev,
-      [productId]: clamped,
-    }));
+    setSelectedItems((prev) => ({ ...prev, [productId]: clamped }));
   }
 
   function getSelectedProducts() {
@@ -67,8 +64,7 @@ function CreateLivraisonPage() {
 
   function getTotal() {
     return getSelectedProducts().reduce(
-      (sum, p) => sum + selectedItems[p.id] * Number(p.selling_price_ttc),
-      0
+      (sum, p) => sum + selectedItems[p.id] * Number(p.selling_price_ttc), 0
     );
   }
 
@@ -85,17 +81,14 @@ function CreateLivraisonPage() {
   async function handleConfirm(e) {
     e.preventDefault();
     setError('');
-
     if (!password) {
       setError('Votre mot de passe est requis pour confirmer.');
       return;
     }
-
     const items = getSelectedProducts().map((p) => ({
       product_id: p.id,
       qte_chargee: selectedItems[p.id],
     }));
-
     setSubmitting(true);
     try {
       const data = await apiPost('/livraisons', {
@@ -110,8 +103,28 @@ function CreateLivraisonPage() {
     }
   }
 
+  function getInitials(name) {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+  }
+
+  const STEP_LABELS = ['Commercial', 'Produits', 'Aperçu', 'Confirmation'];
+
   if (loadingData) {
-    return <div className="page-container"><div className="loading-state">Chargement...</div></div>;
+    return (
+      <div className="create-livraison">
+        <div className="page-header">
+          <div>
+            <h1 className="page-title">Nouvelle livraison</h1>
+            <p className="page-subtitle">Créez un bon de sortie pour un commercial</p>
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div className="skeleton skeleton-card" />
+          <div className="skeleton skeleton-card" />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -121,13 +134,28 @@ function CreateLivraisonPage() {
           <h1 className="page-title">Nouvelle livraison</h1>
           <p className="page-subtitle">Créez un bon de sortie pour un commercial</p>
         </div>
-        <div className="step-indicator">
-          {[1, 2, 3, 4].map((s) => (
-            <span key={s} className={`step-dot ${step >= s ? 'active' : ''} ${step === s ? 'current' : ''}`}>
-              {s}
+      </div>
+
+      {/* Wizard Stepper */}
+      <div className="wizard-stepper">
+        {STEP_LABELS.map((label, idx) => {
+          const s = idx + 1;
+          const isActive = step === s;
+          const isDone = step > s;
+          return (
+            <span key={s} className={`stepper-step ${isActive ? 'current' : ''} ${isDone ? 'done' : ''}`}>
+              <span className={`stepper-circle ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}`}>
+                {isDone ? (
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2.5 7l3 3 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                ) : s}
+              </span>
+              <span className="stepper-label">{label}</span>
+              {s < 4 && <span className={`stepper-line ${isDone ? 'done' : ''}`} />}
             </span>
-          ))}
-        </div>
+          );
+        })}
       </div>
 
       {error && <div className="error-banner">{error}</div>}
@@ -135,7 +163,8 @@ function CreateLivraisonPage() {
       {/* STEP 1: Select Commercial */}
       {step === 1 && (
         <div className="step-panel">
-          <h2 className="step-title">1. Sélectionnez le commercial</h2>
+          <h2 className="step-title">Sélectionnez le commercial</h2>
+          <p className="step-hint">Choisissez le commercial qui effectuera la livraison.</p>
           {commercials.length === 0 ? (
             <div className="empty-state"><p>Aucun commercial actif trouvé.</p></div>
           ) : (
@@ -146,6 +175,7 @@ function CreateLivraisonPage() {
                   className={`commercial-card ${selectedCommercial?.id === com.id ? 'selected' : ''}`}
                   onClick={() => handleSelectCommercial(com)}
                 >
+                  <div className="com-avatar">{getInitials(com.full_name)}</div>
                   <div className="com-name">{com.full_name}</div>
                   <div className="com-vehicle">
                     {com.vehicle_name && <span>{com.vehicle_name}</span>}
@@ -165,8 +195,8 @@ function CreateLivraisonPage() {
       {/* STEP 2: Select Products */}
       {step === 2 && selectedCommercial && (
         <div className="step-panel">
-          <h2 className="step-title">2. Sélectionnez les produits pour {selectedCommercial.full_name}</h2>
-          <p className="step-hint">Seuls les produits avec stock disponible sont affichés.</p>
+          <h2 className="step-title">Sélectionnez les produits</h2>
+          <p className="step-hint">Pour {selectedCommercial.full_name}. Seuls les produits avec stock disponible sont affichés.</p>
 
           <div className="products-grid">
             {stock.map((product) => (
@@ -174,7 +204,7 @@ function CreateLivraisonPage() {
                 <div className="ps-info">
                   <div className="ps-name">{product.name}</div>
                   <div className="ps-details">
-                    <span>{product.id}</span>
+                    <span className="td-code">{product.id}</span>
                     <span>{formatDT(product.selling_price_ttc)}</span>
                     <span className={`ps-stock ${product.quantity < 21 ? 'low' : ''}`}>
                       Stock: {product.quantity}
@@ -228,7 +258,8 @@ function CreateLivraisonPage() {
       {/* STEP 3: Preview */}
       {step === 3 && (
         <div className="step-panel">
-          <h2 className="step-title">3. Aperçu du Bon de Sortie</h2>
+          <h2 className="step-title">Aperçu du Bon de Sortie</h2>
+          <p className="step-hint">Vérifiez les informations avant de confirmer.</p>
 
           <div className="preview-card">
             <div className="preview-header">
@@ -253,18 +284,18 @@ function CreateLivraisonPage() {
               <tbody>
                 {getSelectedProducts().map((p) => (
                   <tr key={p.id}>
-                    <td>{p.id}</td>
+                    <td className="td-code">{p.id}</td>
                     <td>{p.name}</td>
-                    <td>{formatDT(p.selling_price_ttc)}</td>
-                    <td>{selectedItems[p.id]}</td>
+                    <td className="td-price">{formatDT(p.selling_price_ttc)}</td>
+                    <td className="td-qty">{selectedItems[p.id]}</td>
                     <td className="td-price">{formatDT(selectedItems[p.id] * Number(p.selling_price_ttc))}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr>
-                  <td colSpan="4"><strong>Total</strong></td>
-                  <td className="td-price"><strong>{formatDT(getTotal())}</strong></td>
+                  <td colSpan="4" style={{ textAlign: 'right', fontWeight: '600' }}>Total</td>
+                  <td className="td-price" style={{ fontWeight: '700' }}>{formatDT(getTotal())}</td>
                 </tr>
               </tfoot>
             </table>
@@ -282,7 +313,8 @@ function CreateLivraisonPage() {
       {/* STEP 4: Password Confirmation */}
       {step === 4 && (
         <div className="step-panel step-confirm">
-          <h2 className="step-title">4. Confirmer la charge</h2>
+          <h2 className="step-title">Confirmer la charge</h2>
+          <p className="step-hint">Saisissez votre mot de passe pour valider la création.</p>
 
           <div className="confirm-summary">
             <p>Vous allez créer un bon de sortie pour :</p>
@@ -293,8 +325,9 @@ function CreateLivraisonPage() {
 
           <form onSubmit={handleConfirm}>
             <div className="form-group">
-              <label className="form-label">Votre mot de passe</label>
+              <label className="form-label" htmlFor="create-password">Votre mot de passe</label>
               <input
+                id="create-password"
                 type="password"
                 className="form-input"
                 placeholder="Mot de passe pour confirmer"
@@ -305,7 +338,7 @@ function CreateLivraisonPage() {
 
             <div className="step-actions">
               <button type="button" className="btn btn-secondary" onClick={() => setStep(3)}>Retour</button>
-              <button type="submit" className="btn btn-primary" disabled={submitting}>
+              <button type="submit" className="btn btn-primary btn-lg" disabled={submitting}>
                 {submitting ? 'Création...' : 'Confirmer la charge'}
               </button>
             </div>
