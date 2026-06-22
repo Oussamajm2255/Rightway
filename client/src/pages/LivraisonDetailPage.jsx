@@ -56,9 +56,9 @@ function LivraisonDetailPage() {
     setSubmitting(true);
     try {
       const data = await apiPut(`/livraisons/${id}/confirm-sortie`, { password });
+      setLivraison(data.livraison);
       setSuccess(data.message);
       setShowConfirmSortie(false);
-      fetchLivraison();
     } catch (err) {
       setActionError(err.message);
     } finally {
@@ -74,10 +74,10 @@ function LivraisonDetailPage() {
     setSubmitting(true);
     try {
       const data = await apiPut(`/livraisons/${id}/terminer`, { password });
+      setLivraison(data.livraison);
       setTerminerSummary(data);
       setShowTerminer(false);
       setSuccess(data.message);
-      fetchLivraison();
     } catch (err) {
       setActionError(err.message);
     } finally {
@@ -93,9 +93,9 @@ function LivraisonDetailPage() {
     setSubmitting(true);
     try {
       const data = await apiPut(`/livraisons/${id}/confirmer-retour`, { password });
+      setLivraison(data.livraison);
       setSuccess(data.message);
       setShowConfirmerRetour(false);
-      fetchLivraison();
     } catch (err) {
       setActionError(err.message);
     } finally {
