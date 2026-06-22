@@ -8,6 +8,11 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const isProduction = process.env.NODE_ENV === 'production';
 
+// Trust Railway's reverse proxy in production for correct client IP
+if (isProduction) {
+  app.set('trust proxy', 1);
+}
+
 // --- Middleware ---
 app.use(helmet({
   contentSecurityPolicy: false, // Allow inline scripts for Vite build
