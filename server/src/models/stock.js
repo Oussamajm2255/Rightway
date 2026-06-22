@@ -39,21 +39,31 @@ async function adjustStock(product_id, quantity_change, reason, created_by) {
   try {
     await client.query('BEGIN');
 
-    // Upsert depot_stock
+    // Get current stock level
+    const { rows: currentRows } = await client.query(
+      'SELECT COALESCE(quantity, 0) AS quantity FROM depot_stock WHERE product_id = $1 FOR UPDATE',
+      [product_id]
+    );
+    const currentQty = currentRows.length > 0 ? currentRows[0].quantity : 0;
+    const newQty = currentQty + quantity_change;
+
+    // Validate stock won't go negative
+    if (newQty < 0) {
+      await client.query('ROLLBACK');
+      return {
+        error: `Stock insuffisant. Stock actuel: ${currentQty}. Réduction demandée: ${Math.abs(quantity_change)}. Il manque ${Math.abs(newQty)} unité(s).`
+      };
+    }
+
+    // Upsert depot_stock (safe: newQty >= 0 guaranteed)
     const { rows: stockRows } = await client.query(
       `INSERT INTO depot_stock (product_id, quantity)
        VALUES ($1, $2)
        ON CONFLICT (product_id)
-       DO UPDATE SET quantity = depot_stock.quantity + $2, last_updated = NOW()
+       DO UPDATE SET quantity = $2, last_updated = NOW()
        RETURNING *`,
-      [product_id, quantity_change]
+      [product_id, newQty]
     );
-
-    // Verify no negative stock
-    if (stockRows[0].quantity < 0) {
-      await client.query('ROLLBACK');
-      return { error: `Stock insuffisant. Stock actuel: ${stockRows[0].quantity - quantity_change}. Réduction demandée: ${Math.abs(quantity_change)}.` };
-    }
 
     // Write stock movement
     await client.query(
