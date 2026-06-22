@@ -1,0 +1,226 @@
+/* ===== Sales Page ===== */
+.sales-page {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0.75rem 1rem 6rem;
+}
+
+/* ===== Banners ===== */
+.offline-banner {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  text-align: center;
+  padding: 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.syncing-banner {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  text-align: center;
+  padding: 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  margin-bottom: 0.5rem;
+}
+
+.online-banner {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+  text-align: center;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  margin-bottom: 0.5rem;
+}
+
+/* ===== CA Header ===== */
+.ca-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--color-primary);
+  color: #fff;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow-md);
+}
+
+.ca-label {
+  font-size: 0.85rem;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.ca-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== Sale Cards ===== */
+.sales-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sale-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  transition: border-color var(--transition);
+}
+
+.sale-card.pending {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(200, 168, 78, 0.15);
+}
+
+.sale-card-header {
+  margin-bottom: 0.75rem;
+}
+
+.sale-product-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.15rem;
+}
+
+.sale-product-code {
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+}
+
+/* ===== Stats Grid ===== */
+.sale-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.sale-stat {
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  margin-bottom: 0.15rem;
+  letter-spacing: 0.3px;
+}
+
+.stat-value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-value.zero {
+  color: var(--color-text-secondary);
+}
+
+.stat-value.montant {
+  color: var(--color-primary);
+}
+
+/* ===== Action Buttons ===== */
+.sale-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.qty-btn.large {
+  width: 48px;
+  height: 48px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.qty-btn.large:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background: rgba(26, 60, 52, 0.05);
+  color: var(--color-primary);
+}
+
+.qty-btn.large:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.sale-qty-display {
+  font-size: 1.5rem;
+  font-weight: 700;
+  min-width: 48px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.btn-valider {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  margin-left: 0.25rem;
+}
+
+/* ===== Terminer ===== */
+.terminer-section {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1rem;
+  background: linear-gradient(transparent, var(--color-bg) 40%);
+  z-index: 200;
+}
+
+.btn-terminer {
+  display: block;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  background: var(--color-danger);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition);
+  text-align: center;
+}
+
+.btn-terminer:hover {
+  background: #b91c1c;
+}
+
+@media (min-width: 768px) {
+  .sale-stats {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

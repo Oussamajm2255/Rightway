@@ -1,0 +1,59 @@
+/* ===== Products Page ===== */
+.products-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+/* Reuse page-header, filters-bar, table-container, data-table from UsersPage */
+/* Those are defined in UsersPage.css but since they're not scoped, we rely on index.css globals */
+
+.category-tag {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  background: var(--color-bg);
+  border-radius: 100px;
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.td-code {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--color-primary);
+}
+
+.td-price {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--color-primary);
+}
+
+@media (max-width: 768px) {
+  .products-page {
+    padding: 1rem;
+  }
+
+  .td-price {
+    font-size: 0.82rem;
+  }
+}

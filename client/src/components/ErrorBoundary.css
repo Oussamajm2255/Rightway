@@ -1,0 +1,17 @@
+.error-boundary {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+  padding: 2rem;
+}
+
+.eb-card {
+  text-align: center;
+  max-width: 420px;
+}
+
+.eb-card h1 { color: var(--color-primary); margin-bottom: 0.5rem; }
+.eb-card h2 { font-size: 1.1rem; color: var(--color-danger); margin-bottom: 0.5rem; }
+.eb-card p { color: var(--color-text-secondary); margin-bottom: 1.5rem; }

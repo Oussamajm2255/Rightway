@@ -1,0 +1,365 @@
+/* ===== Create Livraison ===== */
+.create-livraison {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.step-indicator {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.step-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: var(--color-border);
+  color: var(--color-text-secondary);
+  transition: all var(--transition);
+}
+
+.step-dot.active {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.step-dot.current {
+  box-shadow: 0 0 0 3px rgba(26, 60, 52, 0.3);
+}
+
+/* ===== Step Panel ===== */
+.step-panel {
+  margin-top: 1.5rem;
+}
+
+.step-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+}
+
+.step-hint {
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+/* ===== Commercial Grid ===== */
+.commercial-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.commercial-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 1rem;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: inherit;
+}
+
+.commercial-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.commercial-card.selected {
+  border-color: var(--color-primary);
+  background: rgba(26, 60, 52, 0.03);
+}
+
+.com-name {
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.com-vehicle {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.com-plate {
+  display: block;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  margin-top: 2px;
+}
+
+.com-phone {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  margin-top: 0.25rem;
+}
+
+/* ===== Products Grid ===== */
+.products-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.product-select-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  gap: 1rem;
+  transition: border-color var(--transition);
+}
+
+.product-select-card.selected {
+  border-color: var(--color-primary);
+  background: rgba(26, 60, 52, 0.02);
+}
+
+.ps-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ps-name {
+  font-weight: 500;
+  font-size: 0.9rem;
+  margin-bottom: 0.15rem;
+}
+
+.ps-details {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+  flex-wrap: wrap;
+}
+
+.ps-stock.low {
+  color: var(--color-danger);
+  font-weight: 500;
+}
+
+.ps-qty {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.qty-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.qty-btn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.qty-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.qty-input {
+  width: 56px;
+  height: 32px;
+  text-align: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 600;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.qty-input::-webkit-inner-spin-button,
+.qty-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.qty-input:focus {
+  border-color: var(--color-primary);
+}
+
+.ps-total {
+  width: 90px;
+  text-align: right;
+  font-weight: 600;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+/* ===== Preview ===== */
+.preview-total-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.preview-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.preview-header {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.preview-header strong {
+  display: block;
+  font-size: 1.1rem;
+  color: var(--color-primary);
+}
+
+.preview-header span {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.5px;
+}
+
+.preview-meta {
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+}
+
+.preview-meta div {
+  margin-bottom: 0.25rem;
+}
+
+.preview-meta span {
+  color: var(--color-text-secondary);
+}
+
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.preview-table th,
+.preview-table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.preview-table th {
+  font-weight: 600;
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+}
+
+.preview-table thead th {
+  border-bottom: 2px solid var(--color-border);
+}
+
+.preview-table tfoot td {
+  border-top: 2px solid var(--color-text);
+  border-bottom: none;
+  padding-top: 0.75rem;
+}
+
+/* ===== Confirm ===== */
+.step-confirm {
+  max-width: 500px;
+}
+
+.confirm-summary {
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+}
+
+.confirm-summary p {
+  margin: 0.25rem 0;
+}
+
+.confirm-note {
+  color: var(--color-text-secondary);
+  font-style: italic;
+  font-size: 0.82rem;
+  margin-top: 0.5rem !important;
+}
+
+/* ===== Step Actions ===== */
+.step-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .create-livraison {
+    padding: 1rem;
+  }
+
+  .product-select-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ps-qty {
+    justify-content: center;
+  }
+
+  .ps-total {
+    text-align: center;
+    width: 100%;
+  }
+
+  .commercial-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .step-actions {
+    flex-direction: column;
+  }
+
+  .step-actions .btn {
+    width: 100%;
+  }
+}
