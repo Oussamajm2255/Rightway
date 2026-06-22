@@ -230,7 +230,7 @@ function AppLayout({ children }) {
         <div className="topbar-actions">
           <button className="notif-bell" onClick={openNotifPanel} aria-label="Notifications">
             <IconBell />
-            {unreadCount > 0 && <span className="notif-dot" />}
+            <span className={`notif-dot ${unreadCount > 0 ? '' : 'notif-dot-hidden'}`} aria-hidden="true" />
           </button>
           <div className="topbar-avatar">
             {getInitials(user?.full_name)}
