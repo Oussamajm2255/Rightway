@@ -383,6 +383,76 @@ cd ../client && npm run dev
 
 ---
 
+## Deployment (Railway)
+
+**Repository**: https://github.com/Oussamajm2255/Rightway
+
+### Single-service architecture
+The Express server serves the React client build via `express.static()` when `NODE_ENV=production`. No separate client deployment needed.
+
+### Railway settings
+| Setting | Value |
+|---|---|
+| Root Directory | (blank — repo root) |
+| Build Command | `npm run build` |
+| Start Command | `npm start` |
+| NODE_ENV | `production` |
+| DATABASE_URL | (Railway Postgres connection string) |
+| JWT_SECRET | (your secret) |
+
+### Build flow
+1. `npm run build` at root → `cd client && npm install && npm run build && cd ../server && npm install`
+2. Vite builds React into `client/dist/`
+3. `npm start` → `cd server && NODE_ENV=production node src/index.js`
+4. Server serves `client/dist/` as static files + API routes on same port
+
+### Production behavior (NODE_ENV=production)
+- CORS allows all origins (client and server on same domain)
+- `helmet` CSP disabled to allow Vite's inline scripts
+- `client/dist/` served as static files
+- SPA fallback: any non-API route returns `index.html`
+
+---
+
+## Important Fixes Applied
+
+### 1. `depot_stock.product_id` UNIQUE constraint
+**Issue**: `ON CONFLICT (product_id)` failed because no UNIQUE constraint existed on the column.
+**Fix**: Added `ALTER TABLE depot_stock ADD CONSTRAINT ... UNIQUE (product_id)`.
+
+### 2. ProtectedRoute render loop
+**Issue**: `<Navigate>` during render caused "Maximum update depth exceeded" when auth state fluctuated.
+**Fix**: Replaced `<Navigate>` with `useEffect` + `useNavigate()` — navigation happens as a side effect, not during render.
+
+### 3. API client 401 handling
+**Issue**: `window.location.href = '/login'` in `api.js` caused full page reloads that conflicted with React state.
+**Fix**: Removed hard redirect. The AuthContext handles logout via state, ProtectedRoute navigates programmatically.
+
+### 4. EN_ATTENTE_COMMERCIAL confirmation UI
+**Issue**: Task 9 rewrite of `LivraisonDetailPage` dropped the confirmation card for the initial "En attente" state.
+**Fix**: Restored alert card + password modal for Commercial to confirm Bon de Sortie.
+
+### 5. Product catalog restructured (38 active products)
+**Issue**: Original 12 products were categories, not sellable items.
+**Fix**: Migration created 35 sub-products inheriting parent prices. Original parents archived. 3 kept as-is (BROWNIE, AMANDIES, DATE BAR).
+
+| Category | Products |
+|---|---|
+| KAKITO FOUR | Baton, Boule |
+| KAKITO MOKLI | Mini bâtons (Sel/Piquant/Fromage/Ail), Mini boules (×4) |
+| KAKITO MOKLI SEAUX | Seau Sel/Piquant/Fromage/Ail |
+| SABLE COOKIES SANS SUCRE | Noix de coco, Cacao, Amandes |
+| Cake MARIO | Pépites de chocolat, Tout chocolat, Vanille chocolat |
+| Cake VALENTINO | Pépites chocolat, Tout chocolat, Vanille chocolat |
+| GAUFRETTE 80G | Chocolat, Fraise, Noisette, Noix de coco, Lait |
+| BISCUIT 190G | Chocolat, Lait, Noisette |
+| LANGUE DE CHAT GOUTINEL | Nature, Chocolat |
+| BROWNIE | (standalone) |
+| AMANDIES | (standalone) |
+| DATE BAR | (standalone) |
+
+---
+
 ## Build Output
 - Server: plain Node.js, no build step
-- Client: `vite build` → `dist/` (65 modules, ~241 KB JS gzipped to ~69 KB, ~28 KB CSS gzipped to ~5.5 KB)
+- Client: `vite build` → `dist/` (65 modules, ~243 KB JS gzipped to ~69 KB, ~28 KB CSS gzipped to ~5.5 KB)
