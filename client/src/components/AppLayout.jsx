@@ -223,7 +223,13 @@ function AppLayout({ children }) {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
           >
-            {mobileMenuOpen ? <IconClose /> : <IconMenu />}
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {mobileMenuOpen ? (
+                <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              ) : (
+                <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              )}
+            </svg>
           </button>
           <span className="topbar-page-title">{getCurrentPageTitle()}</span>
         </div>
