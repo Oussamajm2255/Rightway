@@ -43,12 +43,8 @@
   background: var(--color-surface-hover);
 }
 
-.hamburger span {
-  width: 18px;
-  height: 2px;
-  background: currentColor;
-  border-radius: 1px;
-  transition: transform var(--transition-fast);
+.hamburger svg {
+  display: block;
 }
 
 .topbar-page-title {

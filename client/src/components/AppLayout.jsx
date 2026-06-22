@@ -88,6 +88,14 @@ function IconBell() {
   );
 }
 
+function IconMenu() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function IconClose() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -215,11 +223,7 @@ function AppLayout({ children }) {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
           >
-            {mobileMenuOpen ? <IconClose /> : (
-              <>
-                <span /><span /><span />
-              </>
-            )}
+            {mobileMenuOpen ? <IconClose /> : <IconMenu />}
           </button>
           <span className="topbar-page-title">{getCurrentPageTitle()}</span>
         </div>
