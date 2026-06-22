@@ -281,6 +281,7 @@ function AppLayout({ children }) {
 
       <div className="app-body">
         {/* Sidebar Desktop */}
+        <div className="sidebar-spacer" />
         <aside className={`sidebar ${mobileMenuOpen ? 'open' : ''}`}>
           <div className="sidebar-brand" onClick={() => { navigate('/'); setMobileMenuOpen(false); }}>
             <div className="sidebar-logo">Right Way</div>
