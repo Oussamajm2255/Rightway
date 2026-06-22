@@ -104,53 +104,53 @@ function LivraisonDetailPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="livraison-detail">
-        <div className="page-header">
-          <div><h1 className="page-title skeleton skeleton-heading" /></div>
-        </div>
-        <div className="detail-grid">
-          <div className="skeleton skeleton-card" />
-          <div className="skeleton skeleton-card" />
-        </div>
-      </div>
-    );
-  }
-  if (error) return <div className="page-container"><div className="error-banner">{error}</div></div>;
-  if (!livraison) return <div className="page-container"><div className="empty-state">Livraison introuvable.</div></div>;
 
-  const isEnCours = livraison.status === 'EN_COURS';
-  const isEnAttente = livraison.status === 'EN_ATTENTE_COMMERCIAL';
-  const isEnRetour = livraison.status === 'EN_RETOUR';
-  const isCloture = livraison.status === 'CLOTURE';
+  if (error) return <div className="page-container"><div className="error-banner">{error}</div></div>;
+  if (!loading && !livraison) return <div className="page-container"><div className="empty-state">Livraison introuvable.</div></div>;
+
+  const isEnCours = livraison?.status === 'EN_COURS';
+  const isEnAttente = livraison?.status === 'EN_ATTENTE_COMMERCIAL';
+  const isEnRetour = livraison?.status === 'EN_RETOUR';
+  const isCloture = livraison?.status === 'CLOTURE';
   const isCommercial = user?.role === 'COMMERCIAL';
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
-  const isAssignedCommercial = isCommercial && livraison.commercial_id === user?.id;
+  const isAssignedCommercial = isCommercial && livraison?.commercial_id === user?.id;
   const ca = computeCA();
   const commission = Number((ca * 0.10).toFixed(3));
   const net_a_reverser = Number((ca - commission).toFixed(3));
-  const adminConfirmed = livraison.retour_confirmed_by_admin_at;
-  const commercialConfirmed = livraison.retour_confirmed_by_commercial_at;
+  const adminConfirmed = livraison?.retour_confirmed_by_admin_at;
+  const commercialConfirmed = livraison?.retour_confirmed_by_commercial_at;
 
   return (
     <div className="livraison-detail">
       <button className="btn btn-ghost btn-sm" onClick={() => navigate('/livraisons')} style={{ marginBottom: 'var(--space-4)' }}>
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0}}>
           <path d="M9 2.5L4.5 7l4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         Retour aux livraisons
       </button>
 
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">{livraison.reference}</h1>
-          <p className="page-subtitle">Créée le {new Date(livraison.created_at).toLocaleString('fr-FR')}</p>
-        </div>
-        <StatusBadge status={livraison.status} />
-      </div>
+      {loading ? (
+        <>
+          <div className="page-header">
+            <div><h1 className="page-title skeleton skeleton-heading" /></div>
+          </div>
+          <div className="detail-grid">
+            <div className="skeleton skeleton-card" />
+            <div className="skeleton skeleton-card" />
+          </div>
+        </>
+      ) : livraison ? (
+        <>
+          <div className="page-header">
+            <div>
+              <h1 className="page-title">{livraison.reference}</h1>
+              <p className="page-subtitle">Créée le {new Date(livraison.created_at).toLocaleString('fr-FR')}</p>
+            </div>
+            <StatusBadge status={livraison.status} />
+          </div>
 
-      {success && <div className="success-banner">{success}</div>}
+          {success && <div className="success-banner">{success}</div>}
 
       {/* Status Timeline */}
       <div className="status-timeline">
@@ -516,6 +516,8 @@ function LivraisonDetailPage() {
           </div>
         </div>
       )}
+        </>
+      ) : null}
     </div>
   );
 }
