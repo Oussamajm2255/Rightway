@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
+    "build": "cd ../client && npm install && npm run build",
     "db:init": "node src/db/init.js"
   },
   "dependencies": {
