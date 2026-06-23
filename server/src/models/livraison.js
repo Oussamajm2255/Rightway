@@ -96,9 +96,9 @@ async function findById(id) {
 /**
  * List livraisons with filters
  */
-async function findAll({ status, commercial_id, date_from, date_to, admin_id, limit = 100, offset = 0 } = {}) {
+async function findAll({ status, commercial_id, date_from, date_to, admin_id, include_archived, limit = 100, offset = 0 } = {}) {
   let query = `
-    SELECT l.reference, l.id, l.status, l.created_at, l.closed_at,
+    SELECT l.reference, l.id, l.status, l.created_at, l.closed_at, l.is_archived,
            c.full_name AS commercial_name, c.vehicle_name, c.vehicle_plate,
            a.full_name AS admin_name
     FROM livraisons l
@@ -108,6 +108,11 @@ async function findAll({ status, commercial_id, date_from, date_to, admin_id, li
   `;
   const params = [];
   let idx = 1;
+
+  // Exclude archived by default
+  if (!include_archived) {
+    query += ` AND l.is_archived = false`;
+  }
 
   if (status) {
     query += ` AND l.status = $${idx++}`;
@@ -312,7 +317,7 @@ async function syncSales(livraison_id, sales) {
   return results;
 }
 
-module.exports = { generateReference, create, findById, findAll, confirmSortie, getSalesState, recordSales, syncSales, terminerLivraison, confirmerRetour };
+module.exports = { generateReference, create, findById, findAll, confirmSortie, getSalesState, recordSales, syncSales, terminerLivraison, confirmerRetour, archiveLivraison };
 
 // ============================================================
 // END LIVRAISON & BON DE RETOUR
@@ -436,4 +441,18 @@ async function confirmerRetour(id, user_id, role) {
   } finally {
     client.release();
   }
+}
+
+/**
+ * Archive a livraison (soft-delete) — SUPER_ADMIN only with password
+ */
+async function archiveLivraison(id) {
+  const result = await pool.query(
+    `UPDATE livraisons SET is_archived = true
+     WHERE id = $1 AND is_archived = false
+     RETURNING id, reference`,
+    [id]
+  );
+  if (result.rows.length === 0) return null;
+  return result.rows[0];
 }

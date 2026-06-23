@@ -33,8 +33,9 @@ async function createLivraison(req, res) {
 
 async function listLivraisons(req, res) {
   try {
-    const { status, commercial_id, date_from, date_to } = req.query;
+    const { status, commercial_id, date_from, date_to, include_archived } = req.query;
     const filters = { status, date_from, date_to };
+    if (include_archived === 'true') filters.include_archived = true;
     if (req.user.role === 'COMMERCIAL') filters.commercial_id = req.user.id;
     else if (req.user.role === 'ADMIN') filters.admin_id = req.user.id;
     if (req.user.role === 'SUPER_ADMIN' && commercial_id) filters.commercial_id = commercial_id;
@@ -192,4 +193,21 @@ async function getDossier(req, res) {
   } catch (err) { console.error('getDossier error:', err); res.status(500).json({ error: 'Erreur interne du serveur' }); }
 }
 
-module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier };
+async function archiveLivraison(req, res) {
+  try {
+    const { password } = req.body;
+    if (!password) return res.status(400).json({ error: 'Mot de passe requis.' });
+
+    const { rows: userRows } = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+    if (!await verifyPassword(password, userRows[0].password_hash)) {
+      return res.status(401).json({ error: 'Mot de passe incorrect.' });
+    }
+
+    const archived = await livraisonModel.archiveLivraison(req.params.id);
+    if (!archived) return res.status(404).json({ error: 'Livraison introuvable ou déjà archivée.' });
+
+    res.json({ message: `Livraison ${archived.reference} archivée.`, archived });
+  } catch (err) { console.error('archiveLivraison error:', err); res.status(500).json({ error: 'Erreur interne du serveur' }); }
+}
+
+module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier, archiveLivraison };

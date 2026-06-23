@@ -21,6 +21,7 @@ function LivraisonDetailPage() {
   const [terminerSummary, setTerminerSummary] = useState(null);
   const [showConfirmerRetour, setShowConfirmerRetour] = useState(false);
   const [showConfirmSortie, setShowConfirmSortie] = useState(false);
+  const [showArchive, setShowArchive] = useState(false);
   const [password, setPassword] = useState('');
   const [actionError, setActionError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -104,6 +105,24 @@ function LivraisonDetailPage() {
     }
   }
 
+  async function handleArchive(e) {
+    e.preventDefault();
+    setActionError('');
+    if (!password) { setActionError('Mot de passe requis.'); return; }
+    setSubmitting(true);
+    try {
+      const data = await apiPut(`/livraisons/${id}/archive`, { password });
+      setSuccess(data.message);
+      setShowArchive(false);
+      setTimeout(() => navigate('/livraisons'), 800);
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setSubmitting(false);
+      setPassword('');
+    }
+  }
+
 
   if (error) return <div className="page-container"><div className="error-banner">{error}</div></div>;
   if (!loading && !livraison) return <div className="page-container"><div className="empty-state">Livraison introuvable.</div></div>;
@@ -129,6 +148,16 @@ function LivraisonDetailPage() {
         </svg>
         Retour aux livraisons
       </button>
+
+      {!loading && user?.role === 'SUPER_ADMIN' && (
+        <button
+          className="btn btn-outline-danger btn-sm"
+          onClick={() => setShowArchive(true)}
+          style={{ marginBottom: 'var(--space-4)', marginLeft: 'var(--space-2)' }}
+        >
+          Archiver
+        </button>
+      )}
 
       {loading ? (
         <>
@@ -513,6 +542,37 @@ function LivraisonDetailPage() {
             <div className="modal-actions" style={{ marginTop: 'var(--space-4)' }}>
               <button className="btn btn-primary" onClick={() => setTerminerSummary(null)}>Fermer</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Archive confirmation modal */}
+      {showArchive && (
+        <div className="modal-overlay" onClick={() => setShowArchive(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <h3 className="modal-title">Archiver la livraison</h3>
+            <div className="modal-summary">
+              <p><strong>{livraison?.reference}</strong></p>
+              <p>Cette action masquera la livraison des listes sans supprimer les données.</p>
+            </div>
+            <div className="modal-warning">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{flexShrink:0}}>
+                <path d="M12 9v4M12 17h.01" strokeLinecap="round" />
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              </svg>
+              Cette action est réversible uniquement par un Super Admin.
+            </div>
+            {actionError && <div className="login-error">{actionError}</div>}
+            <form onSubmit={handleArchive}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="archive-password">Votre mot de passe</label>
+                <input id="archive-password" type="password" className="form-input" value={password} onChange={(e) => setPassword(e.target.value)} />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowArchive(false)}>Annuler</button>
+                <button type="submit" className="btn btn-danger" disabled={submitting}>{submitting ? '...' : 'Confirmer l\'archivage'}</button>
+              </div>
+            </form>
           </div>
         </div>
       )}

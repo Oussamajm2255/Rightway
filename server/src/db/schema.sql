@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS livraisons (
   retour_confirmed_by_admin_at TIMESTAMPTZ,
   retour_confirmed_by_commercial_at TIMESTAMPTZ,
   closed_at TIMESTAMPTZ,
+  is_archived BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

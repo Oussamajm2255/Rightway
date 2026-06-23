@@ -15,6 +15,7 @@ const {
   downloadBonRetourPDF,
   downloadDossierPDF,
   getDossier,
+  archiveLivraison,
 } = require('../controllers/livraisons');
 
 router.use(authenticate);
@@ -23,6 +24,9 @@ router.post('/', authorize('SUPER_ADMIN', 'ADMIN'), createLivraison);
 router.get('/', listLivraisons);
 router.get('/:id', getLivraison);
 router.put('/:id/confirm-sortie', authorize('COMMERCIAL'), confirmSortie);
+
+// Archive (SUPER_ADMIN only)
+router.put('/:id/archive', authorize('SUPER_ADMIN'), archiveLivraison);
 
 // Sales routes
 router.get('/:id/sales', authorize('COMMERCIAL'), getSales);
