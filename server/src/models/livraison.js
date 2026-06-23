@@ -317,7 +317,7 @@ async function syncSales(livraison_id, sales) {
   return results;
 }
 
-module.exports = { generateReference, create, findById, findAll, confirmSortie, getSalesState, recordSales, syncSales, terminerLivraison, confirmerRetour, archiveLivraison };
+module.exports = { generateReference, create, findById, findAll, confirmSortie, getSalesState, recordSales, syncSales, terminerLivraison, confirmerRetour, archiveLivraison, demanderAnnulation, confirmerAnnulation };
 
 // ============================================================
 // END LIVRAISON & BON DE RETOUR
@@ -455,4 +455,87 @@ async function archiveLivraison(id) {
   );
   if (result.rows.length === 0) return null;
   return result.rows[0];
+}
+
+/**
+ * Commercial requests annulation — status EN_COURS → EN_ATTENTE_ANNULATION
+ */
+async function demanderAnnulation(id, commercial_id) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const { rows } = await client.query(
+      'SELECT * FROM livraisons WHERE id = $1 FOR UPDATE', [id]
+    );
+    if (rows.length === 0) { await client.query('ROLLBACK'); return { error: 'Livraison introuvable.' }; }
+    if (rows[0].status !== 'EN_COURS') { await client.query('ROLLBACK'); return { error: `Impossible d''annuler. Statut actuel: ${rows[0].status}.` }; }
+    if (rows[0].commercial_id !== commercial_id) { await client.query('ROLLBACK'); return { error: 'Cette livraison ne vous est pas assignée.' }; }
+
+    const now = new Date().toISOString();
+    await client.query(
+      `UPDATE livraisons SET status = 'EN_ATTENTE_ANNULATION', annulation_requested_at = $2 WHERE id = $1`,
+      [id, now]
+    );
+
+    await client.query('COMMIT');
+    const livraison = await findById(id);
+    return { livraison };
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Admin confirms annulation — ATOMIC: restore stock → status ANNULE
+ */
+async function confirmerAnnulation(id, admin_id) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const { rows } = await client.query(
+      'SELECT * FROM livraisons WHERE id = $1 FOR UPDATE', [id]
+    );
+    if (rows.length === 0) { await client.query('ROLLBACK'); return { error: 'Livraison introuvable.' }; }
+    if (rows[0].status !== 'EN_ATTENTE_ANNULATION') { await client.query('ROLLBACK'); return { error: `Statut invalide: ${rows[0].status}. Attendu: EN_ATTENTE_ANNULATION.` }; }
+
+    // Restore stock: re-add all charged quantities
+    const { rows: items } = await client.query(
+      'SELECT * FROM livraison_items WHERE livraison_id = $1', [id]
+    );
+
+    for (const item of items) {
+      await client.query(
+        `INSERT INTO depot_stock (product_id, quantity)
+         VALUES ($1, $2)
+         ON CONFLICT (product_id)
+         DO UPDATE SET quantity = depot_stock.quantity + $2, last_updated = NOW()`,
+        [item.product_id, item.qte_chargee]
+      );
+      await client.query(
+        `INSERT INTO stock_movements (product_id, type, quantity, livraison_id, created_by)
+         VALUES ($1, 'RETOUR', $2, $3, $4)`,
+        [item.product_id, item.qte_chargee, id, admin_id]
+      );
+    }
+
+    const now = new Date().toISOString();
+    await client.query(
+      `UPDATE livraisons SET status = 'ANNULE', annulation_confirmed_by_admin_at = $2, closed_at = $2 WHERE id = $1`,
+      [id, now]
+    );
+
+    await client.query('COMMIT');
+    const livraison = await findById(id);
+    return { livraison };
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 }

@@ -63,6 +63,8 @@ CREATE TABLE IF NOT EXISTS livraisons (
       'CONFIRME',
       'EN_COURS',
       'EN_RETOUR',
+      'EN_ATTENTE_ANNULATION',
+      'ANNULE',
       'CLOTURE'
     )),
   confirmed_by_admin_at TIMESTAMPTZ,
@@ -70,6 +72,8 @@ CREATE TABLE IF NOT EXISTS livraisons (
   end_declared_at TIMESTAMPTZ,
   retour_confirmed_by_admin_at TIMESTAMPTZ,
   retour_confirmed_by_commercial_at TIMESTAMPTZ,
+  annulation_requested_at TIMESTAMPTZ,
+  annulation_confirmed_by_admin_at TIMESTAMPTZ,
   closed_at TIMESTAMPTZ,
   is_archived BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW()

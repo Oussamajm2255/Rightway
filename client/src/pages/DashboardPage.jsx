@@ -266,8 +266,8 @@ function CommercialDashboard({ data, navigate }) {
 }
 
 function StatusBadge({ status }) {
-  const labels = { EN_ATTENTE_COMMERCIAL: 'En attente', EN_COURS: 'En cours', EN_RETOUR: 'En retour', CLOTURE: 'Clôturé' };
-  const cls = { EN_ATTENTE_COMMERCIAL: 'badge-status-pending', EN_COURS: 'badge-status-active', EN_RETOUR: 'badge-status-warning', CLOTURE: 'badge-status-closed' }[status] || '';
+  const labels = { EN_ATTENTE_COMMERCIAL: 'En attente', EN_COURS: 'En cours', EN_RETOUR: 'En retour', EN_ATTENTE_ANNULATION: 'Annulation demandée', ANNULE: 'Annulé', CLOTURE: 'Clôturé' };
+  const cls = { EN_ATTENTE_COMMERCIAL: 'badge-status-pending', EN_COURS: 'badge-status-active', EN_RETOUR: 'badge-status-warning', EN_ATTENTE_ANNULATION: 'badge-status-warning', ANNULE: 'badge-status-closed', CLOTURE: 'badge-status-closed' }[status] || '';
   return <span className={`badge ${cls}`}>{labels[status] || status}</span>;
 }
 

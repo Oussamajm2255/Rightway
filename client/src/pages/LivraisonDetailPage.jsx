@@ -22,6 +22,8 @@ function LivraisonDetailPage() {
   const [showConfirmerRetour, setShowConfirmerRetour] = useState(false);
   const [showConfirmSortie, setShowConfirmSortie] = useState(false);
   const [showArchive, setShowArchive] = useState(false);
+  const [showAnnulerDemande, setShowAnnulerDemande] = useState(false);
+  const [showConfirmerAnnulation, setShowConfirmerAnnulation] = useState(false);
   const [password, setPassword] = useState('');
   const [actionError, setActionError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -123,6 +125,42 @@ function LivraisonDetailPage() {
     }
   }
 
+  async function handleDemanderAnnulation(e) {
+    e.preventDefault();
+    setActionError('');
+    if (!password) { setActionError('Mot de passe requis.'); return; }
+    setSubmitting(true);
+    try {
+      const data = await apiPut(`/livraisons/${id}/demander-annulation`, { password });
+      setLivraison(data.livraison);
+      setSuccess(data.message);
+      setShowAnnulerDemande(false);
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setSubmitting(false);
+      setPassword('');
+    }
+  }
+
+  async function handleConfirmerAnnulation(e) {
+    e.preventDefault();
+    setActionError('');
+    if (!password) { setActionError('Mot de passe requis.'); return; }
+    setSubmitting(true);
+    try {
+      const data = await apiPut(`/livraisons/${id}/confirmer-annulation`, { password });
+      setLivraison(data.livraison);
+      setSuccess(data.message);
+      setShowConfirmerAnnulation(false);
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setSubmitting(false);
+      setPassword('');
+    }
+  }
+
 
   if (error) return <div className="page-container"><div className="error-banner">{error}</div></div>;
   if (!loading && !livraison) return <div className="page-container"><div className="empty-state">Livraison introuvable.</div></div>;
@@ -130,6 +168,8 @@ function LivraisonDetailPage() {
   const isEnCours = livraison?.status === 'EN_COURS';
   const isEnAttente = livraison?.status === 'EN_ATTENTE_COMMERCIAL';
   const isEnRetour = livraison?.status === 'EN_RETOUR';
+  const isEnAttenteAnnulation = livraison?.status === 'EN_ATTENTE_ANNULATION';
+  const isAnnule = livraison?.status === 'ANNULE';
   const isCloture = livraison?.status === 'CLOTURE';
   const isCommercial = user?.role === 'COMMERCIAL';
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
@@ -186,12 +226,12 @@ function LivraisonDetailPage() {
         {[
           { label: 'Créé', date: livraison.created_at, done: true },
           { label: 'Confirmé', date: livraison.confirmed_by_commercial_at, done: !!livraison.confirmed_by_commercial_at },
-          { label: 'En cours', date: null, done: isEnCours || isEnRetour || isCloture },
-          { label: 'Retour', date: livraison.end_declared_at, done: isEnRetour || isCloture },
-          { label: 'Clôturé', date: livraison.closed_at, done: isCloture },
+          { label: 'En cours', date: null, done: isEnCours || isEnRetour || isEnAttenteAnnulation || isAnnule || isCloture },
+          { label: 'Retour', date: livraison.end_declared_at, done: isEnRetour || isAnnule || isCloture },
+          { label: isAnnule ? 'Annulé' : 'Clôturé', date: livraison.closed_at, done: isAnnule || isCloture },
         ].map((s, i, arr) => (
           <span key={s.label} className={`timeline-step ${s.done ? 'current' : ''}`}>
-            <span className={`timeline-dot ${s.done ? (isCloture || (i < arr.length - 1 && arr[i+1].done) ? 'done' : 'active') : ''}`} />
+            <span className={`timeline-dot ${s.done ? ((isCloture || isAnnule) || (i < arr.length - 1 && arr[i+1].done) ? 'done' : 'active') : ''}`} />
             <span className="timeline-label">{s.label}</span>
             {i < arr.length - 1 && <span className={`timeline-line ${arr[i+1].done ? 'done' : ''}`} />}
           </span>
@@ -253,6 +293,57 @@ function LivraisonDetailPage() {
           <button className="btn btn-primary" onClick={() => navigate(`/ventes/${id}`)}>
             Ventes
           </button>
+        </div>
+      )}
+
+      {/* Commercial: En cours → Demander annulation */}
+      {isEnCours && isAssignedCommercial && (
+        <div className="alert-card" style={{ background: 'var(--color-danger-bg)', borderColor: 'var(--color-danger-border)' }}>
+          <div className="alert-icon" style={{ background: 'var(--color-danger)' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M15 9l-6 6M9 9l6 6" strokeLinecap="round" />
+            </svg>
+          </div>
+          <div className="alert-body">
+            <strong>Annuler la livraison</strong>
+            <p>Demandez l'annulation. Un admin devra confirmer. Le stock sera restauré.</p>
+          </div>
+          <button className="btn btn-danger" onClick={() => setShowAnnulerDemande(true)}>
+            Annuler la livraison
+          </button>
+        </div>
+      )}
+
+      {/* EN_ATTENTE_ANNULATION — Admin must confirm */}
+      {isEnAttenteAnnulation && (
+        <div className="detail-section">
+          <div className="yellow-banner">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{flexShrink:0, marginRight:'var(--space-2)'}}>
+              <path d="M12 9v4M12 17h.01" strokeLinecap="round" />
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+            Demande d'annulation en attente de confirmation par l'Admin.
+            {isAssignedCommercial && ' Vous serez notifié après confirmation.'}
+          </div>
+          {isAdmin && (
+            <button className="btn btn-danger" onClick={() => setShowConfirmerAnnulation(true)} style={{ marginTop: 'var(--space-3)' }}>
+              Confirmer l'annulation (Admin)
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* ANNULE */}
+      {isAnnule && (
+        <div className="detail-section">
+          <div className="success-banner" style={{ marginBottom: 'var(--space-4)', background: 'var(--color-danger-bg)', borderColor: 'var(--color-danger-border)', color: 'var(--color-danger)' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{flexShrink:0, marginRight:'var(--space-2)'}}>
+              <circle cx="12" cy="12" r="10" />
+              <path d="M15 9l-6 6M9 9l6 6" strokeLinecap="round" />
+            </svg>
+            Livraison annulée le {new Date(livraison.closed_at).toLocaleString('fr-FR')}. Le stock a été restauré.
+          </div>
         </div>
       )}
 
@@ -546,6 +637,54 @@ function LivraisonDetailPage() {
         </div>
       )}
 
+      {/* Demander annulation modal */}
+      {showAnnulerDemande && (
+        <div className="modal-overlay" onClick={() => setShowAnnulerDemande(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <h3 className="modal-title">Demander l'annulation</h3>
+            <div className="modal-summary">
+              <p><strong>{livraison?.reference}</strong></p>
+              <p>L'annulation doit être confirmée par un Admin. Le stock sera restauré.</p>
+            </div>
+            {actionError && <div className="login-error">{actionError}</div>}
+            <form onSubmit={handleDemanderAnnulation}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="annuler-password">Votre mot de passe</label>
+                <input id="annuler-password" type="password" className="form-input" value={password} onChange={(e) => setPassword(e.target.value)} />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowAnnulerDemande(false)}>Annuler</button>
+                <button type="submit" className="btn btn-danger" disabled={submitting}>{submitting ? '...' : 'Confirmer la demande'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmer annulation modal (Admin) */}
+      {showConfirmerAnnulation && (
+        <div className="modal-overlay" onClick={() => setShowConfirmerAnnulation(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <h3 className="modal-title">Confirmer l'annulation</h3>
+            <div className="modal-summary">
+              <p><strong>{livraison?.reference}</strong></p>
+              <p>Le stock sera restauré et la livraison sera définitivement annulée.</p>
+            </div>
+            {actionError && <div className="login-error">{actionError}</div>}
+            <form onSubmit={handleConfirmerAnnulation}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="confirmer-annulation-password">Votre mot de passe</label>
+                <input id="confirmer-annulation-password" type="password" className="form-input" value={password} onChange={(e) => setPassword(e.target.value)} />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowConfirmerAnnulation(false)}>Annuler</button>
+                <button type="submit" className="btn btn-danger" disabled={submitting}>{submitting ? '...' : 'Confirmer l\'annulation'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Archive confirmation modal */}
       {showArchive && (
         <div className="modal-overlay" onClick={() => setShowArchive(false)}>
@@ -583,8 +722,8 @@ function LivraisonDetailPage() {
 }
 
 function StatusBadge({ status }) {
-  const labels = { EN_ATTENTE_COMMERCIAL: 'En attente commercial', CONFIRME: 'Confirmé', EN_COURS: 'En cours', EN_RETOUR: 'En retour', CLOTURE: 'Clôturé' };
-  const cls = { EN_ATTENTE_COMMERCIAL: 'badge-status-pending', EN_COURS: 'badge-status-active', EN_RETOUR: 'badge-status-warning', CLOTURE: 'badge-status-closed' }[status] || 'badge-status-info';
+  const labels = { EN_ATTENTE_COMMERCIAL: 'En attente commercial', CONFIRME: 'Confirmé', EN_COURS: 'En cours', EN_RETOUR: 'En retour', EN_ATTENTE_ANNULATION: 'Annulation demandée', ANNULE: 'Annulé', CLOTURE: 'Clôturé' };
+  const cls = { EN_ATTENTE_COMMERCIAL: 'badge-status-pending', EN_COURS: 'badge-status-active', EN_RETOUR: 'badge-status-warning', EN_ATTENTE_ANNULATION: 'badge-status-warning', ANNULE: 'badge-status-closed', CLOTURE: 'badge-status-closed' }[status] || 'badge-status-info';
   return <span className={`badge ${cls}`}>{labels[status] || status}</span>;
 }
 

@@ -8,6 +8,8 @@ const STATUS_LABELS = {
   CONFIRME: 'Confirmé',
   EN_COURS: 'En cours',
   EN_RETOUR: 'En retour',
+  EN_ATTENTE_ANNULATION: 'Annulation demandée',
+  ANNULE: 'Annulé',
   CLOTURE: 'Clôturé',
 };
 
@@ -17,6 +19,8 @@ function getStatusBadge(status) {
     CONFIRME: 'badge-status-info',
     EN_COURS: 'badge-status-active',
     EN_RETOUR: 'badge-status-warning',
+    EN_ATTENTE_ANNULATION: 'badge-status-warning',
+    ANNULE: 'badge-status-closed',
     CLOTURE: 'badge-status-closed',
   }[status] || '';
 

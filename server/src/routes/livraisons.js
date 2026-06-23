@@ -16,6 +16,8 @@ const {
   downloadDossierPDF,
   getDossier,
   archiveLivraison,
+  demanderAnnulation,
+  confirmerAnnulation,
 } = require('../controllers/livraisons');
 
 router.use(authenticate);
@@ -27,6 +29,10 @@ router.put('/:id/confirm-sortie', authorize('COMMERCIAL'), confirmSortie);
 
 // Archive (SUPER_ADMIN only)
 router.put('/:id/archive', authorize('SUPER_ADMIN'), archiveLivraison);
+
+// Annulation flow: commercial requests → admin confirms
+router.put('/:id/demander-annulation', authorize('COMMERCIAL'), demanderAnnulation);
+router.put('/:id/confirmer-annulation', authorize('SUPER_ADMIN', 'ADMIN'), confirmerAnnulation);
 
 // Sales routes
 router.get('/:id/sales', authorize('COMMERCIAL'), getSales);

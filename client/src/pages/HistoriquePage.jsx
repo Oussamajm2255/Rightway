@@ -15,8 +15,8 @@ function formatDate(d) {
   return new Date(d).toLocaleString('fr-FR');
 }
 
-const STATUS_LABELS = { EN_ATTENTE_COMMERCIAL: 'En attente', EN_COURS: 'En cours', EN_RETOUR: 'En retour', CLOTURE: 'Clôturé' };
-const STATUS_CLASS = { EN_ATTENTE_COMMERCIAL: 'badge-status-pending', EN_COURS: 'badge-status-active', EN_RETOUR: 'badge-status-warning', CLOTURE: 'badge-status-closed' };
+const STATUS_LABELS = { EN_ATTENTE_COMMERCIAL: 'En attente', EN_COURS: 'En cours', EN_RETOUR: 'En retour', EN_ATTENTE_ANNULATION: 'Annulation demandée', ANNULE: 'Annulé', CLOTURE: 'Clôturé' };
+const STATUS_CLASS = { EN_ATTENTE_COMMERCIAL: 'badge-status-pending', EN_COURS: 'badge-status-active', EN_RETOUR: 'badge-status-warning', EN_ATTENTE_ANNULATION: 'badge-status-warning', ANNULE: 'badge-status-closed', CLOTURE: 'badge-status-closed' };
 
 function HistoriquePage() {
   const { user } = useAuth();

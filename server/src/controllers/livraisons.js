@@ -210,4 +210,34 @@ async function archiveLivraison(req, res) {
   } catch (err) { console.error('archiveLivraison error:', err); res.status(500).json({ error: 'Erreur interne du serveur' }); }
 }
 
-module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier, archiveLivraison };
+async function demanderAnnulation(req, res) {
+  try {
+    const { password } = req.body;
+    if (!password) return res.status(400).json({ error: 'Mot de passe requis.' });
+    const { rows: userRows } = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+    if (!await verifyPassword(password, userRows[0].password_hash)) return res.status(401).json({ error: 'Mot de passe incorrect.' });
+
+    const result = await livraisonModel.demanderAnnulation(req.params.id, req.user.id);
+    if (result.error) return res.status(400).json({ error: result.error });
+
+    await notificationModel.create(result.livraison.admin_id, `Le commercial ${req.user.full_name} demande l''annulation de la livraison ${result.livraison.reference}.`, result.livraison.id);
+    res.json({ livraison: result.livraison, message: 'Demande d''annulation envoyée à l''admin.' });
+  } catch (err) { console.error('demanderAnnulation error:', err); res.status(500).json({ error: 'Erreur interne du serveur' }); }
+}
+
+async function confirmerAnnulation(req, res) {
+  try {
+    const { password } = req.body;
+    if (!password) return res.status(400).json({ error: 'Mot de passe requis.' });
+    const { rows: userRows } = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+    if (!await verifyPassword(password, userRows[0].password_hash)) return res.status(401).json({ error: 'Mot de passe incorrect.' });
+
+    const result = await livraisonModel.confirmerAnnulation(req.params.id, req.user.id);
+    if (result.error) return res.status(400).json({ error: result.error });
+
+    await notificationModel.create(result.livraison.commercial_id, `L''admin ${req.user.full_name} a confirmé l''annulation de la livraison ${result.livraison.reference}.`, result.livraison.id);
+    res.json({ livraison: result.livraison, message: 'Livraison annulée. Stock restauré.' });
+  } catch (err) { console.error('confirmerAnnulation error:', err); res.status(500).json({ error: 'Erreur interne du serveur' }); }
+}
+
+module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier, archiveLivraison, demanderAnnulation, confirmerAnnulation };
