@@ -281,9 +281,9 @@ function UserFormModal({ user, onClose, onSaved }) {
       if (isEdit) {
         const body = { ...formData };
         if (!body.password) delete body.password;
-        await require('../lib/api').apiPut(`/users/${user.id}`, body);
+        await apiPut(`/users/${user.id}`, body);
       } else {
-        await require('../lib/api').apiPost('/users', formData);
+        await apiPost('/users', formData);
       }
       onSaved();
     } catch (err) {
