@@ -7,12 +7,18 @@ const pool = require('../db/pool');
  */
 async function authenticate(req, res, next) {
   try {
+    // Accept token from Authorization header OR ?token= query param (for PDF downloads via window.open)
+    let token;
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Authentification requise. Veuillez vous connecter.' });
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else if (req.query.token) {
+      token = req.query.token;
     }
 
-    const token = authHeader.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ error: 'Authentification requise. Veuillez vous connecter.' });
+    }
     let decoded;
     try {
       decoded = verifyToken(token);
