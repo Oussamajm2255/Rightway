@@ -220,8 +220,8 @@ async function demanderAnnulation(req, res) {
     const result = await livraisonModel.demanderAnnulation(req.params.id, req.user.id);
     if (result.error) return res.status(400).json({ error: result.error });
 
-    await notificationModel.create(result.livraison.admin_id, `Le commercial ${req.user.full_name} demande l''annulation de la livraison ${result.livraison.reference}.`, result.livraison.id);
-    res.json({ livraison: result.livraison, message: 'Demande d''annulation envoyée à l''admin.' });
+    await notificationModel.create(result.livraison.admin_id, `Le commercial ${req.user.full_name} demande l'annulation de la livraison ${result.livraison.reference}.`, result.livraison.id);
+    res.json({ livraison: result.livraison, message: `Demande d'annulation envoyée à l'admin.` });
   } catch (err) { console.error('demanderAnnulation error:', err); res.status(500).json({ error: 'Erreur interne du serveur' }); }
 }
 
