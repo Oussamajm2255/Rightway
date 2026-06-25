@@ -162,6 +162,10 @@ function generateBonDeRetour(livraison) {
   const ca = livraison.items.reduce((sum, i) => sum + i.qte_vendue * Number(i.prix_ttc), 0);
   const commission = Number((ca * 0.10).toFixed(3));
   const net = Number((ca - commission).toFixed(3));
+  const totalAvances = (livraison.avances || [])
+    .filter(a => a.status === 'ACCEPTE')
+    .reduce((sum, a) => sum + Number(a.amount), 0);
+  const resteAPayer = Number((net - totalAvances).toFixed(3));
 
   const docDefinition = {
     pageSize: 'A4',
@@ -212,6 +216,10 @@ function generateBonDeRetour(livraison) {
           { text: [{ text: 'Total CA: ', bold: true }, formatDT(ca)], style: 'tableCell', margin: [0, 2] },
           { text: [{ text: 'Commission (10%): ' }, formatDT(commission)], style: 'tableCell', margin: [0, 2] },
           { text: [{ text: 'Net à reverser: ', bold: true }, formatDT(net)], style: 'tableCell', margin: [0, 2] },
+          ...(totalAvances > 0 ? [
+            { text: [{ text: 'Avances acceptées: ' }, formatDT(totalAvances)], style: 'tableCell', margin: [4, 2, 0, 2], color: '#1a3c34' },
+            { text: [{ text: 'Reste à payer: ', bold: true }, formatDT(resteAPayer)], style: 'tableCell', margin: [0, 2] },
+          ] : []),
         ]},
       ]},
 
@@ -245,6 +253,10 @@ function generateDossierComplet(livraison, salesLog) {
   const ca = livraison.items.reduce((sum, i) => sum + i.qte_vendue * Number(i.prix_ttc), 0);
   const commission = Number((ca * 0.10).toFixed(3));
   const net = Number((ca - commission).toFixed(3));
+  const totalAvances = (livraison.avances || [])
+    .filter(a => a.status === 'ACCEPTE')
+    .reduce((sum, a) => sum + Number(a.amount), 0);
+  const resteAPayer = Number((net - totalAvances).toFixed(3));
   const duration = livraison.closed_at
     ? Math.round((new Date(livraison.closed_at) - new Date(livraison.created_at)) / 3600000)
     : null;
@@ -327,6 +339,10 @@ function generateDossierComplet(livraison, salesLog) {
         { text: [{ text: 'CA Total: ', bold: true }, formatDT(ca)], margin: [0, 2] },
         { text: [{ text: 'Commission (10%): ' }, formatDT(commission)], margin: [0, 2] },
         { text: [{ text: 'Net à reverser: ', bold: true }, formatDT(net)], margin: [0, 2] },
+        ...(totalAvances > 0 ? [
+          { text: [{ text: 'Avances acceptées: ' }, formatDT(totalAvances)], margin: [6, 2, 0, 2], color: '#1a3c34' },
+          { text: [{ text: 'Reste à payer: ', bold: true }, formatDT(resteAPayer)], margin: [0, 2] },
+        ] : []),
       ]},
     ]},
 

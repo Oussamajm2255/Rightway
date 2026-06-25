@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { apiGet, apiPut } from '../lib/api';
+import { apiGet, apiPost, apiPut } from '../lib/api';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
@@ -29,6 +29,14 @@ function LivraisonDetailPage() {
   const [password, setPassword] = useState('');
   const [actionError, setActionError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  // Avances
+  const [showAvanceModal, setShowAvanceModal] = useState(false);
+  const [avanceAmount, setAvanceAmount] = useState('');
+  const [avanceImage, setAvanceImage] = useState(null);
+  const [avancePreview, setAvancePreview] = useState('');
+  const [avanceError, setAvanceError] = useState('');
+  const [refuseAvanceNote, setRefuseAvanceNote] = useState('');
+  const [refusingAvanceId, setRefusingAvanceId] = useState(null);
 
   const fetchLivraison = useCallback(async () => {
     setLoading(true);
@@ -168,6 +176,78 @@ function LivraisonDetailPage() {
     }
   }
 
+  // Avances handlers
+  function handleAvanceFileChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { setAvanceError('Image trop volumineuse (max 5 Mo).'); return; }
+    setAvanceImage(file);
+    const reader = new FileReader();
+    reader.onload = () => setAvancePreview(reader.result);
+    reader.readAsDataURL(file);
+  }
+
+  async function handleDeclarerAvance(e) {
+    e.preventDefault();
+    setAvanceError('');
+    const amount = parseFloat(avanceAmount);
+    if (!amount || amount <= 0) { setAvanceError('Veuillez entrer un montant valide.'); return; }
+    setSubmitting(true);
+    try {
+      const data = await apiPost(`/livraisons/${id}/avances`, {
+        amount,
+        image_base64: avancePreview || null,
+      });
+      setLivraison(prev => ({
+        ...prev,
+        avances: [data.avance, ...(prev.avances || [])],
+      }));
+      setSuccess(data.message);
+      setShowAvanceModal(false);
+      setAvanceAmount('');
+      setAvanceImage(null);
+      setAvancePreview('');
+    } catch (err) {
+      setAvanceError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleAccepterAvance(avanceId) {
+    setSubmitting(true);
+    try {
+      const data = await apiPut(`/livraisons/${id}/avances/${avanceId}/accepter`, {});
+      setLivraison(prev => ({
+        ...prev,
+        avances: prev.avances.map(a => a.id === avanceId ? data.avance : a),
+      }));
+      setSuccess(data.message);
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleRefuserAvance(avanceId) {
+    setSubmitting(true);
+    try {
+      const data = await apiPut(`/livraisons/${id}/avances/${avanceId}/refuser`, { note: refuseAvanceNote });
+      setLivraison(prev => ({
+        ...prev,
+        avances: prev.avances.map(a => a.id === avanceId ? data.avance : a),
+      }));
+      setRefuseAvanceNote('');
+      setRefusingAvanceId(null);
+      setSuccess(data.message);
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
 
   if (error) return <div className="page-container"><div className="error-banner">{error}</div></div>;
   if (!loading && !livraison) return <div className="page-container"><div className="empty-state">Livraison introuvable.</div></div>;
@@ -184,6 +264,10 @@ function LivraisonDetailPage() {
   const ca = computeCA();
   const commission = Number((ca * 0.10).toFixed(3));
   const net_a_reverser = Number((ca - commission).toFixed(3));
+  const totalAvances = (livraison?.avances || [])
+    .filter(a => a.status === 'ACCEPTE')
+    .reduce((sum, a) => sum + Number(a.amount), 0);
+  const resteAPayer = Number((net_a_reverser - totalAvances).toFixed(3));
   const adminConfirmed = livraison?.retour_confirmed_by_admin_at;
   const commercialConfirmed = livraison?.retour_confirmed_by_commercial_at;
 
@@ -368,6 +452,104 @@ function LivraisonDetailPage() {
         </div>
       )}
 
+      {/* Avances section */}
+      {livraison.avances && livraison.avances.length > 0 && (
+        <div className="detail-section">
+          <h2>Avances</h2>
+          <div className="table-container">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Montant</th>
+                  <th>Statut</th>
+                  <th>Preuve</th>
+                  {(isAdmin) && <th style={{ textAlign: 'center' }}>Action</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {livraison.avances.map((av) => {
+                  const isPending = av.status === 'EN_ATTENTE';
+                  const isAccepted = av.status === 'ACCEPTE';
+                  const isRefused = av.status === 'REFUSE';
+                  return (
+                    <tr key={av.id}>
+                      <td style={{ fontSize: '0.85rem' }}>{new Date(av.created_at).toLocaleString('fr-FR')}</td>
+                      <td className="td-price">{formatDT(av.amount)}</td>
+                      <td>
+                        <span className={`badge ${isAccepted ? 'badge-ok' : isRefused ? 'badge-danger' : 'badge-status-pending'}`}>
+                          {isAccepted ? 'Acceptée' : isRefused ? 'Refusée' : 'En attente'}
+                        </span>
+                      </td>
+                      <td>
+                        {av.image_base64 ? (
+                          <img
+                            src={av.image_base64}
+                            alt="Preuve de paiement"
+                            style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 4, cursor: 'pointer' }}
+                            onClick={() => window.open(av.image_base64, '_blank')}
+                          />
+                        ) : (
+                          <span style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>—</span>
+                        )}
+                      </td>
+                      {(isAdmin) && (
+                        <td style={{ textAlign: 'center' }}>
+                          {isPending && refusingAvanceId !== av.id && (
+                            <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'center' }}>
+                              <button className="btn btn-primary btn-sm" onClick={() => handleAccepterAvance(av.id)} disabled={submitting}>
+                                Accepter
+                              </button>
+                              <button className="btn btn-outline-danger btn-sm" onClick={() => { setRefusingAvanceId(av.id); setRefuseAvanceNote(''); }}>
+                                Refuser
+                              </button>
+                            </div>
+                          )}
+                          {isPending && refusingAvanceId === av.id && (
+                            <div style={{ display: 'flex', gap: 'var(--space-1)', alignItems: 'center' }}>
+                              <input
+                                type="text"
+                                className="form-input"
+                                placeholder="Motif (optionnel)"
+                                value={refuseAvanceNote}
+                                onChange={(e) => setRefuseAvanceNote(e.target.value)}
+                                style={{ width: 120, fontSize: '0.8rem', padding: 'var(--space-1) var(--space-2)' }}
+                              />
+                              <button className="btn btn-danger btn-sm" onClick={() => handleRefuserAvance(av.id)} disabled={submitting}>
+                                Confirmer
+                              </button>
+                              <button className="btn btn-ghost btn-sm" onClick={() => setRefusingAvanceId(null)}>Annuler</button>
+                            </div>
+                          )}
+                          {isRefused && av.admin_note && (
+                            <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{av.admin_note}</span>
+                          )}
+                          {isAccepted && (
+                            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>—</span>
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Commercial: En cours → Déclarer une avance */}
+      {isEnCours && isAssignedCommercial && (
+        <div className="detail-section">
+          <button className="btn btn-outline-primary btn-sm" onClick={() => { setShowAvanceModal(true); setAvanceError(''); setAvanceAmount(''); setAvanceImage(null); setAvancePreview(''); }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{flexShrink:0, marginRight:'var(--space-1)'}}>
+              <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+            </svg>
+            Déclarer une avance
+          </button>
+        </div>
+      )}
+
       {/* Bon de Retour view for EN_RETOUR */}
       {isEnRetour && (
         <div className="detail-section">
@@ -428,6 +610,18 @@ function LivraisonDetailPage() {
                   <td colSpan="6" style={{ textAlign: 'right' }}><strong>Net à reverser au dépôt</strong></td>
                   <td className="td-price"><strong>{formatDT(net_a_reverser)}</strong></td>
                 </tr>
+                {totalAvances > 0 && (
+                  <>
+                    <tr>
+                      <td colSpan="6" style={{ textAlign: 'right', color: 'var(--color-primary)' }}>Avances acceptées</td>
+                      <td className="td-price" style={{ color: 'var(--color-primary)' }}>{formatDT(totalAvances)}</td>
+                    </tr>
+                    <tr>
+                      <td colSpan="6" style={{ textAlign: 'right' }}><strong>Reste à payer</strong></td>
+                      <td className="td-price"><strong>{formatDT(resteAPayer)}</strong></td>
+                    </tr>
+                  </>
+                )}
               </tfoot>
             </table>
           </div>
@@ -476,6 +670,12 @@ function LivraisonDetailPage() {
             <div className="detail-card"><h3>CA Total</h3><p className="detail-value">{formatDT(ca)}</p></div>
             <div className="detail-card"><h3>Commission (10%)</h3><p className="detail-value">{formatDT(commission)}</p></div>
             <div className="detail-card"><h3>Net à reverser</h3><p className="detail-value">{formatDT(net_a_reverser)}</p></div>
+            {totalAvances > 0 && (
+              <>
+                <div className="detail-card"><h3>Avances acceptées</h3><p className="detail-value" style={{ color: 'var(--color-primary)' }}>{formatDT(totalAvances)}</p></div>
+                <div className="detail-card"><h3>Reste à payer</h3><p className="detail-value">{formatDT(resteAPayer)}</p></div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -731,6 +931,78 @@ function LivraisonDetailPage() {
               <div className="modal-actions">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowArchive(false)}>Annuler</button>
                 <button type="submit" className="btn btn-danger" disabled={submitting}>{submitting ? '...' : 'Confirmer l\'archivage'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Déclarer une avance modal */}
+      {showAvanceModal && (
+        <div className="modal-overlay" onClick={() => setShowAvanceModal(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
+            <h3 className="modal-title">Déclarer une avance</h3>
+            <div className="modal-summary">
+              <p>Déclarez un montant envoyé à l'administration comme avance sur cette livraison.</p>
+            </div>
+            {avanceError && <div className="login-error">{avanceError}</div>}
+            <form onSubmit={handleDeclarerAvance}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="avance-amount">Montant (DT)</label>
+                <input
+                  id="avance-amount"
+                  type="number"
+                  step="0.001"
+                  min="0.001"
+                  className="form-input"
+                  placeholder="Ex: 150.000"
+                  value={avanceAmount}
+                  onChange={(e) => setAvanceAmount(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Preuve de paiement (image)</label>
+                <div
+                  style={{
+                    border: '2px dashed var(--color-border)',
+                    borderRadius: 8,
+                    padding: avancePreview ? 'var(--space-2)' : 'var(--space-6)',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    background: 'var(--color-bg-secondary)',
+                  }}
+                  onClick={() => document.getElementById('avance-file').click()}
+                >
+                  {avancePreview ? (
+                    <img
+                      src={avancePreview}
+                      alt="Aperçu"
+                      style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 4 }}
+                    />
+                  ) : (
+                    <div style={{ color: 'var(--color-text-muted)' }}>
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ marginBottom: 'var(--space-2)' }}>
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <p style={{ fontSize: '0.85rem' }}>Cliquez pour sélectionner une image</p>
+                      <p style={{ fontSize: '0.75rem' }}>PNG, JPG — Max 5 Mo</p>
+                    </div>
+                  )}
+                </div>
+                <input
+                  id="avance-file"
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleAvanceFileChange}
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowAvanceModal(false)}>Annuler</button>
+                <button type="submit" className="btn btn-primary" disabled={submitting}>
+                  {submitting ? '...' : 'Déclarer l\'avance'}
+                </button>
               </div>
             </form>
           </div>

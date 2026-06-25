@@ -18,6 +18,10 @@ const {
   archiveLivraison,
   demanderAnnulation,
   confirmerAnnulation,
+  declarerAvance,
+  getAvances,
+  accepterAvance,
+  refuserAvance,
 } = require('../controllers/livraisons');
 
 router.use(authenticate);
@@ -33,6 +37,12 @@ router.put('/:id/archive', authorize('SUPER_ADMIN'), archiveLivraison);
 // Annulation flow: commercial requests → admin confirms
 router.put('/:id/demander-annulation', authorize('COMMERCIAL'), demanderAnnulation);
 router.put('/:id/confirmer-annulation', authorize('SUPER_ADMIN', 'ADMIN'), confirmerAnnulation);
+
+// Avances (advance payments during EN_COURS)
+router.post('/:id/avances', authorize('COMMERCIAL'), declarerAvance);
+router.get('/:id/avances', getAvances);
+router.put('/:id/avances/:avanceId/accepter', authorize('SUPER_ADMIN', 'ADMIN'), accepterAvance);
+router.put('/:id/avances/:avanceId/refuser', authorize('SUPER_ADMIN', 'ADMIN'), refuserAvance);
 
 // Sales routes
 router.get('/:id/sales', authorize('COMMERCIAL'), getSales);

@@ -1,4 +1,5 @@
 const livraisonModel = require('../models/livraison');
+const avanceModel = require('../models/livraisonAvance');
 const notificationModel = require('../models/notification');
 const { verifyPassword } = require('../utils/password');
 const pool = require('../db/pool');
@@ -235,9 +236,64 @@ async function confirmerAnnulation(req, res) {
     const result = await livraisonModel.confirmerAnnulation(req.params.id, req.user.id);
     if (result.error) return res.status(400).json({ error: result.error });
 
-    await notificationModel.create(result.livraison.commercial_id, `L''admin ${req.user.full_name} a confirmé l''annulation de la livraison ${result.livraison.reference}.`, result.livraison.id);
+    await notificationModel.create(result.livraison.commercial_id, `L'admin ${req.user.full_name} a confirmé l'annulation de la livraison ${result.livraison.reference}.`, result.livraison.id);
     res.json({ livraison: result.livraison, message: 'Livraison annulée. Stock restauré.' });
   } catch (err) { console.error('confirmerAnnulation error:', err); res.status(500).json({ error: 'Erreur interne du serveur' }); }
 }
 
-module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier, archiveLivraison, demanderAnnulation, confirmerAnnulation };
+// ============================================================
+// AVANCES (advance payment declarations)
+// ============================================================
+
+async function declarerAvance(req, res) {
+  try {
+    const { amount, image_base64 } = req.body;
+    if (!amount || isNaN(amount) || Number(amount) <= 0) return res.status(400).json({ error: 'Veuillez entrer un montant valide.' });
+
+    // Verify livraison is EN_COURS and assigned to this commercial
+    const livraison = await livraisonModel.findById(req.params.id);
+    if (!livraison) return res.status(404).json({ error: 'Livraison introuvable.' });
+    if (livraison.status !== 'EN_COURS') return res.status(400).json({ error: 'Les avances ne peuvent être déclarées que sur une livraison en cours.' });
+    if (livraison.commercial_id !== req.user.id) return res.status(403).json({ error: 'Cette livraison ne vous est pas assignée.' });
+
+    const avance = await avanceModel.create(req.params.id, req.user.id, Number(amount), image_base64 || null);
+
+    await notificationModel.create(livraison.admin_id, `Le commercial ${req.user.full_name} a déclaré une avance de ${Number(amount).toFixed(3)} DT pour la livraison ${livraison.reference}.`, livraison.id);
+
+    res.status(201).json({ avance, message: 'Avance déclarée avec succès.' });
+  } catch (err) { console.error('declarerAvance error:', err); res.status(500).json({ error: 'Erreur interne du serveur' }); }
+}
+
+async function getAvances(req, res) {
+  try {
+    const avances = await avanceModel.findByLivraison(req.params.id);
+    res.json({ avances });
+  } catch (err) { console.error('getAvances error:', err); res.status(500).json({ error: 'Erreur interne du serveur' }); }
+}
+
+async function accepterAvance(req, res) {
+  try {
+    const avance = await avanceModel.accepter(req.params.avanceId, req.user.id);
+    if (!avance) return res.status(404).json({ error: 'Avance introuvable ou déjà traitée.' });
+
+    const livraison = await livraisonModel.findById(req.params.id);
+    await notificationModel.create(avance.commercial_id, `L'admin ${req.user.full_name} a accepté votre avance de ${Number(avance.amount).toFixed(3)} DT pour la livraison ${livraison.reference}.`, livraison.id);
+
+    res.json({ avance, message: 'Avance acceptée.' });
+  } catch (err) { console.error('accepterAvance error:', err); res.status(500).json({ error: 'Erreur interne du serveur' }); }
+}
+
+async function refuserAvance(req, res) {
+  try {
+    const { note } = req.body;
+    const avance = await avanceModel.refuser(req.params.avanceId, req.user.id, note || null);
+    if (!avance) return res.status(404).json({ error: 'Avance introuvable ou déjà traitée.' });
+
+    const livraison = await livraisonModel.findById(req.params.id);
+    await notificationModel.create(avance.commercial_id, `L'admin ${req.user.full_name} a refusé votre avance de ${Number(avance.amount).toFixed(3)} DT pour la livraison ${livraison.reference}.`, livraison.id);
+
+    res.json({ avance, message: 'Avance refusée.' });
+  } catch (err) { console.error('refuserAvance error:', err); res.status(500).json({ error: 'Erreur interne du serveur' }); }
+}
+
+module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier, archiveLivraison, demanderAnnulation, confirmerAnnulation, declarerAvance, getAvances, accepterAvance, refuserAvance };

@@ -90,6 +90,20 @@ async function findById(id) {
   );
   livraison.items = items;
 
+  // Load avances
+  const { rows: avances } = await pool.query(
+    `SELECT la.*,
+            c.full_name AS commercial_name,
+            a.full_name AS admin_name
+     FROM livraison_avances la
+     LEFT JOIN users c ON la.commercial_id = c.id
+     LEFT JOIN users a ON la.admin_id = a.id
+     WHERE la.livraison_id = $1
+     ORDER BY la.created_at DESC`,
+    [id]
+  );
+  livraison.avances = avances;
+
   return livraison;
 }
 

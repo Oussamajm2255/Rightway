@@ -117,6 +117,23 @@ CREATE TABLE IF NOT EXISTS stock_movements (
 );
 
 -- ============================================================
+-- LIVRAISON AVANCES (advance payments during delivery)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS livraison_avances (
+  id SERIAL PRIMARY KEY,
+  livraison_id UUID REFERENCES livraisons(id) ON DELETE CASCADE,
+  amount NUMERIC(10,3) NOT NULL CHECK (amount > 0),
+  image_base64 TEXT,
+  status VARCHAR(20) NOT NULL DEFAULT 'EN_ATTENTE'
+    CHECK (status IN ('EN_ATTENTE', 'ACCEPTE', 'REFUSE')),
+  commercial_id UUID REFERENCES users(id),
+  admin_id UUID REFERENCES users(id),
+  admin_note TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  confirmed_at TIMESTAMPTZ
+);
+
+-- ============================================================
 -- NOTIFICATIONS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS notifications (
@@ -141,5 +158,7 @@ CREATE INDEX IF NOT EXISTS idx_livraisons_admin ON livraisons(admin_id);
 CREATE INDEX IF NOT EXISTS idx_livraison_items_livraison ON livraison_items(livraison_id);
 CREATE INDEX IF NOT EXISTS idx_livraison_sales_log_livraison ON livraison_sales_log(livraison_id);
 CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements(product_id);
+CREATE INDEX IF NOT EXISTS idx_livraison_avances_livraison ON livraison_avances(livraison_id);
+CREATE INDEX IF NOT EXISTS idx_livraison_avances_status ON livraison_avances(livraison_id, status);
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications(user_id, is_read) WHERE is_read = false;
