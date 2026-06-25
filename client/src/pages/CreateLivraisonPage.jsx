@@ -293,7 +293,8 @@ function CreateLivraisonPage() {
             <table className="preview-table">
               <thead>
                 <tr>
-                  <th>Code</th>
+                  <th>Code-barres</th>
+                  <th>Catégorie</th>
                   <th>Produit</th>
                   <th>PU TTC</th>
                   <th>Qté</th>
@@ -303,7 +304,8 @@ function CreateLivraisonPage() {
               <tbody>
                 {getSelectedProducts().map((p) => (
                   <tr key={p.id}>
-                    <td className="td-code">{p.id}</td>
+                    <td className="td-code">{p.barcode || p.id}</td>
+                    <td>{p.category || '—'}</td>
                     <td>{p.name}</td>
                     <td className="td-price">{formatDT(p.selling_price_ttc)}</td>
                     <td className="td-qty">{selectedItems[p.id]}</td>
@@ -313,7 +315,7 @@ function CreateLivraisonPage() {
               </tbody>
               <tfoot>
                 <tr>
-                  <td colSpan="4" style={{ textAlign: 'right', fontWeight: '600' }}>Total</td>
+                  <td colSpan="5" style={{ textAlign: 'right', fontWeight: '600' }}>Total</td>
                   <td className="td-price" style={{ fontWeight: '700' }}>{formatDT(getTotal())}</td>
                 </tr>
               </tfoot>
