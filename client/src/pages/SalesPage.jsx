@@ -169,6 +169,16 @@ function SalesPage() {
     }
   }
 
+  function groupByCategory(products) {
+    const groups = {};
+    for (const p of products) {
+      const cat = p.category || 'Sans catégorie';
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(p);
+    }
+    return Object.entries(groups);
+  }
+
   function handleTerminer() {
     navigate(`/livraisons/${id}?action=terminer`);
   }
@@ -216,67 +226,76 @@ function SalesPage() {
       {error && <div className="error-banner" style={{ marginTop: 'var(--space-2)' }}>{error}</div>}
 
       <div className="sales-cards">
-        {items.map((item) => {
-          const sold = getPendingQty(item.product_id);
-          const remaining = item.qte_chargee - sold;
-          const soldValue = sold * Number(item.prix_ttc);
-          const hasPending = pendingChanges[item.product_id] !== undefined;
-
-          return (
-            <div key={item.product_id} className={`sale-card ${hasPending ? 'pending' : ''}`}>
-              <div className="sale-card-header">
-                <div className="sale-product-name">{item.product_name}</div>
-                <div className="sale-product-code">{item.barcode} · {formatDT(item.prix_ttc)}</div>
-              </div>
-
-              <div className="sale-stats">
-                <div className="sale-stat">
-                  <span className="stat-label">Chargé</span>
-                  <span className="stat-value">{item.qte_chargee}</span>
-                </div>
-                <div className="sale-stat">
-                  <span className="stat-label">Vendu</span>
-                  <span className="stat-value">{sold}</span>
-                </div>
-                <div className="sale-stat">
-                  <span className="stat-label">Restant</span>
-                  <span className={`stat-value ${remaining <= 0 ? 'zero' : ''}`}>{remaining}</span>
-                </div>
-                <div className="sale-stat">
-                  <span className="stat-label">Montant</span>
-                  <span className="stat-value montant">{formatDT(soldValue)}</span>
-                </div>
-              </div>
-
-              <div className="sale-actions">
-                <button
-                  className="qty-btn large"
-                  onClick={() => handleQtyChange(item.product_id, -1)}
-                  disabled={sold <= 0}
-                  aria-label="Diminuer la quantité"
-                >−</button>
-
-                <div className="sale-qty-display">{sold}</div>
-
-                <button
-                  className="qty-btn large"
-                  onClick={() => handleQtyChange(item.product_id, 1)}
-                  disabled={sold >= item.qte_chargee}
-                  aria-label="Augmenter la quantité"
-                >+</button>
-
-                {hasPending && (
-                  <button
-                    className="btn-valider"
-                    onClick={() => handleValider(item.product_id)}
-                  >
-                    Valider
-                  </button>
-                )}
-              </div>
+        {groupByCategory(items).map(([category, catItems]) => (
+          <div key={category} className="category-section">
+            <div className="category-header">
+              <span className="category-header-icon">📦</span>
+              <span className="category-header-name">{category}</span>
+              <span className="category-header-count">{catItems.length} produit{catItems.length > 1 ? 's' : ''}</span>
             </div>
-          );
-        })}
+            {catItems.map((item) => {
+              const sold = getPendingQty(item.product_id);
+              const remaining = item.qte_chargee - sold;
+              const soldValue = sold * Number(item.prix_ttc);
+              const hasPending = pendingChanges[item.product_id] !== undefined;
+
+              return (
+                <div key={item.product_id} className={`sale-card ${hasPending ? 'pending' : ''}`}>
+                  <div className="sale-card-header">
+                    <div className="sale-product-name">{item.product_name}</div>
+                    <div className="sale-product-code">{item.barcode} · {formatDT(item.prix_ttc)}</div>
+                  </div>
+
+                  <div className="sale-stats">
+                    <div className="sale-stat">
+                      <span className="stat-label">Chargé</span>
+                      <span className="stat-value">{item.qte_chargee}</span>
+                    </div>
+                    <div className="sale-stat">
+                      <span className="stat-label">Vendu</span>
+                      <span className="stat-value">{sold}</span>
+                    </div>
+                    <div className="sale-stat">
+                      <span className="stat-label">Restant</span>
+                      <span className={`stat-value ${remaining <= 0 ? 'zero' : ''}`}>{remaining}</span>
+                    </div>
+                    <div className="sale-stat">
+                      <span className="stat-label">Montant</span>
+                      <span className="stat-value montant">{formatDT(soldValue)}</span>
+                    </div>
+                  </div>
+
+                  <div className="sale-actions">
+                    <button
+                      className="qty-btn large"
+                      onClick={() => handleQtyChange(item.product_id, -1)}
+                      disabled={sold <= 0}
+                      aria-label="Diminuer la quantité"
+                    >−</button>
+
+                    <div className="sale-qty-display">{sold}</div>
+
+                    <button
+                      className="qty-btn large"
+                      onClick={() => handleQtyChange(item.product_id, 1)}
+                      disabled={sold >= item.qte_chargee}
+                      aria-label="Augmenter la quantité"
+                    >+</button>
+
+                    {hasPending && (
+                      <button
+                        className="btn-valider"
+                        onClick={() => handleValider(item.product_id)}
+                      >
+                        Valider
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ))}
       </div>
 
       <div className="terminer-section">

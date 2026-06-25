@@ -58,6 +58,16 @@ function CreateLivraisonPage() {
     setSelectedItems((prev) => ({ ...prev, [productId]: clamped }));
   }
 
+  function groupByCategory(products) {
+    const groups = {};
+    for (const p of products) {
+      const cat = p.category || 'Sans catégorie';
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(p);
+    }
+    return Object.entries(groups);
+  }
+
   function getSelectedProducts() {
     return stock.filter((s) => selectedItems[s.id] && selectedItems[s.id] > 0);
   }
@@ -199,44 +209,53 @@ function CreateLivraisonPage() {
           <p className="step-hint">Pour {selectedCommercial.full_name}. Seuls les produits avec stock disponible sont affichés.</p>
 
           <div className="products-grid">
-            {stock.map((product) => (
-              <div key={product.id} className={`product-select-card ${selectedItems[product.id] > 0 ? 'selected' : ''}`}>
-                <div className="ps-info">
-                  <div className="ps-name">{product.name}</div>
-                  <div className="ps-details">
-                    <span className="td-code">{product.id}</span>
-                    <span>{formatDT(product.selling_price_ttc)}</span>
-                    <span className={`ps-stock ${product.quantity < 21 ? 'low' : ''}`}>
-                      Stock: {product.quantity}
-                    </span>
+            {groupByCategory(stock).map(([category, products]) => (
+              <div key={category} className="category-section">
+                <div className="category-header">
+                  <span className="category-header-icon">📦</span>
+                  <span className="category-header-name">{category}</span>
+                  <span className="category-header-count">{products.length} produit{products.length > 1 ? 's' : ''}</span>
+                </div>
+                {products.map((product) => (
+                  <div key={product.id} className={`product-select-card ${selectedItems[product.id] > 0 ? 'selected' : ''}`}>
+                    <div className="ps-info">
+                      <div className="ps-name">{product.name}</div>
+                      <div className="ps-details">
+                        <span className="td-code">{product.id}</span>
+                        <span>{formatDT(product.selling_price_ttc)}</span>
+                        <span className={`ps-stock ${product.quantity < 21 ? 'low' : ''}`}>
+                          Stock: {product.quantity}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="ps-qty">
+                      <button
+                        className="qty-btn"
+                        onClick={() => handleQtyChange(product.id, (selectedItems[product.id] || 0) - 1)}
+                        disabled={!selectedItems[product.id]}
+                      >−</button>
+                      <input
+                        type="number"
+                        className="qty-input"
+                        value={selectedItems[product.id] || ''}
+                        onChange={(e) => handleQtyChange(product.id, e.target.value)}
+                        placeholder="0"
+                        min="0"
+                        max={product.quantity}
+                      />
+                      <button
+                        className="qty-btn"
+                        onClick={() => handleQtyChange(product.id, (selectedItems[product.id] || 0) + 1)}
+                        disabled={(selectedItems[product.id] || 0) >= product.quantity}
+                      >+</button>
+                    </div>
+                    <div className="ps-total">
+                      {selectedItems[product.id] > 0 && (
+                        <span>{formatDT(selectedItems[product.id] * Number(product.selling_price_ttc))}</span>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <div className="ps-qty">
-                  <button
-                    className="qty-btn"
-                    onClick={() => handleQtyChange(product.id, (selectedItems[product.id] || 0) - 1)}
-                    disabled={!selectedItems[product.id]}
-                  >−</button>
-                  <input
-                    type="number"
-                    className="qty-input"
-                    value={selectedItems[product.id] || ''}
-                    onChange={(e) => handleQtyChange(product.id, e.target.value)}
-                    placeholder="0"
-                    min="0"
-                    max={product.quantity}
-                  />
-                  <button
-                    className="qty-btn"
-                    onClick={() => handleQtyChange(product.id, (selectedItems[product.id] || 0) + 1)}
-                    disabled={(selectedItems[product.id] || 0) >= product.quantity}
-                  >+</button>
-                </div>
-                <div className="ps-total">
-                  {selectedItems[product.id] > 0 && (
-                    <span>{formatDT(selectedItems[product.id] * Number(product.selling_price_ttc))}</span>
-                  )}
-                </div>
+                ))}
               </div>
             ))}
           </div>
