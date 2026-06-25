@@ -3,6 +3,8 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { apiGet, apiPut } from '../lib/api';
 
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
+
 function formatDT(value) {
   if (value === null || value === undefined) return '—';
   return Number(value).toFixed(3) + ' DT';
@@ -107,6 +109,11 @@ function LivraisonDetailPage() {
     }
   }
 
+  function handlePrintBonSortie() {
+    const token = localStorage.getItem('rightway_token');
+    window.open(`${API_BASE}/livraisons/${id}/bon-sortie/pdf?token=${encodeURIComponent(token)}`, '_blank');
+  }
+
   async function handleArchive(e) {
     e.preventDefault();
     setActionError('');
@@ -188,6 +195,20 @@ function LivraisonDetailPage() {
         </svg>
         Retour aux livraisons
       </button>
+
+      {!loading && isAdmin && livraison?.confirmed_by_commercial_at && (
+        <button
+          className="btn btn-outline-primary btn-sm"
+          onClick={handlePrintBonSortie}
+          style={{ marginBottom: 'var(--space-4)', marginLeft: 'var(--space-2)' }}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0, marginRight:'var(--space-1)'}}>
+            <path d="M4 1.5h6a1 1 0 011 1V5h1a1 1 0 011 1v4a1 1 0 01-1 1h-1v2.5H3V11H2a1 1 0 01-1-1V6a1 1 0 011-1h1V2.5a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M5 5.5h4M5 8h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+          </svg>
+          Bon de Sortie
+        </button>
+      )}
 
       {!loading && user?.role === 'SUPER_ADMIN' && (
         <button
