@@ -3,6 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { apiGet, apiPost } from '../lib/api';
 import './CreateLivraisonPage.css';
 
+function IconCarton() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M2 6l8-4 8 4-8 4-8-4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M2 6v8l8 4M18 6v8l-8 4" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M10 10v8" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M6 8l4-2 4 2" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function formatDT(value) {
   if (value === null || value === undefined) return '—';
   return Number(value).toFixed(3) + ' DT';
@@ -212,7 +223,7 @@ function CreateLivraisonPage() {
             {groupByCategory(stock).map(([category, products]) => (
               <div key={category} className="category-section">
                 <div className="category-header">
-                  <span className="category-header-icon">📦</span>
+                  <span className="category-header-icon"><IconCarton /></span>
                   <span className="category-header-name">{category}</span>
                   <span className="category-header-count">{products.length} produit{products.length > 1 ? 's' : ''}</span>
                 </div>
