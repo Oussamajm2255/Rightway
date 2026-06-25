@@ -117,19 +117,19 @@ function generateBonDeSortie(livraison) {
       // Items table
       { text: 'Produits chargés', style: 'sectionTitle' },
       buildTable(
-        ['Code', 'Code-barres', 'Produit', 'Catégorie', 'Qté', 'PU TTC', 'Total'],
+        ['Code', 'Code-barres', 'Catégorie', 'Produit', 'Qté', 'PU TTC', 'Total'],
         livraison.items.map((item) => [
           { text: item.product_id, style: 'tableCell' },
           { text: item.barcode, style: 'tableCell' },
-          { text: item.product_name, style: 'tableCell' },
           { text: item.category || '', style: 'tableCell' },
+          { text: item.product_name, style: 'tableCell' },
           { text: String(item.qte_chargee), style: 'tableCellRight' },
           { text: formatDT(item.prix_ttc), style: 'tableCellRight' },
           { text: formatDT(item.qte_chargee * Number(item.prix_ttc)), style: 'tableCellRight' },
         ]).concat([
           [{ text: '', colSpan: 4, style: 'tableFooter' }, {}, {}, {}, { text: 'Total', style: 'tableFooter', alignment: 'right' }, { text: '', style: 'tableFooter' }, { text: formatDT(total), style: 'tableFooter', alignment: 'right' }],
         ]),
-        ['auto', 'auto', '*', 'auto', 'auto', 'auto', 'auto']
+        ['auto', 'auto', 'auto', '*', 'auto', 'auto', 'auto']
       ),
 
       { text: '', margin: [0, 12] },
@@ -284,16 +284,16 @@ function generateDossierComplet(livraison, salesLog) {
     // Bon de Sortie items
     { text: '1. Bon de Sortie — Produits chargés', style: 'sectionTitle' },
     buildTable(
-      ['Code', 'Produit', 'Catégorie', 'Qté Chargée', 'PU TTC', 'Total'],
+      ['Code', 'Catégorie', 'Produit', 'Qté Chargée', 'PU TTC', 'Total'],
       livraison.items.map((item) => [
         { text: item.product_id, style: 'tableCell' },
-        { text: item.product_name, style: 'tableCell' },
         { text: item.category || '', style: 'tableCell' },
+        { text: item.product_name, style: 'tableCell' },
         { text: String(item.qte_chargee), style: 'tableCellRight' },
         { text: formatDT(item.prix_ttc), style: 'tableCellRight' },
         { text: formatDT(item.qte_chargee * Number(item.prix_ttc)), style: 'tableCellRight' },
       ]),
-      ['auto', '*', 'auto', 'auto', 'auto', 'auto']
+      ['auto', 'auto', '*', 'auto', 'auto', 'auto']
     ),
 
     // Sales log
