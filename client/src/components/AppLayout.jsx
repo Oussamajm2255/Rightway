@@ -238,6 +238,9 @@ function AppLayout({ children }) {
             <IconBell />
             <span className={`notif-dot ${unreadCount > 0 ? '' : 'notif-dot-hidden'}`} aria-hidden="true" />
           </button>
+          <button className="topbar-logout-btn" onClick={logout} aria-label="Déconnexion" title="Déconnexion">
+            <IconLogout />
+          </button>
           <div className="topbar-avatar">
             {getInitials(user?.full_name)}
           </div>

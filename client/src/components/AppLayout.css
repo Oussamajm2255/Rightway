@@ -115,6 +115,31 @@
   display: none;
 }
 
+/* Mobile logout button in topbar (visible only on mobile; sidebar has logout on desktop) */
+.topbar-logout-btn {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.topbar-logout-btn:hover {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.topbar-logout-btn svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
 @keyframes pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.3); }
@@ -605,6 +630,10 @@
     width: calc(100% - var(--space-8));
     right: var(--space-4);
     left: var(--space-4);
+  }
+
+  .topbar-logout-btn {
+    display: flex;
   }
 }
 
