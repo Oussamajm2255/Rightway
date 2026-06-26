@@ -83,7 +83,7 @@ async function adjustStock(product_id, quantity_change, reason, created_by, extr
   }
 }
 
-async function getStockMovements({ limit = 100, product_id, type, movement_date, offset = 0 } = {}) {
+async function getStockMovements({ limit = 100, product_id, type, movement_date, date_from, date_to, operation, offset = 0 } = {}) {
   const conditions = [];
   const params = [];
   let idx = 1;
@@ -99,6 +99,19 @@ async function getStockMovements({ limit = 100, product_id, type, movement_date,
   if (movement_date) {
     conditions.push(`sm.movement_date = $${idx++}`);
     params.push(movement_date);
+  }
+  if (date_from) {
+    conditions.push(`COALESCE(sm.movement_date, sm.created_at::date) >= $${idx++}`);
+    params.push(date_from);
+  }
+  if (date_to) {
+    conditions.push(`COALESCE(sm.movement_date, sm.created_at::date) <= $${idx++}`);
+    params.push(date_to);
+  }
+  if (operation === 'add') {
+    conditions.push(`sm.quantity > 0`);
+  } else if (operation === 'remove') {
+    conditions.push(`sm.quantity < 0`);
   }
 
   const where = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';

@@ -21,6 +21,25 @@ function IconMinus() {
   );
 }
 
+function IconBox() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M2 6l8-4 8 4-8 4-8-4z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M2 6v8l8 4M18 6v8l-8 4" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M10 10v8" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+function IconJournal() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="2" width="14" height="16" rx="2" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M7 6h6M7 10h6M7 14h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function formatDT(value) {
   if (value === null || value === undefined) return '—';
   return Number(value).toFixed(3) + ' DT';
@@ -45,10 +64,15 @@ function StockPage() {
   const [adjustError, setAdjustError] = useState('');
   const [adjusting, setAdjusting] = useState(false);
 
-  // Stock history
-  const [showHistory, setShowHistory] = useState(false);
+  // Tab navigation
+  const [activeTab, setActiveTab] = useState('stock');
+
+  // Journal des ajustements
   const [movements, setMovements] = useState([]);
   const [movementsLoading, setMovementsLoading] = useState(false);
+  const [journalDateFrom, setJournalDateFrom] = useState('');
+  const [journalDateTo, setJournalDateTo] = useState('');
+  const [journalOperation, setJournalOperation] = useState('');
 
   const fetchStock = useCallback(async () => {
     setLoading(true);
@@ -74,10 +98,14 @@ function StockPage() {
 
   useEffect(() => { fetchStock(); }, [fetchStock]);
 
-  async function fetchMovements() {
+  async function fetchMovements(filters = {}) {
     setMovementsLoading(true);
     try {
-      const data = await apiGet('/stock/movements');
+      const params = new URLSearchParams();
+      if (filters.dateFrom) params.append('date_from', filters.dateFrom);
+      if (filters.dateTo) params.append('date_to', filters.dateTo);
+      if (filters.operation) params.append('operation', filters.operation);
+      const data = await apiGet(`/stock/movements?${params.toString()}`);
       setMovements(data.movements);
     } catch (err) {
       console.error('fetchMovements error:', err);
@@ -86,11 +114,11 @@ function StockPage() {
     }
   }
 
-  function handleToggleHistory() {
-    if (!showHistory) {
-      fetchMovements();
+  function switchTab(tab) {
+    setActiveTab(tab);
+    if (tab === 'journal') {
+      fetchMovements({ dateFrom: journalDateFrom, dateTo: journalDateTo, operation: journalOperation });
     }
-    setShowHistory(!showHistory);
   }
 
   function handleAdjustClick(item) {
@@ -160,6 +188,29 @@ function StockPage() {
           <p className="page-subtitle">Gérez et surveillez les niveaux de stock</p>
         </div>
       </div>
+
+      {/* Tab bar */}
+      <nav className="tab-bar">
+        <button
+          className={`tab-btn ${activeTab === 'stock' ? 'tab-btn-active' : ''}`}
+          onClick={() => switchTab('stock')}
+        >
+          <IconBox />
+          <span>Stock</span>
+        </button>
+        {user?.role === 'SUPER_ADMIN' && (
+          <button
+            className={`tab-btn ${activeTab === 'journal' ? 'tab-btn-active' : ''}`}
+            onClick={() => switchTab('journal')}
+          >
+            <IconJournal />
+            <span>Journal des ajustements</span>
+          </button>
+        )}
+      </nav>
+
+      {activeTab === 'stock' && (
+        <>
 
       {successMsg && <div className="success-banner">{successMsg}</div>}
 
@@ -384,67 +435,114 @@ function StockPage() {
         </div>
       )}
 
-      {/* Journal des ajustements — Super Admin only */}
-      {user?.role === 'SUPER_ADMIN' && (
-        <section className="stock-history-section">
-          <button
-            className="btn btn-outline history-toggle-btn"
-            onClick={handleToggleHistory}
-          >
-            {showHistory ? 'Masquer le journal' : '📋 Journal des ajustements'}
-          </button>
+        </>
+      )}
 
-          {showHistory && (
-            <div className="table-container" style={{ marginTop: 'var(--space-4)' }}>
-              {movementsLoading ? (
-                <div className="loading-state">Chargement du journal...</div>
-              ) : movements.length === 0 ? (
-                <div className="empty-state"><p>Aucun ajustement manuel enregistré.</p></div>
-              ) : (
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Produit</th>
-                      <th>Catégorie</th>
-                      <th>Opération</th>
-                      <th>Qté</th>
-                      <th>N° Facture</th>
-                      <th>Société</th>
-                      <th>Motif</th>
-                      <th>Par</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {movements.map((m) => (
-                      <tr key={m.id}>
-                        <td className="td-date">
-                          {m.movement_date
-                            ? new Date(m.movement_date).toLocaleDateString('fr-FR')
-                            : new Date(m.created_at).toLocaleDateString('fr-FR')}
-                        </td>
-                        <td className="td-name">{m.product_name}</td>
-                        <td>{m.product_category || '—'}</td>
-                        <td>
-                          <span className={`movement-badge ${m.quantity > 0 ? 'movement-add' : 'movement-remove'}`}>
-                            {m.quantity > 0 ? 'Ajout' : 'Retrait'}
-                          </span>
-                        </td>
-                        <td className={`td-qty ${m.quantity < 0 ? 'qty-low' : ''}`}>
-                          {m.quantity > 0 ? '+' : ''}{m.quantity}
-                        </td>
-                        <td>{m.invoice_number || '—'}</td>
-                        <td>{m.company_name || '—'}</td>
-                        <td className="movement-reason">{m.reason || '—'}</td>
-                        <td>{m.created_by_name || '—'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+      {/* Journal des ajustements — Super Admin only */}
+      {activeTab === 'journal' && user?.role === 'SUPER_ADMIN' && (
+        <>
+          <div className="journal-filters">
+            <div className="journal-filter-group">
+              <label>Du</label>
+              <input
+                type="date"
+                className="form-input"
+                value={journalDateFrom}
+                onChange={(e) => setJournalDateFrom(e.target.value)}
+              />
+            </div>
+            <div className="journal-filter-group">
+              <label>Au</label>
+              <input
+                type="date"
+                className="form-input"
+                value={journalDateTo}
+                onChange={(e) => setJournalDateTo(e.target.value)}
+              />
+            </div>
+            <div className="journal-filter-group">
+              <label>Opération</label>
+              <select
+                className="form-input"
+                value={journalOperation}
+                onChange={(e) => setJournalOperation(e.target.value)}
+              >
+                <option value="">Toutes</option>
+                <option value="add">Ajouts</option>
+                <option value="remove">Retraits</option>
+              </select>
+            </div>
+            <button
+              className="btn btn-sm btn-primary"
+              onClick={() => fetchMovements({ dateFrom: journalDateFrom, dateTo: journalDateTo, operation: journalOperation })}
+            >
+              Appliquer
+            </button>
+          </div>
+
+          {movements.length > 0 && (
+            <div className="journal-summary">
+              <span className="journal-summary-item journal-summary-add">
+                +{movements.filter((m) => m.quantity > 0).reduce((s, m) => s + m.quantity, 0)} unités ajoutées
+              </span>
+              <span className="journal-summary-item journal-summary-remove">
+                −{Math.abs(movements.filter((m) => m.quantity < 0).reduce((s, m) => s + m.quantity, 0))} unités retirées
+              </span>
+              <span className={`journal-summary-item ${movements.reduce((s, m) => s + m.quantity, 0) >= 0 ? 'journal-summary-add' : 'journal-summary-remove'}`}>
+                Net : {movements.reduce((s, m) => s + m.quantity, 0) > 0 ? '+' : ''}{movements.reduce((s, m) => s + m.quantity, 0)} unités
+              </span>
             </div>
           )}
-        </section>
+
+          <div className="table-container">
+            {movementsLoading ? (
+              <div className="loading-state">Chargement du journal...</div>
+            ) : movements.length === 0 ? (
+              <div className="empty-state"><p>Aucun ajustement manuel enregistré.</p></div>
+            ) : (
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Produit</th>
+                    <th>Catégorie</th>
+                    <th>Opération</th>
+                    <th>Qté</th>
+                    <th>N° Facture</th>
+                    <th>Société</th>
+                    <th>Motif</th>
+                    <th>Par</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {movements.map((m) => (
+                    <tr key={m.id}>
+                      <td className="td-date">
+                        {m.movement_date
+                          ? new Date(m.movement_date).toLocaleDateString('fr-FR')
+                          : new Date(m.created_at).toLocaleDateString('fr-FR')}
+                      </td>
+                      <td className="td-name">{m.product_name}</td>
+                      <td>{m.product_category || '—'}</td>
+                      <td>
+                        <span className={`movement-badge ${m.quantity > 0 ? 'movement-add' : 'movement-remove'}`}>
+                          {m.quantity > 0 ? 'Ajout' : 'Retrait'}
+                        </span>
+                      </td>
+                      <td className={`td-qty ${m.quantity < 0 ? 'qty-low' : ''}`}>
+                        {m.quantity > 0 ? '+' : ''}{m.quantity}
+                      </td>
+                      <td>{m.invoice_number || '—'}</td>
+                      <td>{m.company_name || '—'}</td>
+                      <td className="movement-reason">{m.reason || '—'}</td>
+                      <td>{m.created_by_name || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

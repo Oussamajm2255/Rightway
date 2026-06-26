@@ -112,15 +112,17 @@ async function adjustStock(req, res) {
  * GET /api/stock/movements
  * Returns ONLY manual adjustments by default (type=AJUSTEMENT).
  * Delivery movements (SORTIE/RETOUR) are tracked per-livraison.
- * Query: ?product_id=XX&type=AJUSTEMENT&movement_date=2026-01-01&limit=100&offset=0
+ * Query: ?product_id=XX&date_from=2026-01-01&date_to=2026-06-30&operation=add&limit=100&offset=0
  */
 async function listMovements(req, res) {
   try {
-    const { product_id, type, movement_date, limit, offset } = req.query;
+    const { product_id, date_from, date_to, operation, limit, offset } = req.query;
     const movements = await stockModel.getStockMovements({
       product_id: product_id || undefined,
-      type: type || 'AJUSTEMENT',
-      movement_date: movement_date || undefined,
+      type: 'AJUSTEMENT',
+      date_from: date_from || undefined,
+      date_to: date_to || undefined,
+      operation: operation || undefined,
       limit: parseInt(limit, 10) || 100,
       offset: parseInt(offset, 10) || 0,
     });
