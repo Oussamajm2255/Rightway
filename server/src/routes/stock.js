@@ -12,7 +12,7 @@ router.get('/', authorize('SUPER_ADMIN', 'ADMIN'), listStock);
 // GET /api/stock/alerts (Admin + Super Admin)
 router.get('/alerts', authorize('SUPER_ADMIN', 'ADMIN'), getAlerts);
 
-// PUT /api/stock/adjust (Admin + Super Admin)
-router.put('/adjust', authorize('SUPER_ADMIN', 'ADMIN'), adjustStock);
+// PUT /api/stock/adjust (Super Admin only)
+router.put('/adjust', authorize('SUPER_ADMIN'), adjustStock);
 
 module.exports = router;

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiGet, apiPut } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 import './StockPage.css';
 
 function formatDT(value) {
@@ -8,6 +9,7 @@ function formatDT(value) {
 }
 
 function StockPage() {
+  const { user } = useAuth();
   const [stock, setStock] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -187,12 +189,14 @@ function StockPage() {
                       )}
                     </td>
                     <td>
-                      <button
-                        className="btn btn-sm btn-outline"
-                        onClick={() => handleAdjustClick(item)}
-                      >
-                        Ajuster
-                      </button>
+                      {user?.role === 'SUPER_ADMIN' && (
+                        <button
+                          className="btn btn-sm btn-outline"
+                          onClick={() => handleAdjustClick(item)}
+                        >
+                          Ajuster
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );
