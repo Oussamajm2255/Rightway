@@ -191,11 +191,12 @@ function generateBonDeRetour(livraison) {
 
       { text: 'Détail du retour', style: 'sectionTitle' },
       buildTable(
-        ['Code', 'Article', 'Qté Sortie', 'Qté Vendue', 'Qté Retour', 'PU TTC', 'Montant Vendu'],
+        ['Code', 'Catégorie', 'Article', 'Qté Sortie', 'Qté Vendue', 'Qté Retour', 'PU TTC', 'Montant Vendu'],
         livraison.items.map((item) => {
           const retour = item.qte_chargee - item.qte_vendue;
           return [
             { text: item.product_id, style: 'tableCell' },
+            { text: item.category || '', style: 'tableCell' },
             { text: item.product_name, style: 'tableCell' },
             { text: String(item.qte_chargee), style: 'tableCellRight' },
             { text: String(item.qte_vendue), style: 'tableCellRight' },
@@ -204,7 +205,7 @@ function generateBonDeRetour(livraison) {
             { text: formatDT(item.qte_vendue * Number(item.prix_ttc)), style: 'tableCellRight' },
           ];
         }),
-        ['auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto']
+        ['auto', 'auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto']
       ),
 
       { text: '', margin: [0, 6] },
@@ -314,11 +315,12 @@ function generateDossierComplet(livraison, salesLog) {
     // Bon de Retour
     { text: '3. Bon de Retour', style: 'sectionTitle' },
     buildTable(
-      ['Code', 'Article', 'Qté Sortie', 'Qté Vendue', 'Qté Retour', 'Montant Vendu'],
+      ['Code', 'Catégorie', 'Article', 'Qté Sortie', 'Qté Vendue', 'Qté Retour', 'Montant Vendu'],
       livraison.items.map((item) => {
         const retour = item.qte_chargee - item.qte_vendue;
         return [
           { text: item.product_id, style: 'tableCell' },
+          { text: item.category || '', style: 'tableCell' },
           { text: item.product_name, style: 'tableCell' },
           { text: String(item.qte_chargee), style: 'tableCellRight' },
           { text: String(item.qte_vendue), style: 'tableCellRight' },
@@ -326,7 +328,7 @@ function generateDossierComplet(livraison, salesLog) {
           { text: formatDT(item.qte_vendue * Number(item.prix_ttc)), style: 'tableCellRight' },
         ];
       }),
-      ['auto', '*', 'auto', 'auto', 'auto', 'auto']
+      ['auto', 'auto', '*', 'auto', 'auto', 'auto', 'auto']
     ),
 
     { text: '', margin: [0, 8] },

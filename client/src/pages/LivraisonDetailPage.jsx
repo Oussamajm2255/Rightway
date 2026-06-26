@@ -573,6 +573,7 @@ function LivraisonDetailPage() {
               <thead>
                 <tr>
                   <th>Code</th>
+                  <th>Catégorie</th>
                   <th>Article</th>
                   <th style={{ textAlign: 'center' }}>Qté Sortie</th>
                   <th style={{ textAlign: 'center' }}>Qté Vendue</th>
@@ -587,6 +588,7 @@ function LivraisonDetailPage() {
                   return (
                     <tr key={item.id}>
                       <td className="td-code">{item.product_id}</td>
+                      <td>{item.category || '—'}</td>
                       <td>{item.product_name}</td>
                       <td className="td-qty">{item.qte_chargee}</td>
                       <td className="td-qty">{item.qte_vendue}</td>
@@ -599,25 +601,25 @@ function LivraisonDetailPage() {
               </tbody>
               <tfoot>
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'right' }}><strong>Total CA</strong></td>
+                  <td colSpan="7" style={{ textAlign: 'right' }}><strong>Total CA</strong></td>
                   <td className="td-price"><strong>{formatDT(ca)}</strong></td>
                 </tr>
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'right' }}>Commission Commerciale (10%)</td>
+                  <td colSpan="7" style={{ textAlign: 'right' }}>Commission Commerciale (10%)</td>
                   <td className="td-price">{formatDT(commission)}</td>
                 </tr>
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'right' }}><strong>Net à reverser au dépôt</strong></td>
+                  <td colSpan="7" style={{ textAlign: 'right' }}><strong>Net à reverser au dépôt</strong></td>
                   <td className="td-price"><strong>{formatDT(net_a_reverser)}</strong></td>
                 </tr>
                 {totalAvances > 0 && (
                   <>
                     <tr>
-                      <td colSpan="6" style={{ textAlign: 'right', color: 'var(--color-primary)' }}>Avances acceptées</td>
+                      <td colSpan="7" style={{ textAlign: 'right', color: 'var(--color-primary)' }}>Avances acceptées</td>
                       <td className="td-price" style={{ color: 'var(--color-primary)' }}>{formatDT(totalAvances)}</td>
                     </tr>
                     <tr>
-                      <td colSpan="6" style={{ textAlign: 'right' }}><strong>Reste à payer</strong></td>
+                      <td colSpan="7" style={{ textAlign: 'right' }}><strong>Reste à payer</strong></td>
                       <td className="td-price"><strong>{formatDT(resteAPayer)}</strong></td>
                     </tr>
                   </>
@@ -713,6 +715,7 @@ function LivraisonDetailPage() {
             <thead>
               <tr>
                 <th>Code</th>
+                <th>Catégorie</th>
                 <th>Produit</th>
                 <th>PU TTC</th>
                 <th style={{ textAlign: 'center' }}>Qté</th>
@@ -724,6 +727,7 @@ function LivraisonDetailPage() {
               {livraison.items.map((item) => (
                 <tr key={item.id}>
                   <td className="td-code">{item.product_id}</td>
+                  <td>{item.category || '—'}</td>
                   <td>{item.product_name}</td>
                   <td className="td-price">{formatDT(item.prix_ttc)}</td>
                   <td className="td-qty">{item.qte_chargee}</td>
@@ -734,7 +738,7 @@ function LivraisonDetailPage() {
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan={4} style={{ textAlign: 'right' }}><strong>Total</strong></td>
+                <td colSpan={5} style={{ textAlign: 'right' }}><strong>Total</strong></td>
                 <td className="td-price"><strong>{formatDT(computeTotal())}</strong></td>
                 {(isEnCours || isEnRetour || isCloture) && <td></td>}
               </tr>
