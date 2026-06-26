@@ -3,6 +3,24 @@ import { apiGet, apiPut } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import './StockPage.css';
 
+function IconPlus() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M10 5v10M5 10h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconMinus() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M5 10h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function formatDT(value) {
   if (value === null || value === undefined) return '—';
   return Number(value).toFixed(3) + ' DT';
@@ -270,14 +288,16 @@ function StockPage() {
                     className={`toggle-btn ${adjustDirection === 'add' ? 'toggle-btn-active toggle-btn-add' : ''}`}
                     onClick={() => setAdjustDirection('add')}
                   >
-                    ➕ Ajouter au stock
+                    <IconPlus />
+                    <span>Ajouter au stock</span>
                   </button>
                   <button
                     type="button"
                     className={`toggle-btn ${adjustDirection === 'remove' ? 'toggle-btn-active toggle-btn-remove' : ''}`}
                     onClick={() => setAdjustDirection('remove')}
                   >
-                    ➖ Retirer du stock
+                    <IconMinus />
+                    <span>Retirer du stock</span>
                   </button>
                 </div>
               </div>
