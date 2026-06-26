@@ -384,22 +384,22 @@ function StockPage() {
         </div>
       )}
 
-      {/* Stock History — Super Admin only */}
+      {/* Journal des ajustements — Super Admin only */}
       {user?.role === 'SUPER_ADMIN' && (
         <section className="stock-history-section">
           <button
             className="btn btn-outline history-toggle-btn"
             onClick={handleToggleHistory}
           >
-            {showHistory ? 'Masquer l\'historique' : '📋 Historique des mouvements'}
+            {showHistory ? 'Masquer le journal' : '📋 Journal des ajustements'}
           </button>
 
           {showHistory && (
             <div className="table-container" style={{ marginTop: 'var(--space-4)' }}>
               {movementsLoading ? (
-                <div className="loading-state">Chargement de l'historique...</div>
+                <div className="loading-state">Chargement du journal...</div>
               ) : movements.length === 0 ? (
-                <div className="empty-state"><p>Aucun mouvement de stock enregistré.</p></div>
+                <div className="empty-state"><p>Aucun ajustement manuel enregistré.</p></div>
               ) : (
                 <table className="data-table">
                   <thead>
@@ -407,7 +407,7 @@ function StockPage() {
                       <th>Date</th>
                       <th>Produit</th>
                       <th>Catégorie</th>
-                      <th>Type</th>
+                      <th>Opération</th>
                       <th>Qté</th>
                       <th>N° Facture</th>
                       <th>Société</th>
@@ -426,11 +426,8 @@ function StockPage() {
                         <td className="td-name">{m.product_name}</td>
                         <td>{m.product_category || '—'}</td>
                         <td>
-                          <span className={`movement-badge movement-${m.type.toLowerCase()}`}>
-                            {m.type === 'AJUSTEMENT' ? (m.quantity > 0 ? 'Ajout' : 'Retrait')
-                              : m.type === 'SORTIE' ? 'Sortie'
-                              : m.type === 'RETOUR' ? 'Retour'
-                              : m.type}
+                          <span className={`movement-badge ${m.quantity > 0 ? 'movement-add' : 'movement-remove'}`}>
+                            {m.quantity > 0 ? 'Ajout' : 'Retrait'}
                           </span>
                         </td>
                         <td className={`td-qty ${m.quantity < 0 ? 'qty-low' : ''}`}>

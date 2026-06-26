@@ -235,19 +235,14 @@ textarea.form-input {
   font-weight: var(--weight-medium);
 }
 
-.movement-ajustement {
-  background: var(--color-info-bg);
-  color: var(--color-info);
-}
-
-.movement-sortie {
-  background: var(--color-danger-bg);
-  color: var(--color-danger);
-}
-
-.movement-retour {
+.movement-add {
   background: var(--color-success-bg);
   color: var(--color-success);
+}
+
+.movement-remove {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
 }
 
 .movement-reason {
