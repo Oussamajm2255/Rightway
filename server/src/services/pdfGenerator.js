@@ -132,21 +132,6 @@ function generateBonDeSortie(livraison) {
         ['auto', 'auto', 'auto', '*', 'auto', 'auto', 'auto']
       ),
 
-      { text: '', margin: [0, 12] },
-
-      // Confirmation block
-      { text: 'Confirmations', style: 'sectionTitle' },
-      { columns: [
-        { width: '50%', stack: [
-          { text: `Confirmé par ${livraison.admin_name} (Admin)`, style: 'confirmationBlock' },
-          { text: livraison.created_at ? `Le ${formatDate(livraison.created_at)}` : '', style: 'metaText' },
-        ]},
-        { width: '50%', stack: [
-          { text: `Confirmé par ${livraison.commercial_name} (Commercial)`, style: 'confirmationBlock' },
-          { text: livraison.confirmed_by_commercial_at ? `Le ${formatDate(livraison.confirmed_by_commercial_at)}` : 'En attente', style: 'metaText' },
-        ]},
-      ]},
-
       { text: '', margin: [0, 15] },
       { text: 'Cachet de l\'entreprise', style: 'metaText', alignment: 'right' },
     ],
