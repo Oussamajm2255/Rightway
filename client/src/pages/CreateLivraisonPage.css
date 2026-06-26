@@ -448,6 +448,13 @@
   border-left: 3px solid var(--color-primary);
 }
 
+/* Cycle category header accent through 5 colors */
+.category-section:nth-child(5n+1) .category-header { border-left-color: #4f87e0; }
+.category-section:nth-child(5n+2) .category-header { border-left-color: #3b8c5e; }
+.category-section:nth-child(5n+3) .category-header { border-left-color: #c9a00b; }
+.category-section:nth-child(5n+4) .category-header { border-left-color: #7c5ce0; }
+.category-section:nth-child(5n+5) .category-header { border-left-color: #d94f6c; }
+
 .category-header-icon {
   display: flex;
   align-items: center;

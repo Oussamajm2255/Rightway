@@ -83,6 +83,19 @@ function CreateLivraisonPage() {
     return stock.filter((s) => selectedItems[s.id] && selectedItems[s.id] > 0);
   }
 
+  function getCategoryColorIndex(products) {
+    const map = {};
+    let idx = 0;
+    for (const p of products) {
+      const cat = p.category || 'Sans catégorie';
+      if (!(cat in map)) {
+        map[cat] = idx % 5;
+        idx++;
+      }
+    }
+    return map;
+  }
+
   function getTotal() {
     return getSelectedProducts().reduce(
       (sum, p) => sum + selectedItems[p.id] * Number(p.selling_price_ttc), 0
@@ -313,16 +326,20 @@ function CreateLivraisonPage() {
                 </tr>
               </thead>
               <tbody>
-                {getSelectedProducts().map((p) => (
-                  <tr key={p.id}>
-                    <td className="td-code">{p.barcode || p.id}</td>
-                    <td>{p.category || '—'}</td>
-                    <td>{p.name}</td>
-                    <td className="td-price">{formatDT(p.selling_price_ttc)}</td>
-                    <td className="td-qty">{selectedItems[p.id]}</td>
-                    <td className="td-price">{formatDT(selectedItems[p.id] * Number(p.selling_price_ttc))}</td>
-                  </tr>
-                ))}
+                {(() => {
+                  const selected = getSelectedProducts();
+                  const catColors = getCategoryColorIndex(selected);
+                  return selected.map((p) => (
+                    <tr key={p.id} className={`cat-row-${catColors[p.category || 'Sans catégorie']}`}>
+                      <td className="td-code">{p.barcode || p.id}</td>
+                      <td>{p.category || '—'}</td>
+                      <td>{p.name}</td>
+                      <td className="td-price">{formatDT(p.selling_price_ttc)}</td>
+                      <td className="td-qty">{selectedItems[p.id]}</td>
+                      <td className="td-price">{formatDT(selectedItems[p.id] * Number(p.selling_price_ttc))}</td>
+                    </tr>
+                  ));
+                })()}
               </tbody>
               <tfoot>
                 <tr>

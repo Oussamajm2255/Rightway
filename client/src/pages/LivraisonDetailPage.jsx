@@ -62,6 +62,19 @@ function LivraisonDetailPage() {
     return livraison.items.reduce((sum, i) => sum + i.qte_vendue * Number(i.prix_ttc), 0);
   }
 
+  function getCategoryColorIndex(items) {
+    const map = {};
+    let idx = 0;
+    for (const item of items || []) {
+      const cat = item.category || 'Sans catégorie';
+      if (!(cat in map)) {
+        map[cat] = idx % 5;
+        idx++;
+      }
+    }
+    return map;
+  }
+
   async function handleConfirmSortie(e) {
     e.preventDefault();
     setActionError('');
@@ -583,10 +596,12 @@ function LivraisonDetailPage() {
                 </tr>
               </thead>
               <tbody>
-                {livraison.items.map((item) => {
+                {(() => {
+                  const catColors = getCategoryColorIndex(livraison.items);
+                  return livraison.items.map((item) => {
                   const qte_retour = item.qte_chargee - item.qte_vendue;
                   return (
-                    <tr key={item.id}>
+                    <tr key={item.id} className={`cat-row-${catColors[item.category || 'Sans catégorie']}`}>
                       <td className="td-code">{item.product_id}</td>
                       <td>{item.category || '—'}</td>
                       <td>{item.product_name}</td>
@@ -597,7 +612,8 @@ function LivraisonDetailPage() {
                       <td className="td-price">{formatDT(item.qte_vendue * Number(item.prix_ttc))}</td>
                     </tr>
                   );
-                })}
+                });
+              })()}
               </tbody>
               <tfoot>
                 <tr>
@@ -724,8 +740,10 @@ function LivraisonDetailPage() {
               </tr>
             </thead>
             <tbody>
-              {livraison.items.map((item) => (
-                <tr key={item.id}>
+              {(() => {
+                const catColors = getCategoryColorIndex(livraison.items);
+                return livraison.items.map((item) => (
+                <tr key={item.id} className={`cat-row-${catColors[item.category || 'Sans catégorie']}`}>
                   <td className="td-code">{item.product_id}</td>
                   <td>{item.category || '—'}</td>
                   <td>{item.product_name}</td>
@@ -734,7 +752,8 @@ function LivraisonDetailPage() {
                   <td className="td-price">{formatDT(item.qte_chargee * Number(item.prix_ttc))}</td>
                   {(isEnCours || isEnRetour || isCloture) && <td className="td-qty">{item.qte_vendue}</td>}
                 </tr>
-              ))}
+              ));
+              })()}
             </tbody>
             <tfoot>
               <tr>
