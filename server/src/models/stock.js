@@ -34,7 +34,7 @@ async function getStockAlerts(threshold = 20) {
   return getStockLevels({ below_threshold: threshold });
 }
 
-async function adjustStock(product_id, quantity_change, reason, created_by) {
+async function adjustStock(product_id, quantity_change, reason, created_by, extraFields = {}) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -65,11 +65,12 @@ async function adjustStock(product_id, quantity_change, reason, created_by) {
       [product_id, newQty]
     );
 
-    // Write stock movement
+    // Write stock movement with optional extra fields
+    const { movement_date, invoice_number, company_name } = extraFields;
     await client.query(
-      `INSERT INTO stock_movements (product_id, type, quantity, reason, created_by)
-       VALUES ($1, 'AJUSTEMENT', $2, $3, $4)`,
-      [product_id, quantity_change, reason, created_by]
+      `INSERT INTO stock_movements (product_id, type, quantity, reason, created_by, movement_date, invoice_number, company_name)
+       VALUES ($1, 'AJUSTEMENT', $2, $3, $4, $5, $6, $7)`,
+      [product_id, quantity_change, reason, created_by, movement_date || null, invoice_number || null, company_name || null]
     );
 
     await client.query('COMMIT');
@@ -82,4 +83,44 @@ async function adjustStock(product_id, quantity_change, reason, created_by) {
   }
 }
 
-module.exports = { getStockLevels, getStockAlerts, adjustStock };
+async function getStockMovements({ limit = 100, product_id, type, movement_date, offset = 0 } = {}) {
+  const conditions = [];
+  const params = [];
+  let idx = 1;
+
+  if (product_id) {
+    conditions.push(`sm.product_id = $${idx++}`);
+    params.push(product_id);
+  }
+  if (type) {
+    conditions.push(`sm.type = $${idx++}`);
+    params.push(type);
+  }
+  if (movement_date) {
+    conditions.push(`sm.movement_date = $${idx++}`);
+    params.push(movement_date);
+  }
+
+  const where = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
+
+  const query = `
+    SELECT
+      sm.id, sm.product_id, sm.type, sm.quantity,
+      sm.movement_date, sm.invoice_number, sm.company_name,
+      sm.reason, sm.created_at,
+      p.name AS product_name, p.category AS product_category,
+      u.full_name AS created_by_name
+    FROM stock_movements sm
+    JOIN products p ON sm.product_id = p.id
+    LEFT JOIN users u ON sm.created_by = u.id
+    ${where}
+    ORDER BY sm.created_at DESC
+    LIMIT $${idx++} OFFSET $${idx++}
+  `;
+
+  params.push(limit, offset);
+  const { rows } = await pool.query(query, params);
+  return rows;
+}
+
+module.exports = { getStockLevels, getStockAlerts, adjustStock, getStockMovements };

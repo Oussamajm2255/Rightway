@@ -111,6 +111,9 @@ CREATE TABLE IF NOT EXISTS stock_movements (
   type VARCHAR(20) NOT NULL CHECK (type IN ('SORTIE', 'RETOUR', 'AJUSTEMENT')),
   quantity INTEGER NOT NULL,
   livraison_id UUID REFERENCES livraisons(id),
+  movement_date DATE,
+  invoice_number VARCHAR(100),
+  company_name VARCHAR(150),
   reason TEXT,
   created_by UUID REFERENCES users(id),
   created_at TIMESTAMPTZ DEFAULT NOW()

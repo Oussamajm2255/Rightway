@@ -34,12 +34,12 @@ async function getAlerts(req, res) {
 
 /**
  * PUT /api/stock/adjust
- * Body: { product_id, quantity_change, reason, password }
+ * Body: { product_id, quantity_change, reason, password, movement_date, invoice_number, company_name }
  * quantity_change: positive = add, negative = remove
  */
 async function adjustStock(req, res) {
   try {
-    const { product_id, quantity_change, reason, password } = req.body;
+    const { product_id, quantity_change, reason, password, movement_date, invoice_number, company_name } = req.body;
 
     if (!product_id || quantity_change === undefined || quantity_change === null) {
       return res.status(400).json({ error: 'Produit et quantité sont requis.' });
@@ -55,6 +55,14 @@ async function adjustStock(req, res) {
 
     if (!password) {
       return res.status(400).json({ error: 'Votre mot de passe est requis pour confirmer l\'ajustement.' });
+    }
+
+    // Validate movement_date if provided
+    if (movement_date) {
+      const d = new Date(movement_date);
+      if (isNaN(d.getTime())) {
+        return res.status(400).json({ error: 'Date de mouvement invalide.' });
+      }
     }
 
     // Verify password
@@ -80,7 +88,12 @@ async function adjustStock(req, res) {
       return res.status(404).json({ error: 'Produit introuvable.' });
     }
 
-    const result = await stockModel.adjustStock(product_id, quantity_change, reason, req.user.id);
+    const extraFields = {};
+    if (movement_date) extraFields.movement_date = movement_date;
+    if (invoice_number) extraFields.invoice_number = invoice_number;
+    if (company_name) extraFields.company_name = company_name;
+
+    const result = await stockModel.adjustStock(product_id, quantity_change, reason, req.user.id, extraFields);
     if (result.error) {
       return res.status(400).json({ error: result.error });
     }
@@ -95,4 +108,25 @@ async function adjustStock(req, res) {
   }
 }
 
-module.exports = { listStock, getAlerts, adjustStock };
+/**
+ * GET /api/stock/movements
+ * Query: ?product_id=XX&type=AJUSTEMENT&movement_date=2026-01-01&limit=100&offset=0
+ */
+async function listMovements(req, res) {
+  try {
+    const { product_id, type, movement_date, limit, offset } = req.query;
+    const movements = await stockModel.getStockMovements({
+      product_id: product_id || undefined,
+      type: type || undefined,
+      movement_date: movement_date || undefined,
+      limit: parseInt(limit, 10) || 100,
+      offset: parseInt(offset, 10) || 0,
+    });
+    res.json({ movements });
+  } catch (err) {
+    console.error('listMovements error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+module.exports = { listStock, getAlerts, adjustStock, listMovements };
