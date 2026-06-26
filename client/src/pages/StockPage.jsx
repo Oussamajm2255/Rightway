@@ -94,7 +94,7 @@ function StockPage() {
       setAdjustError('Veuillez saisir une quantité valide supérieure à 0.');
       return;
     }
-    const qty = adjustDirection === 'remove' ? -absQty : absQty;
+    const qty = adjustDirection === 'add' ? absQty : -absQty;
 
     if (!adjustForm.reason.trim()) {
       setAdjustError('Veuillez indiquer un motif d\'ajustement.');
@@ -113,7 +113,7 @@ function StockPage() {
         reason: adjustForm.reason,
         password: adjustForm.password,
       };
-      if (adjustDirection === 'remove') {
+      if (adjustDirection === 'add') {
         if (adjustForm.movement_date) body.movement_date = adjustForm.movement_date;
         if (adjustForm.invoice_number.trim()) body.invoice_number = adjustForm.invoice_number.trim();
         if (adjustForm.company_name.trim()) body.company_name = adjustForm.company_name.trim();
@@ -294,8 +294,8 @@ function StockPage() {
                 />
               </div>
 
-              {/* Conditional fields for Remove */}
-              {adjustDirection === 'remove' && (
+              {/* Conditional fields for Add */}
+              {adjustDirection === 'add' && (
                 <>
                   <div className="form-group">
                     <label className="form-label">Date du mouvement</label>
