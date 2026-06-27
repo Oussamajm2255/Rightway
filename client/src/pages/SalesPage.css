@@ -191,6 +191,21 @@
   margin-left: auto;
   font-weight: var(--weight-medium);
 }
+.sales-cat-header-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.cat-stat-sep {
+  color: var(--color-text-tertiary);
+  font-weight: var(--weight-normal);
+}
 .sales-cat-chevron {
   transition: transform var(--transition-base);
   color: var(--color-text-tertiary);
@@ -490,4 +505,6 @@
   .sales-ca-value { font-size: var(--text-xl); }
   .sales-sync { padding: 3px 8px; font-size: 0.625rem; }
   .sale-stats { grid-template-columns: repeat(2, 1fr); }
+  .sales-cat-header-stats { gap: 4px; font-size: 0.625rem; }
+  .sales-cat-header-count { display: none; }
 }

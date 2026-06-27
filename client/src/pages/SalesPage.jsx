@@ -41,6 +41,12 @@ function fmtDT(v) {
   if (v === null || v === undefined) return '—';
   return Number(v).toFixed(3) + ' DT';
 }
+function fmtShort(v) {
+  if (v === null || v === undefined || v === 0) return '0';
+  const n = Number(v);
+  if (n >= 1000) return (n / 1000).toFixed(1).replace('.0', '') + 'k';
+  return n % 1 === 0 ? n.toFixed(0) : n.toFixed(1);
+}
 
 /* ─── Component ─── */
 function SalesPage() {
@@ -361,6 +367,12 @@ function SalesPage() {
             const { bg: catBg, text: catText } = catColors(category);
             const isCollapsed = collapsedCats[category];
 
+            // Per-category summary stats
+            const catDeclared = catItems.filter((p) => getPendingQty(p.product_id) > 0).length;
+            const catTotal = catItems.length;
+            const catCA = catItems.reduce((sum, p) => sum + getPendingQty(p.product_id) * Number(p.prix_ttc), 0);
+            const catMax = catItems.reduce((sum, p) => sum + p.qte_chargee * Number(p.prix_ttc), 0);
+
             return (
               <div
                 key={category}
@@ -377,6 +389,11 @@ function SalesPage() {
                   </span>
                   <span className="sales-cat-header-name" style={{ color: catText }}>
                     {category}
+                  </span>
+                  <span className="sales-cat-header-stats">
+                    <span className="cat-stat">{catDeclared}/{catTotal}</span>
+                    <span className="cat-stat-sep">·</span>
+                    <span className="cat-stat">{fmtShort(catCA)} DT / {fmtShort(catMax)} DT</span>
                   </span>
                   <span className="sales-cat-header-count">
                     {catItems.length} produit{catItems.length > 1 ? 's' : ''}
