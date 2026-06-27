@@ -16,7 +16,24 @@ const CAT_PALETTE = {
 };
 const CAT_DEFAULT = { bg: 'var(--color-surface-hover)', text: 'var(--color-text-tertiary)', bar: '#8b93b0' };
 
-function catColors(cat) { return CAT_PALETTE[cat] || CAT_DEFAULT; }
+// Hash a string to a stable hue (0-360) so every category gets a distinct colour
+function hashHue(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) hash = (hash * 31 + str.charCodeAt(i)) | 0;
+  return Math.abs(hash) % 360;
+}
+
+// Build on-the-fly palette for any category not in the curated list
+function autoPalette(cat) {
+  const h = hashHue(cat);
+  return {
+    bg: `hsla(${h},58%,54%,.1)`,
+    text: `hsl(${h},58%,34%)`,
+    bar: `hsl(${h},58%,45%)`,
+  };
+}
+
+function catColors(cat) { return CAT_PALETTE[cat] || autoPalette(cat); }
 
 // ─── Formatters ───
 function fmtDT(v) {
