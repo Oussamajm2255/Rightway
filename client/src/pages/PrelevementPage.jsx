@@ -498,7 +498,9 @@ export default function PrelevementPage() {
     try {
       const data = await apiGet('/prelevements/categories');
       setCategories(data.categories || []);
-    } catch {}
+    } catch (err) {
+      console.error('[Prelevement] fetchCategories error:', err.message);
+    }
   }, []);
 
   const fetchExpenses = useCallback(async (p = page) => {
@@ -513,14 +515,18 @@ export default function PrelevementPage() {
       const data = await apiGet(`/prelevements?${params.toString()}`);
       setExpenses(data.expenses || []);
       setTotal(data.total || 0);
-    } catch {}
+    } catch (err) {
+      console.error('[Prelevement] fetchExpenses error:', err.message);
+    }
   }, [page, filters]);
 
   const fetchStats = useCallback(async () => {
     try {
       const data = await apiGet('/prelevements/stats');
       setStats(data.stats || null);
-    } catch {}
+    } catch (err) {
+      console.error('[Prelevement] fetchStats error:', err.message);
+    }
   }, []);
 
   useEffect(() => { fetchCategories(); }, [fetchCategories]);

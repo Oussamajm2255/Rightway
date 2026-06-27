@@ -67,8 +67,12 @@ async function seedPrelevementCategories() {
 
     for (const name of mainCats) {
       await client.query(
-        `INSERT INTO prelevement_categories (name, parent_id) VALUES ($1, NULL)
-         ON CONFLICT (name, COALESCE(parent_id, 0)) DO NOTHING`,
+        `INSERT INTO prelevement_categories (name, parent_id)
+         SELECT $1, NULL
+         WHERE NOT EXISTS (
+           SELECT 1 FROM prelevement_categories
+           WHERE name = $1 AND parent_id IS NULL
+         )`,
         [name]
       );
     }
@@ -127,7 +131,10 @@ async function seedPrelevementCategories() {
       await client.query(
         `INSERT INTO prelevement_categories (name, parent_id)
          SELECT $1, id FROM prelevement_categories WHERE name = $2 AND parent_id IS NULL
-         ON CONFLICT (name, COALESCE(parent_id, 0)) DO NOTHING`,
+         AND NOT EXISTS (
+           SELECT 1 FROM prelevement_categories c2
+           WHERE c2.name = $1 AND c2.parent_id = (SELECT id FROM prelevement_categories WHERE name = $2 AND parent_id IS NULL)
+         )`,
         [childName, parentName]
       );
     }
