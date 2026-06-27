@@ -132,10 +132,31 @@ app.use(express.urlencoded({ extended: true }));
 // ============================================================
 if (isProduction) {
   const clientDist = path.join(__dirname, '..', '..', 'client', 'dist');
-  app.use(express.static(clientDist, {
-    maxAge: '7d',
+
+  // Prevent index.html caching — avoids stale chunk references after deploy
+  app.use((req, _res, next) => {
+    if (req.path === '/' || req.path.endsWith('.html')) {
+      _res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+    next();
+  });
+
+  // Hashed assets can be cached aggressively (fingerprinted filenames)
+  app.use('/assets', express.static(path.join(clientDist, 'assets'), {
+    maxAge: '365d',
     immutable: true,
   }));
+
+  // Serve everything else (index.html, favicon, etc.) with short cache
+  app.use(express.static(clientDist, {
+    maxAge: '5m',
+    setHeaders: (res, filepath) => {
+      if (filepath.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache');
+      }
+    },
+  }));
+
   console.log('Serving static files from:', clientDist);
 }
 
