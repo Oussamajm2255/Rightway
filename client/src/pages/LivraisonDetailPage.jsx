@@ -272,6 +272,7 @@ function LivraisonDetailPage() {
   const isCloture = livraison?.status === 'CLOTURE';
   const isCommercial = user?.role === 'COMMERCIAL';
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
   const isAssignedCommercial = isCommercial && livraison?.commercial_id === user?.id;
   const ca = computeCA();
   const commission = Number((ca * 0.10).toFixed(3));
@@ -490,7 +491,7 @@ function LivraisonDetailPage() {
                   <th>Montant</th>
                   <th>Statut</th>
                   <th>Preuve</th>
-                  {(isAdmin) && <th style={{ textAlign: 'center' }}>Action</th>}
+                  {(isSuperAdmin) && <th style={{ textAlign: 'center' }}>Action</th>}
                 </tr>
               </thead>
               <tbody>
@@ -519,7 +520,7 @@ function LivraisonDetailPage() {
                           <span style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>—</span>
                         )}
                       </td>
-                      {(isAdmin) && (
+                      {(isSuperAdmin) && (
                         <td style={{ textAlign: 'center' }}>
                           {isPending && refusingAvanceId !== av.id && (
                             <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'center' }}>

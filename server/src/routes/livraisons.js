@@ -78,8 +78,8 @@ router.put('/:id/confirmer-annulation', authorize('SUPER_ADMIN', 'ADMIN'), confi
 // Avances (advance payments during EN_COURS)
 router.post('/:id/avances', authorize('COMMERCIAL'), declarerAvance);
 router.get('/:id/avances', authorize('SUPER_ADMIN', 'ADMIN', 'COMMERCIAL'), requireLivraisonOwnership, getAvances);
-router.put('/:id/avances/:avanceId/accepter', authorize('SUPER_ADMIN', 'ADMIN'), accepterAvance);
-router.put('/:id/avances/:avanceId/refuser', authorize('SUPER_ADMIN', 'ADMIN'), refuserAvance);
+router.put('/:id/avances/:avanceId/accepter', authorize('SUPER_ADMIN'), accepterAvance);
+router.put('/:id/avances/:avanceId/refuser', authorize('SUPER_ADMIN'), refuserAvance);
 
 // Real-time monitoring route
 router.get('/:id/realtime', authorize('SUPER_ADMIN', 'ADMIN', 'COMMERCIAL'), requireLivraisonOwnership, realtimeData);
