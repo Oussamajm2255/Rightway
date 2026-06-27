@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Performances Commerciaux — Right Way</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.30.0/webfont/tabler-icons.min.css"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+    :root{
+      --bg:#f5f6f8;
+      --surface:#ffffff;
+      --surface2:#f0f1f4;
+      --border:rgba(0,0,0,.08);
+      --border-s:rgba(0,0,0,.14);
+      --text:#111318;
+      --text2:#52566a;
+      --text3:#9ea3b5;
+      --radius:12px;
+      --radius-sm:8px;
+      --radius-xs:6px;
+      --font:'Inter',system-ui,sans-serif;
+      --mono:'JetBrains Mono',monospace;
+      --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+      --shadow-md:0 4px 16px rgba(0,0,0,.08),0 1px 3px rgba(0,0,0,.04);
+
+      /* palette 12 */
+      --p0:#2a78d6;--p1:#0f9e6a;--p2:#c98500;--p3:#7c3aed;
+      --p4:#dc2626;--p5:#db2777;--p6:#d95926;--p7:#16a34a;
+      --p8:#0891b2;--p9:#9333ea;--p10:#e11d48;--p11:#65a30d;
+    }
+
+    html,body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5;min-height:100vh}
+
+    /* ── LAYOUT SHELL ── */
+    .page{max-width:1380px;margin:0 auto;padding:24px 20px 60px}
+
+    /* ── TOP BAR ── */
+    .topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+    .topbar-left{display:flex;align-items:center;gap:14px}
+    .live-badge{display:flex;align-items:center;gap:6px;background:rgba(15,158,106,.1);border:1px solid rgba(15,158,106,.22);border-radius:20px;padding:4px 11px 4px 7px;font-size:11px;font-weight:500;color:#0f9e6a;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+    .live-dot{width:7px;height:7px;border-radius:50%;background:#0f9e6a;animation:pulse 1.6s ease-in-out infinite;flex-shrink:0}
+    @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(15,158,106,.5)}50%{opacity:.7;box-shadow:0 0 0 5px rgba(15,158,106,0)}}
+    .page-title{font-size:20px;font-weight:700;letter-spacing:-.02em;color:var(--text)}
+    .page-sub{font-size:12px;color:var(--text3);margin-top:2px;font-family:var(--mono)}
+    .topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+    /* ── BUTTONS ── */
+    .btn{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--text2);background:var(--surface);border:1px solid var(--border-s);border-radius:var(--radius-sm);padding:7px 13px;cursor:pointer;transition:all .15s;font-family:var(--font);white-space:nowrap}
+    .btn:hover{color:var(--text);border-color:rgba(0,0,0,.22);background:var(--surface2);box-shadow:var(--shadow)}
+    .btn i{font-size:15px}
+    .btn-primary{background:var(--p0);color:#fff;border-color:var(--p0)}
+    .btn-primary:hover{background:#1a68c6;border-color:#1a68c6;color:#fff}
+    .btn-sm{padding:5px 10px;font-size:11px}
+    .btn-icon{padding:7px;gap:0}
+    .btn.active{background:var(--p0);color:#fff;border-color:var(--p0)}
+
+    /* ── TABS ── */
+    .tabs{display:flex;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:3px;margin-bottom:22px;width:fit-content}
+    .tab{padding:7px 18px;border-radius:calc(var(--radius) - 3px);font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;border:none;background:transparent;font-family:var(--font);display:flex;align-items:center;gap:6px;white-space:nowrap}
+    .tab:hover{color:var(--text)}
+    .tab.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow);font-weight:600}
+    .tab i{font-size:15px}
+
+    /* ── KPI GRID ── */
+    .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px}
+    @media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:640px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+    .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;position:relative;overflow:hidden;transition:box-shadow .2s;box-shadow:var(--shadow)}
+    .kpi-card:hover{box-shadow:var(--shadow-md)}
+    .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent,var(--p0));border-radius:var(--radius) var(--radius) 0 0}
+    .kpi-icon{width:34px;height:34px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;margin-bottom:10px;font-size:17px}
+    .kpi-label{font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+    .kpi-val{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text);letter-spacing:-.025em;line-height:1;margin-bottom:3px;font-family:var(--mono)}
+    .kpi-sub{font-size:11px;color:var(--text3)}
+
+    /* ── TOOLBAR (search/sort/view) ── */
+    .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+    .search-wrap{position:relative;flex:1;min-width:180px;max-width:320px}
+    .search-wrap i{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:15px;pointer-events:none}
+    .search-input{width:100%;padding:7px 12px 7px 32px;background:var(--surface);border:1px solid var(--border-s);border-radius:var(--radius-sm);font-size:13px;color:var(--text);font-family:var(--font);outline:none;transition:border-color .15s}
+    .search-input::placeholder{color:var(--text3)}
+    .search-input:focus{border-color:var(--p0);box-shadow:0 0 0 3px rgba(42,120,214,.1)}
+    .select-wrap select{padding:7px 28px 7px 10px;background:var(--surface);border:1px solid var(--border-s);border-radius:var(--radius-sm);font-size:12px;color:var(--text2);font-family:var(--font);outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ea3b5' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+    .view-toggle{display:flex;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:2px}
+    .view-btn{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:calc(var(--radius-sm) - 2px);cursor:pointer;color:var(--text3);border:none;background:transparent;transition:all .15s;font-size:15px}
+    .view-btn.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+
+    /* ── COMMERCIAL CARD GRID ── */
+    .comm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;margin-bottom:24px}
+    .comm-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);transition:box-shadow .2s,transform .2s;cursor:pointer;position:relative;overflow:hidden}
+    .comm-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+    .comm-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--cc, var(--p0));border-radius:var(--radius) var(--radius) 0 0}
+    .cc-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+    .avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.02em}
+    .cc-info{flex:1;min-width:0}
+    .cc-name{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .cc-vehicle{font-size:11px;color:var(--text3);margin-top:2px;font-family:var(--mono);display:flex;align-items:center;gap:4px}
+    .badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap;letter-spacing:.03em}
+    .badge-green{background:rgba(15,158,106,.1);color:#0a7a52}
+    .badge-orange{background:rgba(217,89,38,.1);color:#b84620}
+    .badge-gray{background:rgba(158,163,181,.1);color:#52566a}
+    .badge-blue{background:rgba(42,120,214,.1);color:#1a5fb4}
+    .badge-red{background:rgba(220,38,38,.1);color:#b91c1c}
+
+    .cc-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+    .cc-kpi{display:flex;flex-direction:column;gap:1px}
+    .cc-kpi-val{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text);font-family:var(--mono);letter-spacing:-.01em}
+    .cc-kpi-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em}
+
+    .bar-outer{height:5px;background:rgba(0,0,0,.07);border-radius:6px;overflow:hidden;margin-bottom:12px}
+    .bar-inner{height:100%;border-radius:6px;transition:width 1.2s cubic-bezier(.22,1,.36,1)}
+
+    .cc-footer{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .cc-ca{font-size:13px;font-weight:600;font-family:var(--mono);letter-spacing:-.01em}
+    .cc-rate-lbl{font-size:10px;color:var(--text3)}
+
+    /* ── LIST TABLE ── */
+    .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:24px}
+    .data-table{width:100%;border-collapse:collapse}
+    .data-table th{padding:10px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);background:var(--surface2);white-space:nowrap}
+    .data-table td{padding:11px 14px;font-size:13px;color:var(--text);border-bottom:1px solid var(--border);vertical-align:middle}
+    .data-table tr:last-child td{border-bottom:none}
+    .data-table tbody tr{transition:background .15s;cursor:pointer}
+    .data-table tbody tr:hover{background:var(--surface2)}
+    .data-table .mono{font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums}
+    .sortable{cursor:pointer;user-select:none}
+    .sortable:hover{color:var(--text)}
+    .th-inner{display:flex;align-items:center;gap:4px}
+    .scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+    .agent-cell{display:flex;align-items:center;gap:10px}
+    .avatar-sm{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+
+    /* ── TAB 2 HISTORIQUE ── */
+    .hist-filters{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin-bottom:20px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+    .filter-group{display:flex;flex-direction:column;gap:5px;min-width:150px;flex:1}
+    .filter-label{font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3)}
+    .filter-select,.filter-input{padding:8px 10px;background:var(--bg);border:1px solid var(--border-s);border-radius:var(--radius-sm);font-size:13px;color:var(--text);font-family:var(--font);outline:none;width:100%;transition:border-color .15s}
+    .filter-select:focus,.filter-input:focus{border-color:var(--p0);box-shadow:0 0 0 3px rgba(42,120,214,.1)}
+
+    .summary-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:20px;box-shadow:var(--shadow)}
+    .summary-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+    .summary-title{font-size:14px;font-weight:600}
+    .summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+    .sum-item{display:flex;flex-direction:column;gap:2px}
+    .sum-val{font-size:18px;font-weight:700;font-family:var(--mono);letter-spacing:-.01em}
+    .sum-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+
+    .charts-row{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:20px}
+    @media(max-width:900px){.charts-row{grid-template-columns:1fr}}
+    .chart-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+    .chart-panel-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+    .chart-wrap{position:relative;width:100%}
+
+    /* ── COMPARE SECTION ── */
+    .compare-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:20px;box-shadow:var(--shadow)}
+    .compare-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+    .compare-title{font-size:14px;font-weight:600}
+    .compare-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:2px solid transparent;transition:all .15s}
+    .chip.selected{border-color:currentColor}
+    .chip-x{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.1);font-size:10px;cursor:pointer}
+
+    .compare-table-wrap{overflow-x:auto}
+    .compare-table{width:100%;border-collapse:collapse;min-width:600px}
+    .compare-table th{padding:8px 12px;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);text-align:left;background:var(--surface2)}
+    .compare-table td{padding:10px 12px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle}
+    .compare-table tr:last-child td{border-bottom:none}
+
+    .compare-chart-wrap{margin-top:16px;position:relative;width:100%;height:200px}
+
+    /* ── HISTORY TABLE ── */
+    .hist-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:20px}
+    .hist-table-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap}
+    .hist-table-title{font-size:13px;font-weight:600;color:var(--text2)}
+
+    /* ── DIVIDER ── */
+    .section-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+    .section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+    /* ── ANIMATIONS ── */
+    .fade-in{animation:fadeIn .3s ease}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:900px){.comm-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}}
+    @media(max-width:640px){
+      .page{padding:16px 14px 40px}
+      .topbar{margin-bottom:16px}
+      .page-title{font-size:17px}
+      .comm-grid{grid-template-columns:1fr}
+      .hist-filters{flex-direction:column}
+      .filter-group{min-width:100%}
+    }
+    @media(max-width:420px){
+      .kpi-grid{grid-template-columns:1fr 1fr}
+      .tabs{width:100%}
+      .tab{flex:1;justify-content:center;padding:7px 10px;font-size:12px}
+    }
+
+    /* ── PROGRESS RING SVG ── */
+    .ring-wrap{position:relative;width:42px;height:42px;flex-shrink:0}
+    .ring-wrap svg{transform:rotate(-90deg)}
+    .ring-bg{fill:none;stroke:rgba(0,0,0,.07)}
+    .ring-fill{fill:none;stroke-linecap:round;transition:stroke-dashoffset 1.2s cubic-bezier(.22,1,.36,1)}
+    .ring-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:var(--mono)}
+
+    /* ── STATUS BADGE in table ── */
+    .status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
+
+    /* hide/show tabs */
+    .tab-content{display:none}
+    .tab-content.active{display:block}
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ══ TOP BAR ══ -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="live-badge"><span class="live-dot"></span>Live</span>
+      <div>
+        <div class="page-title">Performances Commerciaux</div>
+        <div class="page-sub" id="page-sub">6 commerciaux actifs · CA global: —</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="clock btn" id="clock" style="font-family:var(--mono);font-size:12px;gap:6px"><i class="ti ti-clock"></i><span id="clock-val">—</span></div>
+      <button class="btn" onclick="exportData()"><i class="ti ti-download"></i> Exporter</button>
+    </div>
+  </div>
+
+  <!-- ══ TABS ══ -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('performances')" id="tab-performances">
+      <i class="ti ti-chart-bar"></i> Performances
+    </button>
+    <button class="tab" onclick="switchTab('historique')" id="tab-historique">
+      <i class="ti ti-history"></i> Historique
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       TAB 1 — PERFORMANCES
+  ══════════════════════════════════════════ -->
+  <div class="tab-content active fade-in" id="content-performances">
+
+    <!-- KPI ROW -->
+    <div class="kpi-grid">
+      <div class="kpi-card" style="--accent:var(--p0)">
+        <div class="kpi-icon" style="background:rgba(42,120,214,.1);color:var(--p0)"><i class="ti ti-users"></i></div>
+        <div class="kpi-label">Commerciaux actifs</div>
+        <div class="kpi-val" id="kv-agents">—</div>
+        <div class="kpi-sub">comptes activés</div>
+      </div>
+      <div class="kpi-card" style="--accent:var(--p6)">
+        <div class="kpi-icon" style="background:rgba(217,89,38,.1);color:var(--p6)"><i class="ti ti-truck"></i></div>
+        <div class="kpi-label">Livraisons en cours</div>
+        <div class="kpi-val" id="kv-encours">—</div>
+        <div class="kpi-sub">EN_COURS + EN_RETOUR</div>
+      </div>
+      <div class="kpi-card" style="--accent:var(--p2)">
+        <div class="kpi-icon" style="background:rgba(201,133,0,.1);color:var(--p2)"><i class="ti ti-currency-dollar"></i></div>
+        <div class="kpi-label">CA Global TTC</div>
+        <div class="kpi-val" id="kv-ca" style="font-size:18px">—</div>
+        <div class="kpi-sub">livraisons clôturées</div>
+      </div>
+      <div class="kpi-card" style="--accent:var(--p1)">
+        <div class="kpi-icon" style="background:rgba(15,158,106,.1);color:var(--p1)"><i class="ti ti-percentage"></i></div>
+        <div class="kpi-label">Commissions</div>
+        <div class="kpi-val" id="kv-comm" style="font-size:18px">—</div>
+        <div class="kpi-sub">10% du CA global</div>
+      </div>
+      <div class="kpi-card" style="--accent:var(--p3)">
+        <div class="kpi-icon" style="background:rgba(124,58,237,.1);color:var(--p3)"><i class="ti ti-chart-pie"></i></div>
+        <div class="kpi-label">Taux de complétion</div>
+        <div class="kpi-val" id="kv-completion">—</div>
+        <div class="kpi-sub">moyenne tous commerciaux</div>
+      </div>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <div class="search-wrap">
+        <i class="ti ti-search"></i>
+        <input type="text" class="search-input" placeholder="Rechercher un commercial…" id="search-input" oninput="filterCommercials()"/>
+      </div>
+      <div class="select-wrap">
+        <select onchange="sortCommercials(this.value)" style="padding:7px 28px 7px 10px;background:var(--surface);border:1px solid var(--border-s);border-radius:var(--radius-sm);font-size:12px;color:var(--text2);font-family:var(--font);outline:none;cursor:pointer;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ea3b5' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 8px center">
+          <option value="ca">Trier par : CA ↓</option>
+          <option value="name">Nom A→Z</option>
+          <option value="completion">Taux complétion</option>
+          <option value="ecoulement">Taux d'écoulement</option>
+        </select>
+      </div>
+      <div class="view-toggle">
+        <button class="view-btn active" id="vbtn-grid" onclick="setView('grid')" title="Grille"><i class="ti ti-layout-grid"></i></button>
+        <button class="view-btn" id="vbtn-list" onclick="setView('list')" title="Liste"><i class="ti ti-list"></i></button>
+      </div>
+    </div>
+
+    <!-- CARD GRID -->
+    <div class="section-label">Commerciaux</div>
+    <div class="comm-grid" id="comm-grid"></div>
+
+    <!-- LIST VIEW (hidden by default) -->
+    <div id="comm-list" style="display:none">
+      <div class="table-wrap">
+        <div class="scroll-x">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th class="sortable" onclick="sortCommercials('name')"><div class="th-inner">Commercial <i class="ti ti-arrows-sort" style="font-size:11px;color:var(--text3)"></i></div></th>
+                <th>Véhicule</th>
+                <th class="sortable" onclick="sortCommercials('livraisons')"><div class="th-inner">Livraisons <i class="ti ti-arrows-sort" style="font-size:11px;color:var(--text3)"></i></div></th>
+                <th>Actives</th>
+                <th class="sortable" onclick="sortCommercials('ca')"><div class="th-inner">CA Total <i class="ti ti-arrows-sort" style="font-size:11px;color:var(--text3)"></i></div></th>
+                <th>Commission</th>
+                <th class="sortable" onclick="sortCommercials('completion')"><div class="th-inner">Complétion <i class="ti ti-arrows-sort" style="font-size:11px;color:var(--text3)"></i></div></th>
+                <th>Avances</th>
+                <th>Net à reverser</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody id="comm-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tab performances -->
+
+  <!-- ══════════════════════════════════════
+       TAB 2 — HISTORIQUE
+  ══════════════════════════════════════════ -->
+  <div class="tab-content fade-in" id="content-historique">
+
+    <!-- FILTERS -->
+    <div class="hist-filters">
+      <div class="filter-group" style="max-width:220px">
+        <div class="filter-label"><i class="ti ti-user" style="font-size:12px"></i> Commercial</div>
+        <select class="filter-select" id="hist-commercial" onchange="updateHistorique()">
+          <option value="all">Tous les commerciaux</option>
+        </select>
+      </div>
+      <div class="filter-group" style="max-width:160px">
+        <div class="filter-label"><i class="ti ti-calendar" style="font-size:12px"></i> Du</div>
+        <input type="date" class="filter-input" id="hist-from" value="2026-01-01" onchange="updateHistorique()"/>
+      </div>
+      <div class="filter-group" style="max-width:160px">
+        <div class="filter-label"><i class="ti ti-calendar" style="font-size:12px"></i> Au</div>
+        <input type="date" class="filter-input" id="hist-to" value="2026-06-27" onchange="updateHistorique()"/>
+      </div>
+      <div class="filter-group" style="max-width:180px">
+        <div class="filter-label"><i class="ti ti-filter" style="font-size:12px"></i> Statut</div>
+        <select class="filter-select" id="hist-status" onchange="updateHistorique()">
+          <option value="all">Tous les statuts</option>
+          <option value="CLOTURE">Clôturée</option>
+          <option value="EN_COURS">En cours</option>
+          <option value="EN_RETOUR">En retour</option>
+          <option value="ANNULE">Annulée</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="updateHistorique()"><i class="ti ti-search"></i> Filtrer</button>
+    </div>
+
+    <!-- SUMMARY CARD -->
+    <div class="summary-card" id="hist-summary">
+      <div class="summary-header">
+        <div class="avatar" id="hist-avatar" style="background:var(--p0);width:38px;height:38px;font-size:13px">—</div>
+        <div>
+          <div class="summary-title" id="hist-name">Tous les commerciaux</div>
+          <div style="font-size:11px;color:var(--text3)" id="hist-period">Jan 2026 → Juin 2026</div>
+        </div>
+      </div>
+      <div class="summary-grid" id="hist-summary-grid">
+        <div class="sum-item"><span class="sum-val" id="hs-ca" style="color:var(--p2)">—</span><span class="sum-lbl">CA période</span></div>
+        <div class="sum-item"><span class="sum-val" id="hs-livs">—</span><span class="sum-lbl">Livraisons</span></div>
+        <div class="sum-item"><span class="sum-val" id="hs-compl">—</span><span class="sum-lbl">Complétion</span></div>
+        <div class="sum-item"><span class="sum-val" id="hs-comm" style="color:var(--p1)">—</span><span class="sum-lbl">Commission</span></div>
+        <div class="sum-item"><span class="sum-val" id="hs-avances">—</span><span class="sum-lbl">Avances</span></div>
+        <div class="sum-item"><span class="sum-val" id="hs-net" style="color:var(--p0)">—</span><span class="sum-lbl">Net reversé</span></div>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW -->
+    <div class="charts-row">
+      <div class="chart-panel">
+        <div class="chart-panel-title"><i class="ti ti-chart-bar" style="color:var(--p0)"></i> CA mensuel (DT)</div>
+        <div class="chart-wrap" style="height:220px"><canvas id="monthlyChart"></canvas></div>
+      </div>
+      <div class="chart-panel">
+        <div class="chart-panel-title"><i class="ti ti-chart-donut" style="color:var(--p3)"></i> Répartition statuts</div>
+        <div class="chart-wrap" style="height:220px"><canvas id="statusChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- COMPARE SECTION -->
+    <div class="compare-section">
+      <div class="compare-header">
+        <div class="compare-title"><i class="ti ti-arrows-diff" style="color:var(--p3)"></i> Comparaison multi-commerciaux</div>
+        <div style="font-size:11px;color:var(--text3)">Sélectionnez 2 à 5 commerciaux à comparer</div>
+      </div>
+      <div class="compare-chips" id="compare-chips"></div>
+      <div class="compare-table-wrap">
+        <table class="compare-table" id="compare-table">
+          <thead><tr id="compare-thead"></tr></thead>
+          <tbody id="compare-tbody"></tbody>
+        </table>
+      </div>
+      <div class="compare-chart-wrap"><canvas id="compareChart"></canvas></div>
+    </div>
+
+    <!-- HISTORIQUE TABLE -->
+    <div class="hist-table-wrap">
+      <div class="hist-table-header">
+        <div class="hist-table-title"><i class="ti ti-list-details" style="color:var(--p2)"></i> Historique des livraisons</div>
+        <span class="badge badge-gray" id="hist-count">— livraisons</span>
+      </div>
+      <div class="scroll-x">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Référence</th>
+              <th>Commercial</th>
+              <th>Date</th>
+              <th>Statut</th>
+              <th>Chargé</th>
+              <th>Vendu</th>
+              <th>Écoulement</th>
+              <th>CA</th>
+              <th>Commission</th>
+              <th>Avances</th>
+              <th>Net reversé</th>
+              <th>Durée</th>
+            </tr>
+          </thead>
+          <tbody id="hist-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /tab historique -->
+
+</div><!-- /page -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+/* ════════════════════════════════════════════════
+   MOCK DATA
+════════════════════════════════════════════════ */
+const PALETTE = ['#2a78d6','#0f9e6a','#c98500','#7c3aed','#dc2626','#db2777','#d95926','#16a34a','#0891b2','#9333ea','#e11d48','#65a30d'];
+
+const COMMERCIAUX = [
+  {
+    id:'c1', color:'#2a78d6', name:'Youssef Ben Salah', initials:'YB',
+    vehicle:'Ford Transit', plate:'TU 224 TN', active:true,
+    status:'EN_COURS', since:'2024-03-15',
+    livraisons:34, actives:1, cloturees:30, annulees:2, en_retour:1,
+    ca:48750.500, avances:4200.000, ecoulement:82,
+    history:[
+      {ref:'LIV-20260622-001',date:'2026-06-22',status:'EN_COURS',charge:170,vendu:138,ca:3910.500,comm:391.050,avances:300,duree:5},
+      {ref:'LIV-20260615-001',date:'2026-06-15',status:'CLOTURE',charge:150,vendu:143,ca:4050.250,comm:405.025,avances:500,duree:3},
+      {ref:'LIV-20260601-001',date:'2026-06-01',status:'CLOTURE',charge:200,vendu:188,ca:5320.000,comm:532.000,avances:600,duree:4},
+      {ref:'LIV-20260515-001',date:'2026-05-15',status:'CLOTURE',charge:160,vendu:155,ca:4390.500,comm:439.050,avances:400,duree:3},
+      {ref:'LIV-20260501-001',date:'2026-05-01',status:'ANNULE',charge:130,vendu:0,ca:0,comm:0,avances:0,duree:1},
+      {ref:'LIV-20260415-001',date:'2026-04-15',status:'CLOTURE',charge:180,vendu:172,ca:4870.000,comm:487.000,avances:500,duree:4},
+    ]
+  },
+  {
+    id:'c2', color:'#0f9e6a', name:'Amira Trabelsi', initials:'AT',
+    vehicle:'Peugeot Partner', plate:'RS 118 TN', active:true,
+    status:'INACTIVE', since:'2023-11-20',
+    livraisons:52, actives:0, cloturees:49, annulees:1, en_retour:0,
+    ca:71230.750, avances:6800.000, ecoulement:91,
+    history:[
+      {ref:'LIV-20260618-002',date:'2026-06-18',status:'CLOTURE',charge:220,vendu:210,ca:5950.500,comm:595.050,avances:700,duree:3},
+      {ref:'LIV-20260605-002',date:'2026-06-05',status:'CLOTURE',charge:200,vendu:196,ca:5550.000,comm:555.000,avances:600,duree:4},
+      {ref:'LIV-20260520-002',date:'2026-05-20',status:'CLOTURE',charge:240,vendu:224,ca:6340.000,comm:634.000,avances:800,duree:3},
+      {ref:'LIV-20260505-002',date:'2026-05-05',status:'CLOTURE',charge:180,vendu:170,ca:4810.000,comm:481.000,avances:500,duree:4},
+      {ref:'LIV-20260420-002',date:'2026-04-20',status:'CLOTURE',charge:200,vendu:195,ca:5520.000,comm:552.000,avances:600,duree:3},
+    ]
+  },
+  {
+    id:'c3', color:'#c98500', name:'Mohamed Chaabane', initials:'MC',
+    vehicle:'Renault Kangoo', plate:'SF 442 TN', active:true,
+    status:'EN_RETOUR', since:'2025-01-08',
+    livraisons:21, actives:1, cloturees:18, annulees:2, en_retour:1,
+    ca:27840.000, avances:2100.000, ecoulement:74,
+    history:[
+      {ref:'LIV-20260620-003',date:'2026-06-20',status:'EN_RETOUR',charge:140,vendu:102,ca:2890.000,comm:289.000,avances:200,duree:7},
+      {ref:'LIV-20260608-003',date:'2026-06-08',status:'CLOTURE',charge:120,vendu:110,ca:3115.000,comm:311.500,avances:300,duree:4},
+      {ref:'LIV-20260525-003',date:'2026-05-25',status:'CLOTURE',charge:130,vendu:118,ca:3342.000,comm:334.200,avances:350,duree:5},
+      {ref:'LIV-20260510-003',date:'2026-05-10',status:'ANNULE',charge:100,vendu:0,ca:0,comm:0,avances:0,duree:2},
+      {ref:'LIV-20260425-003',date:'2026-04-25',status:'CLOTURE',charge:150,vendu:138,ca:3909.000,comm:390.900,avances:400,duree:4},
+    ]
+  },
+  {
+    id:'c4', color:'#7c3aed', name:'Sarra Mansouri', initials:'SM',
+    vehicle:'Citroën Berlingo', plate:'BS 337 TN', active:true,
+    status:'INACTIVE', since:'2024-07-22',
+    livraisons:29, actives:0, cloturees:26, annulees:2, en_retour:0,
+    ca:39560.500, avances:3400.000, ecoulement:87,
+    history:[
+      {ref:'LIV-20260614-004',date:'2026-06-14',status:'CLOTURE',charge:160,vendu:144,ca:4079.500,comm:407.950,avances:400,duree:3},
+      {ref:'LIV-20260601-004',date:'2026-06-01',status:'CLOTURE',charge:190,vendu:172,ca:4868.000,comm:486.800,avances:500,duree:4},
+      {ref:'LIV-20260518-004',date:'2026-05-18',status:'CLOTURE',charge:170,vendu:158,ca:4474.000,comm:447.400,avances:450,duree:4},
+      {ref:'LIV-20260504-004',date:'2026-05-04',status:'ANNULE',charge:120,vendu:0,ca:0,comm:0,avances:0,duree:1},
+      {ref:'LIV-20260420-004',date:'2026-04-20',status:'CLOTURE',charge:155,vendu:148,ca:4188.500,comm:418.850,avances:400,duree:3},
+    ]
+  },
+  {
+    id:'c5', color:'#dc2626', name:'Karim Jebali', initials:'KJ',
+    vehicle:'Ford Transit', plate:'MN 091 TN', active:true,
+    status:'INACTIVE', since:'2023-06-14',
+    livraisons:67, actives:0, cloturees:63, annulees:3, en_retour:0,
+    ca:92140.250, avances:9100.000, ecoulement:88,
+    history:[
+      {ref:'LIV-20260617-005',date:'2026-06-17',status:'CLOTURE',charge:250,vendu:228,ca:6455.000,comm:645.500,avances:800,duree:3},
+      {ref:'LIV-20260603-005',date:'2026-06-03',status:'CLOTURE',charge:280,vendu:258,ca:7301.000,comm:730.100,avances:900,duree:4},
+      {ref:'LIV-20260520-005',date:'2026-05-20',status:'CLOTURE',charge:260,vendu:240,ca:6792.000,comm:679.200,avances:800,duree:3},
+      {ref:'LIV-20260506-005',date:'2026-05-06',status:'CLOTURE',charge:270,vendu:252,ca:7133.000,comm:713.300,avances:850,duree:4},
+      {ref:'LIV-20260422-005',date:'2026-04-22',status:'ANNULE',charge:180,vendu:0,ca:0,comm:0,avances:0,duree:1},
+    ]
+  },
+  {
+    id:'c6', color:'#d95926', name:'Nadia Bouchriha', initials:'NB',
+    vehicle:'Peugeot Expert', plate:'TN 556 TN', active:true,
+    status:'INACTIVE', since:'2024-10-05',
+    livraisons:18, actives:0, cloturees:15, annulees:2, en_retour:0,
+    ca:21450.000, avances:1800.000, ecoulement:71,
+    history:[
+      {ref:'LIV-20260612-006',date:'2026-06-12',status:'CLOTURE',charge:110,vendu:88,ca:2492.000,comm:249.200,avances:200,duree:4},
+      {ref:'LIV-20260530-006',date:'2026-05-30',status:'CLOTURE',charge:120,vendu:95,ca:2689.500,comm:268.950,avances:250,duree:5},
+      {ref:'LIV-20260515-006',date:'2026-05-15',status:'CLOTURE',charge:100,vendu:78,ca:2208.000,comm:220.800,avances:200,duree:4},
+      {ref:'LIV-20260501-006',date:'2026-05-01',status:'ANNULE',charge:90,vendu:0,ca:0,comm:0,avances:0,duree:2},
+      {ref:'LIV-20260416-006',date:'2026-04-16',status:'CLOTURE',charge:115,vendu:88,ca:2492.000,comm:249.200,avances:200,duree:5},
+    ]
+  }
+];
+
+/* monthly CA mock per commercial (Jan–Jun 2026) */
+const MONTHS = ['Jan','Fév','Mar','Avr','Mai','Jun'];
+const MONTHLY_CA = {
+  c1:[6200,5800,7100,8200,9100,12350],
+  c2:[9800,10200,11500,12100,13800,13830],
+  c3:[3800,4200,4500,5100,5200,5040],
+  c4:[5600,6100,6800,7200,7400,6460],
+  c5:[12500,13200,14800,15600,16200,19840],
+  c6:[2800,3100,3500,4000,4490,3560]
+};
+
+let currentView = 'grid';
+let currentSort = 'ca';
+let currentSearch = '';
+let selectedCompare = ['c1','c2'];
+let monthlyChart = null;
+let statusChart = null;
+let compareChart = null;
+
+/* ── FORMATTERS ── */
+const fmtDT = v => parseFloat(v).toLocaleString('fr-TN',{minimumFractionDigits:3,maximumFractionDigits:3}) + ' DT';
+const fmtDTShort = v => {
+  const n = parseFloat(v);
+  if(n >= 1000) return (n/1000).toLocaleString('fr-TN',{minimumFractionDigits:1,maximumFractionDigits:1}) + ' k DT';
+  return n.toLocaleString('fr-TN',{minimumFractionDigits:3}) + ' DT';
+};
+const fmtPct = v => parseFloat(v).toFixed(0) + ' %';
+const hexAlpha = (hex,a) => {
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+};
+
+function statusLabel(s){
+  const map={EN_COURS:'En tournée',EN_RETOUR:'En retour',INACTIVE:'Inactif',CLOTURE:'Clôturée',ANNULE:'Annulée'};
+  return map[s]||s;
+}
+function statusBadgeClass(s){
+  const m={EN_COURS:'badge-green',EN_RETOUR:'badge-orange',INACTIVE:'badge-gray',CLOTURE:'badge-blue',ANNULE:'badge-red'};
+  return m[s]||'badge-gray';
+}
+
+/* ── GLOBAL KPIs ── */
+function computeGlobals(){
+  const agents = COMMERCIAUX.length;
+  const encours = COMMERCIAUX.filter(c=>c.status==='EN_COURS'||c.status==='EN_RETOUR').length;
+  const caGlobal = COMMERCIAUX.reduce((a,c)=>a+c.ca,0);
+  const commGlobal = caGlobal * 0.1;
+  const completionAvg = COMMERCIAUX.reduce((a,c)=>a+(c.cloturees/c.livraisons*100),0)/COMMERCIAUX.length;
+  return {agents,encours,caGlobal,commGlobal,completionAvg};
+}
+
+function renderGlobals(){
+  const g = computeGlobals();
+  document.getElementById('kv-agents').textContent = g.agents;
+  document.getElementById('kv-encours').textContent = g.encours;
+  document.getElementById('kv-ca').textContent = fmtDTShort(g.caGlobal);
+  document.getElementById('kv-comm').textContent = fmtDTShort(g.commGlobal);
+  document.getElementById('kv-completion').textContent = fmtPct(g.completionAvg);
+  document.getElementById('page-sub').textContent = `${g.agents} commerciaux actifs · CA global: ${fmtDTShort(g.caGlobal)}`;
+}
+
+/* ── SORT & FILTER ── */
+function getSorted(){
+  let arr = [...COMMERCIAUX];
+  const q = currentSearch.trim().toLowerCase();
+  if(q) arr = arr.filter(c=>c.name.toLowerCase().includes(q));
+  const fns={
+    ca:(a,b)=>b.ca-a.ca,
+    name:(a,b)=>a.name.localeCompare(b.name,'fr'),
+    completion:(a,b)=>(b.cloturees/b.livraisons)-(a.cloturees/a.livraisons),
+    ecoulement:(a,b)=>b.ecoulement-a.ecoulement,
+    livraisons:(a,b)=>b.livraisons-a.livraisons
+  };
+  arr.sort(fns[currentSort]||fns.ca);
+  return arr;
+}
+function sortCommercials(v){currentSort=v;renderCommercials()}
+function filterCommercials(){currentSearch=document.getElementById('search-input').value;renderCommercials()}
+function setView(v){
+  currentView=v;
+  document.getElementById('comm-grid').style.display=v==='grid'?'':'none';
+  document.getElementById('comm-list').style.display=v==='list'?'':'none';
+  document.getElementById('vbtn-grid').classList.toggle('active',v==='grid');
+  document.getElementById('vbtn-list').classList.toggle('active',v==='list');
+  renderCommercials();
+}
+
+/* ── PROGRESS RING ── */
+function ringHTML(pct,color){
+  const r=18,c=2*Math.PI*r,dash=c*(pct/100),gap=c-dash;
+  return `<svg width="42" height="42" viewBox="0 0 42 42">
+    <circle class="ring-bg" cx="21" cy="21" r="${r}" stroke-width="4"/>
+    <circle class="ring-fill" cx="21" cy="21" r="${r}" stroke="${color}" stroke-width="4"
+      stroke-dasharray="${dash} ${gap}" stroke-dashoffset="0"/>
+  </svg>`;
+}
+
+/* ── RENDER CARD GRID ── */
+function renderCommercials(){
+  const arr = getSorted();
+  if(currentView==='grid') renderGrid(arr);
+  else renderList(arr);
+}
+
+function renderGrid(arr){
+  const grid = document.getElementById('comm-grid');
+  grid.innerHTML='';
+  if(!arr.length){
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3)"><i class="ti ti-user-off" style="font-size:32px"></i><br/>Aucun commercial trouvé</div>';
+    return;
+  }
+  arr.forEach(c=>{
+    const compl = Math.round(c.cloturees/c.livraisons*100);
+    const net = c.ca - (c.ca*0.1) - c.avances;
+    const div=document.createElement('div');
+    div.className='comm-card fade-in';
+    div.style.setProperty('--cc',c.color);
+    div.innerHTML=`
+      <div class="cc-top">
+        <div class="avatar" style="background:${c.color}">${c.initials}</div>
+        <div class="cc-info">
+          <div class="cc-name">${c.name}</div>
+          <div class="cc-vehicle"><i class="ti ti-car"></i>${c.vehicle} · ${c.plate}</div>
+        </div>
+        <span class="badge ${statusBadgeClass(c.status)}" style="margin-left:auto;flex-shrink:0">
+          ${c.status==='EN_COURS'?'<span style="display:inline-block;width:6px;height:6px;background:#0f9e6a;border-radius:50%;margin-right:3px"></span>':''}
+          ${statusLabel(c.status)}
+        </span>
+      </div>
+      <div class="cc-kpis">
+        <div class="cc-kpi">
+          <span class="cc-kpi-val">${c.livraisons}</span>
+          <span class="cc-kpi-lbl">Livraisons</span>
+        </div>
+        <div class="cc-kpi">
+          <span class="cc-kpi-val" style="color:${c.color}">${c.ecoulement}%</span>
+          <span class="cc-kpi-lbl">Écoulement</span>
+        </div>
+        <div class="cc-kpi">
+          <span class="cc-kpi-val" style="color:#0f9e6a">${compl}%</span>
+          <span class="cc-kpi-lbl">Complétion</span>
+        </div>
+      </div>
+      <div class="bar-outer"><div class="bar-inner" style="width:${c.ecoulement}%;background:${c.color}"></div></div>
+      <div class="cc-footer">
+        <div>
+          <div class="cc-ca" style="color:${c.color}">${fmtDTShort(c.ca)}</div>
+          <div class="cc-rate-lbl">Net: ${fmtDTShort(Math.max(0,net))}</div>
+        </div>
+        <button class="btn btn-sm" style="color:${c.color};border-color:${hexAlpha(c.color,.3)}" onclick="viewHistorique('${c.id}')">
+          <i class="ti ti-eye"></i> Détail
+        </button>
+      </div>`;
+    grid.appendChild(div);
+  });
+}
+
+function renderList(arr){
+  const tbody=document.getElementById('comm-table-body');
+  tbody.innerHTML='';
+  arr.forEach(c=>{
+    const compl=Math.round(c.cloturees/c.livraisons*100);
+    const net=c.ca-(c.ca*0.1)-c.avances;
+    const tr=document.createElement('tr');
+    tr.onclick=()=>viewHistorique(c.id);
+    tr.innerHTML=`
+      <td>
+        <div class="agent-cell">
+          <div class="avatar-sm" style="background:${c.color}">${c.initials}</div>
+          <span style="font-weight:500">${c.name}</span>
+        </div>
+      </td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${c.vehicle}<br/><span style="color:var(--text3)">${c.plate}</span></td>
+      <td class="mono">${c.livraisons}</td>
+      <td><span class="badge ${statusBadgeClass(c.status)}">${c.actives||0}</span></td>
+      <td class="mono" style="color:${c.color};font-weight:600">${fmtDTShort(c.ca)}</td>
+      <td class="mono" style="color:#0f9e6a">${fmtDTShort(c.ca*0.1)}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;height:4px;background:rgba(0,0,0,.07);border-radius:4px;overflow:hidden;min-width:50px">
+            <div style="height:100%;width:${compl}%;background:#0f9e6a;border-radius:4px"></div>
+          </div>
+          <span class="mono" style="font-size:11px;white-space:nowrap">${compl}%</span>
+        </div>
+      </td>
+      <td class="mono">${fmtDTShort(c.avances)}</td>
+      <td class="mono" style="color:var(--p0);font-weight:600">${fmtDTShort(Math.max(0,net))}</td>
+      <td><span class="badge ${statusBadgeClass(c.status)}">${statusLabel(c.status)}</span></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ── HISTORIQUE ── */
+function initHistFilters(){
+  const sel=document.getElementById('hist-commercial');
+  COMMERCIAUX.forEach(c=>{
+    const o=document.createElement('option');
+    o.value=c.id; o.textContent=c.name;
+    sel.appendChild(o);
+  });
+}
+
+function updateHistorique(){
+  const cid=document.getElementById('hist-commercial').value;
+  const statusF=document.getElementById('hist-status').value;
+  const comms = cid==='all' ? COMMERCIAUX : COMMERCIAUX.filter(c=>c.id===cid);
+
+  // gather all history
+  let allHist = comms.flatMap(c=>c.history.map(h=>({...h,comm_id:c.id,comm_name:c.name,comm_color:c.color,comm_initials:c.initials})));
+  if(statusF!=='all') allHist=allHist.filter(h=>h.status===statusF);
+
+  // summary
+  const totalCA=allHist.filter(h=>h.status==='CLOTURE').reduce((a,h)=>a+h.ca,0);
+  const totalLivs=allHist.length;
+  const totalCloture=allHist.filter(h=>h.status==='CLOTURE').length;
+  const compl=totalLivs>0?Math.round(totalCloture/totalLivs*100):0;
+  const totalComm=totalCA*0.1;
+  const totalAvances=allHist.reduce((a,h)=>a+h.avances,0);
+  const totalNet=totalCA-totalComm-totalAvances;
+
+  const c1 = comms.length===1?comms[0]:null;
+  document.getElementById('hist-avatar').textContent=c1?c1.initials:'ΣΣ';
+  document.getElementById('hist-avatar').style.background=c1?c1.color:'var(--p0)';
+  document.getElementById('hist-name').textContent=c1?c1.name:'Tous les commerciaux';
+  document.getElementById('hs-ca').textContent=fmtDT(totalCA);
+  document.getElementById('hs-livs').textContent=totalLivs;
+  document.getElementById('hs-compl').textContent=fmtPct(compl);
+  document.getElementById('hs-comm').textContent=fmtDT(totalComm);
+  document.getElementById('hs-avances').textContent=fmtDT(totalAvances);
+  document.getElementById('hs-net').textContent=fmtDT(Math.max(0,totalNet));
+
+  // monthly chart
+  const color = c1?c1.color:'#2a78d6';
+  const monthlyData = cid==='all'
+    ? MONTHS.map((_,i)=>COMMERCIAUX.reduce((a,c)=>a+(MONTHLY_CA[c.id]?.[i]||0),0))
+    : (MONTHLY_CA[cid]||[0,0,0,0,0,0]);
+  updateMonthlyChart(monthlyData,color);
+
+  // status donut
+  const sCloture=allHist.filter(h=>h.status==='CLOTURE').length;
+  const sAnnule=allHist.filter(h=>h.status==='ANNULE').length;
+  const sEnCours=allHist.filter(h=>h.status==='EN_COURS').length;
+  const sEnRetour=allHist.filter(h=>h.status==='EN_RETOUR').length;
+  updateStatusChart([sCloture,sAnnule,sEnCours,sEnRetour]);
+
+  // table
+  renderHistTable(allHist);
+
+  // compare
+  renderCompare();
+}
+
+function renderHistTable(arr){
+  const tbody=document.getElementById('hist-tbody');
+  tbody.innerHTML='';
+  document.getElementById('hist-count').textContent=`${arr.length} livraison${arr.length>1?'s':''}`;
+  if(!arr.length){
+    tbody.innerHTML='<tr><td colspan="12" style="text-align:center;padding:30px;color:var(--text3)">Aucune livraison trouvée</td></tr>';
+    return;
+  }
+  arr.forEach(h=>{
+    const eco=h.charge>0?Math.round(h.vendu/h.charge*100):0;
+    const net=h.ca-h.comm-h.avances;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td style="font-family:var(--mono);font-size:11px;color:var(--p0);font-weight:500">${h.ref}</td>
+      <td>
+        <div class="agent-cell">
+          <div class="avatar-sm" style="background:${h.comm_color};width:26px;height:26px;font-size:10px">${h.comm_initials}</div>
+          <span style="font-size:12px">${h.comm_name}</span>
+        </div>
+      </td>
+      <td style="font-size:12px;color:var(--text2);white-space:nowrap">${new Date(h.date).toLocaleDateString('fr-TN',{day:'2-digit',month:'short',year:'numeric'})}</td>
+      <td><span class="status-badge ${statusBadgeClass(h.status)}">${statusLabel(h.status)}</span></td>
+      <td class="mono">${h.charge}</td>
+      <td class="mono" style="color:${h.comm_color};font-weight:600">${h.vendu}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="flex:1;height:3px;background:rgba(0,0,0,.07);border-radius:4px;min-width:36px">
+            <div style="height:100%;width:${eco}%;background:${h.comm_color};border-radius:4px"></div>
+          </div>
+          <span class="mono" style="font-size:11px">${eco}%</span>
+        </div>
+      </td>
+      <td class="mono" style="font-weight:600">${fmtDT(h.ca)}</td>
+      <td class="mono" style="color:#0f9e6a">${fmtDT(h.comm)}</td>
+      <td class="mono">${fmtDT(h.avances)}</td>
+      <td class="mono" style="color:var(--p0)">${fmtDT(Math.max(0,net))}</td>
+      <td class="mono">${h.duree}j</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ── CHARTS ── */
+function updateMonthlyChart(data,color){
+  const ctx=document.getElementById('monthlyChart');
+  if(monthlyChart){monthlyChart.destroy();monthlyChart=null}
+  monthlyChart=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:MONTHS,
+      datasets:[{
+        label:'CA (DT)',
+        data,
+        backgroundColor:hexAlpha(color,.7),
+        borderColor:color,
+        borderWidth:1.5,
+        borderRadius:6,
+        borderSkipped:false
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{
+        backgroundColor:'#fff',borderColor:'rgba(0,0,0,.1)',borderWidth:1,
+        titleColor:'#52566a',bodyColor:'#111318',padding:10,cornerRadius:8,
+        callbacks:{label:ctx=>' '+fmtDT(ctx.raw)}
+      }},
+      scales:{
+        x:{grid:{display:false},border:{display:false},ticks:{color:'#9ea3b5',font:{family:'Inter',size:11}}},
+        y:{grid:{color:'rgba(0,0,0,.05)'},border:{display:false},ticks:{color:'#9ea3b5',font:{family:'JetBrains Mono',size:10},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}}
+      }
+    }
+  });
+}
+
+function updateStatusChart(data){
+  const ctx=document.getElementById('statusChart');
+  if(statusChart){statusChart.destroy();statusChart=null}
+  statusChart=new Chart(ctx,{
+    type:'doughnut',
+    data:{
+      labels:['Clôturée','Annulée','En cours','En retour'],
+      datasets:[{
+        data,
+        backgroundColor:['#0f9e6a','#dc2626','#2a78d6','#d95926'],
+        borderWidth:2,borderColor:'#fff',
+        hoverOffset:6
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      cutout:'65%',
+      plugins:{
+        legend:{position:'bottom',labels:{font:{family:'Inter',size:11},color:'#52566a',padding:12,boxWidth:10,borderRadius:3}},
+        tooltip:{backgroundColor:'#fff',borderColor:'rgba(0,0,0,.1)',borderWidth:1,titleColor:'#52566a',bodyColor:'#111318',padding:10,cornerRadius:8}
+      }
+    }
+  });
+}
+
+/* ── COMPARE ── */
+function renderCompare(){
+  // chips
+  const chipsEl=document.getElementById('compare-chips');
+  chipsEl.innerHTML='';
+  COMMERCIAUX.forEach(c=>{
+    const sel=selectedCompare.includes(c.id);
+    const chip=document.createElement('span');
+    chip.className='chip'+(sel?' selected':'');
+    chip.style.color=c.color;
+    chip.style.background=hexAlpha(c.color,.08);
+    chip.innerHTML=`<span class="avatar-sm" style="background:${c.color};width:20px;height:20px;font-size:9px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font-weight:700">${c.initials}</span>${c.name}`;
+    chip.onclick=()=>{
+      if(sel){
+        if(selectedCompare.length<=2)return;
+        selectedCompare=selectedCompare.filter(x=>x!==c.id);
+      } else {
+        if(selectedCompare.length>=5)return;
+        selectedCompare.push(c.id);
+      }
+      renderCompare();
+    };
+    chipsEl.appendChild(chip);
+  });
+
+  const sel=COMMERCIAUX.filter(c=>selectedCompare.includes(c.id));
+
+  // table
+  const thead=document.getElementById('compare-thead');
+  const tbody=document.getElementById('compare-tbody');
+  thead.innerHTML='<th style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);padding:8px 12px">Indicateur</th>';
+  sel.forEach(c=>{
+    const th=document.createElement('th');
+    th.style.color=c.color;
+    th.innerHTML=`<div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:${c.color}"></div>${c.name}</div>`;
+    thead.appendChild(th);
+  });
+
+  const metrics=[
+    {label:'CA Total',fn:c=>fmtDTShort(c.ca)},
+    {label:'Commission (10%)',fn:c=>fmtDTShort(c.ca*0.1)},
+    {label:'Livraisons totales',fn:c=>c.livraisons},
+    {label:'Clôturées',fn:c=>c.cloturees},
+    {label:'Annulées',fn:c=>c.annulees},
+    {label:'Taux complétion',fn:c=>fmtPct(c.cloturees/c.livraisons*100)},
+    {label:"Taux d'écoulement",fn:c=>fmtPct(c.ecoulement)},
+    {label:'Avances',fn:c=>fmtDTShort(c.avances)},
+    {label:'Net à reverser',fn:c=>fmtDTShort(Math.max(0,c.ca-c.ca*0.1-c.avances))},
+  ];
+  tbody.innerHTML='';
+  metrics.forEach((m,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="font-size:12px;font-weight:500;color:var(--text2);padding:10px 12px;background:${i%2===0?'var(--surface2)':'var(--surface)'}">${m.label}</td>`;
+    sel.forEach(c=>{
+      const td=document.createElement('td');
+      td.style.fontFamily='var(--mono)';td.style.fontSize='12px';
+      td.style.background=i%2===0?'var(--surface2)':'var(--surface)';
+      td.textContent=m.fn(c);
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+
+  // compare chart
+  const ctx=document.getElementById('compareChart');
+  if(compareChart){compareChart.destroy();compareChart=null}
+  compareChart=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:MONTHS,
+      datasets:sel.map(c=>({
+        label:c.name,
+        data:MONTHLY_CA[c.id]||[],
+        backgroundColor:hexAlpha(c.color,.7),
+        borderColor:c.color,
+        borderWidth:1.5,
+        borderRadius:4
+      }))
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'bottom',labels:{font:{family:'Inter',size:11},color:'#52566a',padding:12,boxWidth:10,borderRadius:3}},
+        tooltip:{backgroundColor:'#fff',borderColor:'rgba(0,0,0,.1)',borderWidth:1,titleColor:'#52566a',bodyColor:'#111318',padding:10,cornerRadius:8,
+          callbacks:{label:ctx=>' '+ctx.dataset.label+': '+fmtDT(ctx.raw)}}
+      },
+      scales:{
+        x:{grid:{display:false},border:{display:false},ticks:{color:'#9ea3b5',font:{family:'Inter',size:10}}},
+        y:{grid:{color:'rgba(0,0,0,.05)'},border:{display:false},ticks:{color:'#9ea3b5',font:{family:'JetBrains Mono',size:10},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v}}
+      }
+    }
+  });
+}
+
+/* ── TABS ── */
+function switchTab(name){
+  document.querySelectorAll('.tab-content').forEach(el=>{el.classList.remove('active')});
+  document.querySelectorAll('.tab').forEach(el=>{el.classList.remove('active')});
+  document.getElementById('content-'+name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='historique'){setTimeout(()=>updateHistorique(),50)}
+}
+
+/* ── CLOCK ── */
+function updateClock(){
+  const now=new Date();
+  document.getElementById('clock-val').textContent=
+    now.toLocaleDateString('fr-TN',{day:'2-digit',month:'short'})+'  '+
+    now.toLocaleTimeString('fr-TN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+/* ── VIEW DETAIL ── */
+function viewHistorique(id){
+  document.getElementById('hist-commercial').value=id;
+  switchTab('historique');
+}
+
+function exportData(){
+  alert('Export CSV — à connecter à votre API backend.');
+}
+
+/* ── INIT ── */
+renderGlobals();
+renderCommercials();
+initHistFilters();
+updateClock();
+setInterval(updateClock,1000);
+</script>
+</body>
+</html>

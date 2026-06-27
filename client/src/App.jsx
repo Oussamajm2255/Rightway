@@ -16,6 +16,7 @@ import LivraisonDetailPage from './pages/LivraisonDetailPage';
 import SalesPage from './pages/SalesPage';
 import RealtimeMonitorPage from './pages/RealtimeMonitorPage';
 import HistoriquePage from './pages/HistoriquePage';
+import CommercialsPage from './pages/CommercialsPage';
 import DashboardPage from './pages/DashboardPage';
 
 function AppRoutes() {
@@ -80,6 +81,16 @@ function AppRoutesInner() {
           <ProtectedRoute>
             <RoleGuard roles={['SUPER_ADMIN', 'ADMIN']}>
               <StockPage />
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/commercials"
+        element={
+          <ProtectedRoute>
+            <RoleGuard roles={['SUPER_ADMIN', 'ADMIN']}>
+              <CommercialsPage />
             </RoleGuard>
           </ProtectedRoute>
         }

@@ -71,6 +71,16 @@ function IconHistorique() {
   );
 }
 
+function IconCommercials() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="10" width="3" height="7" rx="0.5" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="8.5" y="6" width="3" height="11" rx="0.5" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="14" y="3" width="3" height="14" rx="0.5" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
 function IconLogout() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -111,6 +121,7 @@ const ICON_MAP = {
   stock: IconStock,
   livraisons: IconLivraisons,
   historique: IconHistorique,
+  commercials: IconCommercials,
   logout: IconLogout,
 };
 
@@ -177,11 +188,13 @@ function AppLayout({ children }) {
     navItems.push({ to: '/products', label: 'Produits', icon: 'products' });
     navItems.push({ to: '/stock', label: 'Stock', icon: 'stock' });
     navItems.push({ to: '/livraisons', label: 'Livraisons', icon: 'livraisons' });
+    navItems.push({ to: '/commercials', label: 'Commerciaux', icon: 'commercials' });
     navItems.push({ to: '/historique', label: 'Historique', icon: 'historique' });
   } else if (role === 'ADMIN') {
     navItems.push({ to: '/', label: 'Tableau de bord', icon: 'dashboard' });
     navItems.push({ to: '/stock', label: 'Stock', icon: 'stock' });
     navItems.push({ to: '/livraisons', label: 'Livraisons', icon: 'livraisons' });
+    navItems.push({ to: '/commercials', label: 'Commerciaux', icon: 'commercials' });
     navItems.push({ to: '/historique', label: 'Historique', icon: 'historique' });
   } else if (role === 'COMMERCIAL') {
     navItems.push({ to: '/', label: 'Tableau de bord', icon: 'dashboard' });
@@ -209,6 +222,7 @@ function AppLayout({ children }) {
     if (path.startsWith('/livraisons/') && path.split('/').length === 3) return 'Détail livraison';
     if (path.startsWith('/livraisons')) return 'Livraisons';
     if (path.startsWith('/ventes')) return 'Déclaration des ventes';
+    if (path.startsWith('/commercials')) return 'Commerciaux';
     if (path.startsWith('/historique')) return 'Historique';
     return '';
   }
