@@ -715,22 +715,93 @@
 }
 
 /* ─── Responsive ─── */
+
+/* ≤ 900px — KPI grids 3-col, charts stack */
 @media (max-width: 900px) {
   .kpi-grid-6 { grid-template-columns: repeat(3, 1fr); }
   .kpi-grid-5 { grid-template-columns: repeat(3, 1fr); }
   .charts-grid { grid-template-columns: 1fr; }
 }
 
+/* ≤ 768px — tablet/mobile: table scroll, chart compact, topbar shrink */
+@media (max-width: 768px) {
+  .table-card {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .data-table-db {
+    min-width: 580px;
+  }
+  .chart-wrap { height: 180px; }
+  .chart-wrap canvas { max-height: 180px; }
+  .chart-card { padding: 14px; }
+  .chart-card h3 { font-size: 11px; margin-bottom: 10px; }
+  .dash-topbar { padding: 12px 16px 10px; }
+  .dash-topbar .topbar-title h1 { font-size: 15px; }
+  .dash-topbar .topbar-title span { font-size: 10.5px; }
+  .dash-topbar .topbar-left { gap: 10px; }
+  .live-badge { padding: 3px 8px 3px 5px; }
+  .live-text { font-size: 9px; }
+  .clock { min-width: 0; font-size: 11px; padding: 4px 8px; }
+  .dash-content { gap: 16px; padding: 16px; }
+  .kpi-grid { gap: 10px; }
+  .charts-grid { gap: 10px; }
+  .feed-item { padding: 10px 12px; }
+  .feed-text { font-size: 11.5px; }
+  .feed-icon { width: 28px; height: 28px; }
+}
+
+/* ≤ 640px — KPI 2-col, clock hidden, compact content */
 @media (max-width: 640px) {
   .kpi-grid-6,
   .kpi-grid-5 { grid-template-columns: repeat(2, 1fr); }
-  .dash-topbar { padding: 14px 16px; }
-  .dash-content { padding: 16px; }
   .clock { display: none; }
+  .kpi-card { padding: 14px; }
+  .kpi-value { font-size: 19px; }
+  .kpi-icon-wrap { width: 30px; height: 30px; }
+  .delivery-hero { padding: 16px; }
+  .delivery-ref { font-size: 16px; }
+  .delivery-ca strong { font-size: 14px; }
+  .section-header h2 { font-size: 9px; letter-spacing: 0.06em; }
 }
 
+/* ≤ 420px — single column, stacked actions, compact KPI */
 @media (max-width: 420px) {
   .kpi-grid-6,
   .kpi-grid-5 { grid-template-columns: 1fr; }
   .dash-topbar .topbar-right .btn { display: none; }
+  .dash-topbar { gap: 8px; }
+  .kpi-card { padding: 12px; }
+  .kpi-value { font-size: 18px; }
+  .kpi-icon-wrap { width: 28px; height: 28px; margin-bottom: 10px; }
+  .kpi-label { font-size: 9px; margin-bottom: 4px; }
+  .kpi-sub { font-size: 10px; }
+  .delivery-hero { padding: 12px; }
+  .delivery-actions { flex-direction: column; }
+  .delivery-actions .btn { width: 100%; justify-content: center; }
+  .delivery-progress-labels { flex-direction: column; gap: 4px; align-items: flex-start; }
+  .bon-card { flex-wrap: wrap; padding: 12px 14px; }
+  .bon-card .btn { width: 100%; margin-top: 8px; }
+  .bon-info { min-width: 0; }
+  .actions-row { flex-direction: column; }
+  .action-btn { width: 100%; justify-content: center; }
+  .dash-content { gap: 12px; padding: 12px; }
+  .feed-text { font-size: 11px; }
+  .feed-time { font-size: 10px; }
+  .delivery-ref { font-size: 15px; }
+  .delivery-ca strong { font-size: 13px; }
+}
+
+/* ≤ 360px — tiny phones: tighter tables, minimum KPI */
+@media (max-width: 360px) {
+  .kpi-card { padding: 10px; }
+  .kpi-value { font-size: 16px; }
+  .data-table-db { min-width: 480px; }
+  .data-table-db th { padding: 8px 10px; font-size: 9px; }
+  .data-table-db td { padding: 8px 10px; font-size: 11px; }
+  .dash-topbar .topbar-title h1 { font-size: 14px; }
+  .dash-topbar .topbar-title span { font-size: 10px; }
+  .live-badge { padding: 2px 6px 2px 4px; }
+  .live-dot { width: 6px; height: 6px; }
+  .live-text { font-size: 8px; }
 }
