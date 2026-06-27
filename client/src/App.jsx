@@ -18,6 +18,7 @@ import RealtimeMonitorPage from './pages/RealtimeMonitorPage';
 import HistoriquePage from './pages/HistoriquePage';
 import CommercialsPage from './pages/CommercialsPage';
 import DashboardPage from './pages/DashboardPage';
+import BenefitsPage from './pages/BenefitsPage';
 
 function AppRoutes() {
   const { user, loading } = useAuth();
@@ -71,6 +72,16 @@ function AppRoutesInner() {
           <ProtectedRoute>
             <RoleGuard roles={['SUPER_ADMIN']}>
               <ProductsPage />
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/benefits"
+        element={
+          <ProtectedRoute>
+            <RoleGuard roles={['SUPER_ADMIN']}>
+              <BenefitsPage />
             </RoleGuard>
           </ProtectedRoute>
         }

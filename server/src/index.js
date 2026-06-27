@@ -45,6 +45,7 @@ const livraisonsRoutes = require('./routes/livraisons');
 const dashboardRoutes = require('./routes/dashboard');
 const notificationsRoutes = require('./routes/notifications');
 const commercialsRoutes = require('./routes/commercials');
+const benefitsRoutes = require('./routes/benefits');
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -58,6 +59,7 @@ app.use('/api/livraisons', livraisonsRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/commercials', commercialsRoutes);
+app.use('/api/benefits', benefitsRoutes);
 
 // --- SPA fallback (production only) ---
 if (isProduction) {

@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bénéfices & Rentabilité — Right Way</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+/* ─── TOKENS ─── */
+:root {
+  --p0:#2a78d6; --p1:#0f9e6a; --p2:#c98500; --p3:#7c3aed;
+  --p4:#dc2626; --p5:#db2777; --p6:#d95926; --p7:#16a34a;
+  --p8:#0891b2; --p9:#9333ea; --p10:#e11d48; --p11:#65a30d;
+
+  --bg:#f0f2f7; --surface:#ffffff; --surface2:#f5f7fb;
+  --surface3:#ebeef6; --border:#e1e5ef; --border2:#cdd2e2;
+  --text:#111827; --text2:#4b5675; --text3:#8b93b0;
+  --radius:12px; --radius-sm:8px; --radius-xs:6px;
+  --shadow:0 2px 16px rgba(30,40,80,.09);
+  --transition:0.2s ease;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px;-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--surface2)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* ─── TOP BAR ─── */
+.topbar{padding:16px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(8px)}
+.topbar-left{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.page-icon{width:36px;height:36px;border-radius:var(--radius-sm);background:rgba(42,120,214,.1);border:1px solid rgba(42,120,214,.2);display:flex;align-items:center;justify-content:center}
+.page-icon i{font-size:18px;color:var(--p0)}
+.topbar-title h1{font-size:17px;font-weight:700;color:var(--text);letter-spacing:-.01em}
+.topbar-title span{font-size:11.5px;color:var(--text2);margin-top:1px;display:block}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.super-admin-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);border-radius:20px;padding:4px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--p3)}
+.super-admin-badge i{font-size:11px}
+
+/* ─── BUTTONS ─── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius-xs);font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--text2);transition:var(--transition);text-decoration:none;white-space:nowrap}
+.btn:hover{background:var(--surface3);color:var(--text);border-color:var(--border2)}
+.btn-primary{background:var(--p0);border-color:var(--p0);color:#fff}
+.btn-primary:hover{background:#2068c0;border-color:#2068c0;color:#fff}
+.btn-export{background:rgba(22,163,74,.08);border-color:rgba(22,163,74,.25);color:var(--p7)}
+.btn-export:hover{background:rgba(22,163,74,.16);color:var(--p7)}
+
+/* ─── CONTENT ─── */
+.content{padding:22px 24px;display:flex;flex-direction:column;gap:24px}
+
+/* ─── SECTION HEADER ─── */
+.section-header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.section-header h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);white-space:nowrap}
+.section-header-line{flex:1;height:1px;background:var(--border)}
+.section-header-actions{display:flex;align-items:center;gap:8px}
+
+/* ─── KPI GRID ─── */
+.kpi-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.kpi-card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 16px;cursor:default;transition:var(--transition);overflow:hidden}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius) var(--radius) 0 0}
+.kpi-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.kpi-icon i{font-size:17px}
+.kpi-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:6px}
+.kpi-value{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:500;color:var(--text);line-height:1;margin-bottom:5px}
+.kpi-sub{font-size:11px;color:var(--text3)}
+.kpi-value.positive{color:var(--p7)}
+.kpi-value.negative{color:var(--p4)}
+
+/* ─── SKELETON ─── */
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.skel{background:linear-gradient(90deg,var(--surface3) 25%,var(--border) 50%,var(--surface3) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px}
+
+/* ─── FILTERS BAR ─── */
+.filters-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.filter-group{display:flex;align-items:center;gap:6px}
+.filter-label{font-size:11px;font-weight:600;color:var(--text3);white-space:nowrap}
+.filter-input{font-family:'Inter',sans-serif;font-size:12.5px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xs);padding:6px 10px;outline:none;transition:var(--transition)}
+.filter-input:focus{border-color:var(--p0);box-shadow:0 0 0 3px rgba(42,120,214,.1)}
+.filter-input::placeholder{color:var(--text3)}
+select.filter-input{cursor:pointer}
+.filter-search{min-width:220px}
+.filter-period{display:flex;align-items:center;gap:6px}
+.filter-sep{font-size:11px;color:var(--text3)}
+.filters-right{margin-left:auto}
+
+/* ─── TABLE WRAPPER ─── */
+.table-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.table-scroll{overflow-x:auto}
+.data-table{width:100%;border-collapse:collapse;min-width:1000px}
+.data-table th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;user-select:none}
+.data-table th.sortable{cursor:pointer;transition:var(--transition)}
+.data-table th.sortable:hover{color:var(--p0);background:var(--surface3)}
+.data-table th .sort-icon{display:inline-flex;align-items:center;margin-left:4px;opacity:.4;font-size:10px}
+.data-table th.asc .sort-icon::after{content:'▲'}
+.data-table th.desc .sort-icon::after{content:'▼'}
+.data-table th:not(.asc):not(.desc) .sort-icon::after{content:'⇅'}
+.data-table th.asc .sort-icon,.data-table th.desc .sort-icon{opacity:1;color:var(--p0)}
+.data-table td{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12.5px;color:var(--text);vertical-align:middle}
+.data-table tbody tr:last-child td{border-bottom:none}
+.data-table tbody tr:hover td{background:rgba(42,120,214,.035)}
+.data-table tbody tr{transition:var(--transition)}
+
+/* ─── TABLE TFOOT (sticky totals) ─── */
+.data-table tfoot td{padding:10px 14px;background:var(--surface2);border-top:2px solid var(--border2);font-size:12px;font-weight:700;color:var(--text);position:sticky;bottom:0}
+
+/* ─── CATEGORY ROW COLORS ─── */
+tr[data-cat="Épicerie"] td{background:rgba(42,120,214,.025)}
+tr[data-cat="Boissons"] td{background:rgba(8,145,178,.025)}
+tr[data-cat="Produits Laitiers"] td{background:rgba(15,158,106,.025)}
+tr[data-cat="Hygiène"] td{background:rgba(124,58,237,.025)}
+tr[data-cat="Nettoyage"] td{background:rgba(217,89,38,.025)}
+tr[data-cat="Confiserie"] td{background:rgba(219,39,119,.025)}
+tr[data-cat="Conserves"] td{background:rgba(201,133,0,.025)}
+
+/* ─── CATEGORY BADGE ─── */
+.cat-badge{display:inline-flex;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
+.cat-Épicerie{background:rgba(42,120,214,.1);color:#1a58a6}
+.cat-Boissons{background:rgba(8,145,178,.1);color:#066d8f}
+.cat-Produits-Laitiers{background:rgba(15,158,106,.1);color:#0a7a51}
+.cat-Hygiène{background:rgba(124,58,237,.1);color:#5b1fcf}
+.cat-Nettoyage{background:rgba(217,89,38,.1);color:#a0390a}
+.cat-Confiserie{background:rgba(219,39,119,.1);color:#9d1560}
+.cat-Conserves{background:rgba(201,133,0,.1);color:#835800}
+.cat-default{background:var(--surface3);color:var(--text3)}
+
+/* ─── BENEFIT VALUE ─── */
+.val-positive{color:var(--p7);font-family:'JetBrains Mono',monospace;font-weight:500}
+.val-negative{color:var(--p4);font-family:'JetBrains Mono',monospace;font-weight:500}
+.val-neutral{color:var(--text2);font-family:'JetBrains Mono',monospace}
+.val-mono{font-family:'JetBrains Mono',monospace}
+
+/* ─── MARGIN PROGRESS ─── */
+.margin-cell{display:flex;align-items:center;gap:7px;min-width:110px}
+.margin-track{flex:1;height:5px;background:var(--surface3);border-radius:20px;overflow:hidden}
+.margin-fill{height:100%;border-radius:20px}
+.margin-pct{font-family:'JetBrains Mono',monospace;font-size:11px;min-width:38px;text-align:right}
+.margin-high .margin-fill{background:var(--p7)}
+.margin-high .margin-pct{color:var(--p7)}
+.margin-mid .margin-fill{background:var(--p2)}
+.margin-mid .margin-pct{color:var(--p2)}
+.margin-low .margin-fill{background:var(--p4)}
+.margin-low .margin-pct{color:var(--p4)}
+.margin-zero .margin-fill{background:var(--text3)}
+.margin-zero .margin-pct{color:var(--text3)}
+
+/* ─── PAGINATION ─── */
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border);background:var(--surface2);flex-wrap:wrap;gap:10px}
+.pagination-info{font-size:12px;color:var(--text3)}
+.pagination-info strong{color:var(--text2)}
+.pagination-controls{display:flex;align-items:center;gap:4px}
+.page-btn{width:30px;height:30px;border-radius:var(--radius-xs);font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text2);display:inline-flex;align-items:center;justify-content:center;transition:var(--transition)}
+.page-btn:hover:not(:disabled){background:var(--surface3);color:var(--text);border-color:var(--border2)}
+.page-btn.active{background:var(--p0);border-color:var(--p0);color:#fff}
+.page-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ─── EMPTY & ERROR STATES ─── */
+.empty-state{padding:48px 24px;text-align:center;color:var(--text3)}
+.empty-state i{font-size:36px;display:block;margin-bottom:12px;opacity:.4}
+.empty-state p{font-size:13px}
+.error-banner{display:flex;align-items:center;gap:12px;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;color:var(--p4)}
+.error-banner i{font-size:16px;flex-shrink:0}
+.error-banner button{margin-left:auto;background:none;border:none;color:var(--p4);cursor:pointer;font-size:12px;font-weight:600;padding:4px 8px;border-radius:4px}
+.error-banner button:hover{background:rgba(220,38,38,.1)}
+
+/* ─── CHART SECTION ─── */
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.chart-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px}
+.chart-card-header h3{font-size:13px;font-weight:600;color:var(--text)}
+.chart-card-header span{font-size:11.5px;color:var(--text3)}
+.chart-wrap{position:relative;width:100%}
+
+/* ─── RESULTS COUNT ─── */
+.results-bar{display:flex;align-items:center;justify-content:space-between;padding:9px 16px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:12px;color:var(--text3);flex-wrap:wrap;gap:8px}
+.results-bar strong{color:var(--text2)}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:900px){
+  .kpi-grid-4{grid-template-columns:repeat(2,1fr)}
+  .filters-bar{flex-direction:column;align-items:flex-start}
+  .filters-right{margin-left:0}
+}
+@media(max-width:640px){
+  .kpi-grid-4{grid-template-columns:repeat(2,1fr)}
+  .topbar{padding:12px 16px}
+  .content{padding:14px 16px}
+  .topbar-right .super-admin-badge{display:none}
+}
+@media(max-width:420px){
+  .kpi-grid-4{grid-template-columns:1fr}
+  .topbar-right .btn{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="page-icon"><i class="ti ti-chart-bar"></i></div>
+    <div class="topbar-title">
+      <h1>Bénéfices &amp; Rentabilité</h1>
+      <span>Analyse par produit · SUPER_ADMIN uniquement</span>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span class="super-admin-badge"><i class="ti ti-shield-lock"></i> Super Admin</span>
+    <button class="btn btn-export" onclick="exportCSV()"><i class="ti ti-download"></i> Export CSV</button>
+    <button class="btn btn-primary" onclick="refreshData()"><i class="ti ti-refresh"></i> Actualiser</button>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- ──────────── SECTION A : KPI GLOBALS ──────────── -->
+  <div>
+    <div class="section-header">
+      <h2>Bénéfice global</h2>
+      <div class="section-header-line"></div>
+      <div class="section-header-actions">
+        <span id="period-label" style="font-size:11px;color:var(--text3)">Toute période</span>
+      </div>
+    </div>
+    <div class="kpi-grid-4" id="kpi-row">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <!-- ──────────── SECTION B : TABLEAU ──────────── -->
+  <div>
+    <div class="section-header">
+      <h2>Détail par produit</h2>
+      <div class="section-header-line"></div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filters-bar" style="margin-bottom:12px">
+      <div class="filter-group">
+        <i class="ti ti-search" style="font-size:14px;color:var(--text3)"></i>
+        <input type="text" id="f-search" class="filter-input filter-search" placeholder="Rechercher nom ou code…" oninput="onFilterChange()">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Catégorie</label>
+        <select id="f-cat" class="filter-input" onchange="onFilterChange()">
+          <option value="">Toutes</option>
+          <option>Épicerie</option>
+          <option>Boissons</option>
+          <option>Produits Laitiers</option>
+          <option>Hygiène</option>
+          <option>Nettoyage</option>
+          <option>Confiserie</option>
+          <option>Conserves</option>
+        </select>
+      </div>
+      <div class="filter-period">
+        <label class="filter-label">Du</label>
+        <input type="date" id="f-from" class="filter-input" onchange="onFilterChange()">
+        <span class="filter-sep">au</span>
+        <input type="date" id="f-to" class="filter-input" onchange="onFilterChange()">
+      </div>
+      <div class="filters-right">
+        <button class="btn" onclick="resetFilters()"><i class="ti ti-x"></i> Réinitialiser</button>
+      </div>
+    </div>
+
+    <!-- TABLE WRAPPER -->
+    <div class="table-wrapper" id="table-wrapper">
+      <div class="results-bar">
+        <span id="results-info"><strong>0</strong> produit(s) affiché(s)</span>
+        <span id="sort-info" style="font-size:11px;color:var(--text3)">Trié par bénéfice ↓</span>
+      </div>
+      <div class="table-scroll">
+        <table class="data-table" id="main-table">
+          <thead>
+            <tr>
+              <th class="sortable" data-col="id">Code<span class="sort-icon"></span></th>
+              <th class="sortable" data-col="name">Produit<span class="sort-icon"></span></th>
+              <th class="sortable" data-col="category">Catégorie<span class="sort-icon"></span></th>
+              <th class="sortable" data-col="purchase_price" style="text-align:right">Prix Achat<span class="sort-icon"></span></th>
+              <th class="sortable" data-col="selling_price_ttc" style="text-align:right">Prix Vente<span class="sort-icon"></span></th>
+              <th class="sortable" data-col="total_sold" style="text-align:right">Qté Vendue<span class="sort-icon"></span></th>
+              <th class="sortable" data-col="ca" style="text-align:right">CA<span class="sort-icon"></span></th>
+              <th class="sortable" data-col="cost" style="text-align:right">Coût<span class="sort-icon"></span></th>
+              <th class="sortable desc" data-col="benefit" style="text-align:right">Bénéfice<span class="sort-icon"></span></th>
+              <th class="sortable" data-col="margin_pct">Marge %<span class="sort-icon"></span></th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+          <tfoot id="table-foot"></tfoot>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+  <!-- ──────────── SECTION C : GRAPHIQUE TOP 15 ──────────── -->
+  <div>
+    <div class="section-header">
+      <h2>Top 15 produits par bénéfice</h2>
+      <div class="section-header-line"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3>Classement des produits les plus rentables</h3>
+        <span>Barres vertes = bénéfice positif · Barres rouges = perte</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="benefit-chart"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<script>
+/* ══════════════════════════════════════════
+   MOCK DATA  (clés identiques à l'API réelle)
+══════════════════════════════════════════ */
+const MOCK_GLOBAL = {
+  ca_total: 301172.500,
+  benefit_total: 87340.920,
+  margin_avg: 29.0,
+  profitable_count: 42
+};
+
+const RAW_PRODUCTS = [
+  {id:'PROD-001',name:'Huile Végétale 1L',category:'Épicerie',barcode:'3701234000001',purchase_price:1.800,selling_price_ttc:3.200,total_sold:2480,ca:7936.000,cost:4464.000,benefit:3472.000,margin_pct:43.7},
+  {id:'PROD-002',name:'Sucre Blanc 2kg',category:'Épicerie',barcode:'3701234000002',purchase_price:1.200,selling_price_ttc:2.100,total_sold:3120,ca:6552.000,cost:3744.000,benefit:2808.000,margin_pct:42.9},
+  {id:'PROD-003',name:'Café Moulu 250g',category:'Boissons',barcode:'3701234000003',purchase_price:3.500,selling_price_ttc:5.900,total_sold:890,ca:5251.000,cost:3115.000,benefit:2136.000,margin_pct:40.7},
+  {id:'PROD-004',name:'Thé Vert Boîte',category:'Boissons',barcode:'3701234000004',purchase_price:2.200,selling_price_ttc:3.750,total_sold:1240,ca:4650.000,cost:2728.000,benefit:1922.000,margin_pct:41.3},
+  {id:'PROD-005',name:'Lait UHT 1L',category:'Produits Laitiers',barcode:'3701234000005',purchase_price:0.950,selling_price_ttc:1.600,total_sold:4200,ca:6720.000,cost:3990.000,benefit:2730.000,margin_pct:40.6},
+  {id:'PROD-006',name:'Yaourt Nature x4',category:'Produits Laitiers',barcode:'3701234000006',purchase_price:1.400,selling_price_ttc:2.300,total_sold:1850,ca:4255.000,cost:2590.000,benefit:1665.000,margin_pct:39.1},
+  {id:'PROD-007',name:'Shampoing 400ml',category:'Hygiène',barcode:'3701234000007',purchase_price:4.100,selling_price_ttc:6.800,total_sold:540,ca:3672.000,cost:2214.000,benefit:1458.000,margin_pct:39.7},
+  {id:'PROD-008',name:'Savon Liquide 500ml',category:'Hygiène',barcode:'3701234000008',purchase_price:2.800,selling_price_ttc:4.500,total_sold:720,ca:3240.000,cost:2016.000,benefit:1224.000,margin_pct:37.8},
+  {id:'PROD-009',name:'Détergent Vaisselle 1L',category:'Nettoyage',barcode:'3701234000009',purchase_price:1.600,selling_price_ttc:2.700,total_sold:1100,ca:2970.000,cost:1760.000,benefit:1210.000,margin_pct:40.7},
+  {id:'PROD-010',name:'Javel 1L',category:'Nettoyage',barcode:'3701234000010',purchase_price:0.800,selling_price_ttc:1.350,total_sold:1600,ca:2160.000,cost:1280.000,benefit:880.000,margin_pct:40.7},
+  {id:'PROD-011',name:'Biscuits Chocolat 200g',category:'Confiserie',barcode:'3701234000011',purchase_price:1.900,selling_price_ttc:3.100,total_sold:980,ca:3038.000,cost:1862.000,benefit:1176.000,margin_pct:38.7},
+  {id:'PROD-012',name:'Bonbons Assortis 100g',category:'Confiserie',barcode:'3701234000012',purchase_price:0.700,selling_price_ttc:1.200,total_sold:2200,ca:2640.000,cost:1540.000,benefit:1100.000,margin_pct:41.7},
+  {id:'PROD-013',name:'Thon Conserve 160g',category:'Conserves',barcode:'3701234000013',purchase_price:2.400,selling_price_ttc:3.800,total_sold:1050,ca:3990.000,cost:2520.000,benefit:1470.000,margin_pct:36.8},
+  {id:'PROD-014',name:'Sardines Boîte 125g',category:'Conserves',barcode:'3701234000014',purchase_price:1.100,selling_price_ttc:1.850,total_sold:1440,ca:2664.000,cost:1584.000,benefit:1080.000,margin_pct:40.5},
+  {id:'PROD-015',name:'Sel Fin 1kg',category:'Épicerie',barcode:'3701234000015',purchase_price:0.350,selling_price_ttc:0.650,total_sold:3800,ca:2470.000,cost:1330.000,benefit:1140.000,margin_pct:46.2},
+  {id:'PROD-016',name:'Vinaigre Blanc 1L',category:'Épicerie',barcode:'3701234000016',purchase_price:0.900,selling_price_ttc:1.550,total_sold:820,ca:1271.000,cost:738.000,benefit:533.000,margin_pct:41.9},
+  {id:'PROD-017',name:'Farine Blanche 1kg',category:'Épicerie',barcode:'3701234000017',purchase_price:0.650,selling_price_ttc:1.100,total_sold:2600,ca:2860.000,cost:1690.000,benefit:1170.000,margin_pct:40.9},
+  {id:'PROD-018',name:'Pâtes Spaghetti 500g',category:'Épicerie',barcode:'3701234000018',purchase_price:0.750,selling_price_ttc:1.300,total_sold:2100,ca:2730.000,cost:1575.000,benefit:1155.000,margin_pct:42.3},
+  {id:'PROD-019',name:'Eau Minérale 1.5L',category:'Boissons',barcode:'3701234000019',purchase_price:0.300,selling_price_ttc:0.550,total_sold:6500,ca:3575.000,cost:1950.000,benefit:1625.000,margin_pct:45.5},
+  {id:'PROD-020',name:'Jus Orange 1L',category:'Boissons',barcode:'3701234000020',purchase_price:1.800,selling_price_ttc:3.000,total_sold:1100,ca:3300.000,cost:1980.000,benefit:1320.000,margin_pct:40.0},
+  {id:'PROD-021',name:'Crème Fraîche 250g',category:'Produits Laitiers',barcode:'3701234000021',purchase_price:1.600,selling_price_ttc:2.600,total_sold:680,ca:1768.000,cost:1088.000,benefit:680.000,margin_pct:38.5},
+  {id:'PROD-022',name:'Fromage Fondu x8',category:'Produits Laitiers',barcode:'3701234000022',purchase_price:2.300,selling_price_ttc:3.700,total_sold:450,ca:1665.000,cost:1035.000,benefit:630.000,margin_pct:37.8},
+  {id:'PROD-023',name:'Dentifrice 75ml',category:'Hygiène',barcode:'3701234000023',purchase_price:1.500,selling_price_ttc:2.500,total_sold:880,ca:2200.000,cost:1320.000,benefit:880.000,margin_pct:40.0},
+  {id:'PROD-024',name:'Déodorant 150ml',category:'Hygiène',barcode:'3701234000024',purchase_price:3.200,selling_price_ttc:5.100,total_sold:320,ca:1632.000,cost:1024.000,benefit:608.000,margin_pct:37.3},
+  {id:'PROD-025',name:'Lessive Poudre 1kg',category:'Nettoyage',barcode:'3701234000025',purchase_price:2.500,selling_price_ttc:4.100,total_sold:560,ca:2296.000,cost:1400.000,benefit:896.000,margin_pct:39.0},
+  {id:'PROD-026',name:'Nettoyant Sol 1L',category:'Nettoyage',barcode:'3701234000026',purchase_price:1.900,selling_price_ttc:3.100,total_sold:400,ca:1240.000,cost:760.000,benefit:480.000,margin_pct:38.7},
+  {id:'PROD-027',name:'Chips Paprika 150g',category:'Confiserie',barcode:'3701234000027',purchase_price:1.200,selling_price_ttc:2.000,total_sold:1500,ca:3000.000,cost:1800.000,benefit:1200.000,margin_pct:40.0},
+  {id:'PROD-028',name:'Chocolat Noir 100g',category:'Confiserie',barcode:'3701234000028',purchase_price:2.100,selling_price_ttc:3.400,total_sold:640,ca:2176.000,cost:1344.000,benefit:832.000,margin_pct:38.2},
+  {id:'PROD-029',name:'Haricots Blancs 400g',category:'Conserves',barcode:'3701234000029',purchase_price:0.950,selling_price_ttc:1.600,total_sold:900,ca:1440.000,cost:855.000,benefit:585.000,margin_pct:40.6},
+  {id:'PROD-030',name:'Maïs Doux 280g',category:'Conserves',barcode:'3701234000030',purchase_price:1.050,selling_price_ttc:1.750,total_sold:760,ca:1330.000,cost:798.000,benefit:532.000,margin_pct:40.0},
+  {id:'PROD-031',name:'Riz Long Grain 1kg',category:'Épicerie',barcode:'3701234000031',purchase_price:0.880,selling_price_ttc:1.500,total_sold:1900,ca:2850.000,cost:1672.000,benefit:1178.000,margin_pct:41.3},
+  {id:'PROD-032',name:'Semoule Fine 1kg',category:'Épicerie',barcode:'3701234000032',purchase_price:0.720,selling_price_ttc:1.200,total_sold:1500,ca:1800.000,cost:1080.000,benefit:720.000,margin_pct:40.0},
+  {id:'PROD-033',name:'Concentré Tomate 70g',category:'Conserves',barcode:'3701234000033',purchase_price:0.450,selling_price_ttc:0.750,total_sold:3200,ca:2400.000,cost:1440.000,benefit:960.000,margin_pct:40.0},
+  {id:'PROD-034',name:'Huile Olive 500ml',category:'Épicerie',barcode:'3701234000034',purchase_price:5.500,selling_price_ttc:9.200,total_sold:310,ca:2852.000,cost:1705.000,benefit:1147.000,margin_pct:40.2},
+  {id:'PROD-035',name:'Couche Bébé x20',category:'Hygiène',barcode:'3701234000035',purchase_price:5.800,selling_price_ttc:9.500,total_sold:180,ca:1710.000,cost:1044.000,benefit:666.000,margin_pct:38.9},
+  {id:'PROD-036',name:'Mouchoirs x150',category:'Hygiène',barcode:'3701234000036',purchase_price:1.300,selling_price_ttc:2.100,total_sold:620,ca:1302.000,cost:806.000,benefit:496.000,margin_pct:38.1},
+  {id:'PROD-037',name:'Papier Toilette x6',category:'Hygiène',barcode:'3701234000037',purchase_price:2.000,selling_price_ttc:3.200,total_sold:480,ca:1536.000,cost:960.000,benefit:576.000,margin_pct:37.5},
+  {id:'PROD-038',name:'Bocal Cornichons 400g',category:'Conserves',barcode:'3701234000038',purchase_price:1.600,selling_price_ttc:2.650,total_sold:420,ca:1113.000,cost:672.000,benefit:441.000,margin_pct:39.6},
+  {id:'PROD-039',name:'Soda Cola 1.5L',category:'Boissons',barcode:'3701234000039',purchase_price:0.850,selling_price_ttc:1.400,total_sold:2400,ca:3360.000,cost:2040.000,benefit:1320.000,margin_pct:39.3},
+  {id:'PROD-040',name:'Lait Concentré Sucré',category:'Produits Laitiers',barcode:'3701234000040',purchase_price:1.750,selling_price_ttc:2.800,total_sold:580,ca:1624.000,cost:1015.000,benefit:609.000,margin_pct:37.5},
+  {id:'PROD-041',name:'Craquelins Salés 200g',category:'Confiserie',barcode:'3701234000041',purchase_price:1.100,selling_price_ttc:1.800,total_sold:850,ca:1530.000,cost:935.000,benefit:595.000,margin_pct:38.9},
+  {id:'PROD-042',name:'Poivre Moulu 50g',category:'Épicerie',barcode:'3701234000042',purchase_price:1.200,selling_price_ttc:2.000,total_sold:480,ca:960.000,cost:576.000,benefit:384.000,margin_pct:40.0},
+  {id:'PROD-043',name:'Cannelle Poudre 30g',category:'Épicerie',barcode:'3701234000043',purchase_price:0.950,selling_price_ttc:1.500,total_sold:320,ca:480.000,cost:304.000,benefit:176.000,margin_pct:36.7},
+  {id:'PROD-044',name:'Eau de Javel 2L',category:'Nettoyage',barcode:'3701234000044',purchase_price:1.100,selling_price_ttc:1.750,total_sold:900,ca:1575.000,cost:990.000,benefit:585.000,margin_pct:37.1},
+  {id:'PROD-045',name:'Gel Douche 250ml',category:'Hygiène',barcode:'3701234000045',purchase_price:2.400,selling_price_ttc:3.900,total_sold:240,ca:936.000,cost:576.000,benefit:360.000,margin_pct:38.5},
+  {id:'PROD-046',name:'Margarine 250g',category:'Produits Laitiers',barcode:'3701234000046',purchase_price:1.300,selling_price_ttc:2.100,total_sold:560,ca:1176.000,cost:728.000,benefit:448.000,margin_pct:38.1},
+  {id:'PROD-047',name:'Beurre 200g',category:'Produits Laitiers',barcode:'3701234000047',purchase_price:2.900,selling_price_ttc:4.600,total_sold:290,ca:1334.000,cost:841.000,benefit:493.000,margin_pct:36.9},
+  {id:'PROD-048',name:'Levure Boulangère 10g',category:'Épicerie',barcode:'3701234000048',purchase_price:0.200,selling_price_ttc:0.400,total_sold:1200,ca:480.000,cost:240.000,benefit:240.000,margin_pct:50.0},
+  {id:'PROD-049',name:'Harissa Tube 130g',category:'Conserves',barcode:'3701234000049',purchase_price:0.900,selling_price_ttc:1.500,total_sold:680,ca:1020.000,cost:612.000,benefit:408.000,margin_pct:40.0},
+  {id:'PROD-050',name:'Pâte d\'Amandes 200g',category:'Confiserie',barcode:'3701234000050',purchase_price:3.800,selling_price_ttc:5.900,total_sold:0,ca:0,cost:0,benefit:0,margin_pct:0},
+  {id:'PROD-051',name:'Sirop Grenadine 75cl',category:'Boissons',barcode:'3701234000051',purchase_price:2.100,selling_price_ttc:0.000,total_sold:120,ca:0,cost:252.000,benefit:-252.000,margin_pct:-100.0},
+  {id:'PROD-052',name:'Désodorisant Spray',category:'Nettoyage',barcode:'3701234000052',purchase_price:4.500,selling_price_ttc:3.500,total_sold:80,ca:280.000,cost:360.000,benefit:-80.000,margin_pct:-28.6},
+];
+
+/* ══════════════════════════════════════════
+   STATE
+══════════════════════════════════════════ */
+let allProducts = [...RAW_PRODUCTS];
+let filteredProducts = [...allProducts];
+let sortCol = 'benefit';
+let sortDir = 'desc';
+let currentPage = 1;
+const PAGE_SIZE = 50;
+let benefitChart = null;
+
+/* ══════════════════════════════════════════
+   FORMATTERS
+══════════════════════════════════════════ */
+function fmtDT(v){
+  if(v===null||v===undefined)return '—';
+  return v.toLocaleString('fr-FR',{minimumFractionDigits:3,maximumFractionDigits:3})+' DT';
+}
+function fmtPct(v){return v.toFixed(1)+'%'}
+function fmtInt(v){return v.toLocaleString('fr-FR')}
+
+/* ══════════════════════════════════════════
+   KPI RENDER
+══════════════════════════════════════════ */
+function renderKPIs(global){
+  const marginColor = global.margin_avg >= 30 ? 'var(--p7)' : global.margin_avg >= 15 ? 'var(--p2)' : 'var(--p4)';
+  document.getElementById('kpi-row').innerHTML = `
+    <!-- CA Global -->
+    <div class="kpi-card no-link">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--p0);border-radius:var(--radius) var(--radius) 0 0"></div>
+      <div class="kpi-icon" style="background:rgba(42,120,214,.1)"><i class="ti ti-currency-dollar" style="color:var(--p0)"></i></div>
+      <div class="kpi-label">Chiffre d'Affaires Total</div>
+      <div class="kpi-value" style="font-size:16px">${fmtDT(global.ca_total)}</div>
+      <div class="kpi-sub">livraisons clôturées</div>
+    </div>
+    <!-- Bénéfice Net -->
+    <div class="kpi-card no-link">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${global.benefit_total>=0?'var(--p7)':'var(--p4)'};border-radius:var(--radius) var(--radius) 0 0"></div>
+      <div class="kpi-icon" style="background:${global.benefit_total>=0?'rgba(22,163,74,.1)':'rgba(220,38,38,.1)'}">
+        <i class="ti ti-trending-up" style="color:${global.benefit_total>=0?'var(--p7)':'var(--p4)'}"></i>
+      </div>
+      <div class="kpi-label">Bénéfice Net Total</div>
+      <div class="kpi-value ${global.benefit_total>=0?'positive':'negative'}" style="font-size:16px">${fmtDT(global.benefit_total)}</div>
+      <div class="kpi-sub">après déduction des coûts</div>
+    </div>
+    <!-- Marge Moyenne -->
+    <div class="kpi-card no-link">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${marginColor};border-radius:var(--radius) var(--radius) 0 0"></div>
+      <div class="kpi-icon" style="background:rgba(124,58,237,.1)"><i class="ti ti-chart-pie" style="color:var(--p3)"></i></div>
+      <div class="kpi-label">Marge Bénéficiaire Moyenne</div>
+      <div class="kpi-value" style="color:${marginColor}">${fmtPct(global.margin_avg)}</div>
+      <div class="kpi-sub">(bénéfice / CA) × 100</div>
+    </div>
+    <!-- Produits Rentables -->
+    <div class="kpi-card no-link">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--p8);border-radius:var(--radius) var(--radius) 0 0"></div>
+      <div class="kpi-icon" style="background:rgba(8,145,178,.1)"><i class="ti ti-circle-check" style="color:var(--p8)"></i></div>
+      <div class="kpi-label">Produits Rentables</div>
+      <div class="kpi-value">${global.profitable_count}</div>
+      <div class="kpi-sub">benefit_product &gt; 0</div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════
+   TABLE RENDER
+══════════════════════════════════════════ */
+function getCatClass(cat){
+  if(!cat)return 'cat-default';
+  return 'cat-'+cat.replace(/\s/g,'-');
+}
+
+function marginClass(pct){
+  if(pct===0)return 'margin-zero';
+  if(pct<0)return 'margin-low';
+  if(pct>=35)return 'margin-high';
+  if(pct>=20)return 'margin-mid';
+  return 'margin-low';
+}
+
+function renderTable(){
+  const start = (currentPage-1)*PAGE_SIZE;
+  const end = start+PAGE_SIZE;
+  const page = filteredProducts.slice(start, end);
+
+  const tbody = document.getElementById('table-body');
+  if(page.length===0){
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><i class="ti ti-search-off"></i><p>Aucun produit ne correspond aux critères de recherche.</p></div></td></tr>`;
+  } else {
+    tbody.innerHTML = page.map(p=>{
+      const benefitClass = p.benefit>0?'val-positive':p.benefit<0?'val-negative':'val-neutral';
+      const mClass = marginClass(p.margin_pct);
+      const marginFillW = Math.min(Math.abs(p.margin_pct), 100);
+      const catKey = p.category?p.category:'';
+      return `<tr data-cat="${catKey}" onclick="void(0)">
+        <td class="val-mono" style="color:var(--text3);font-size:11.5px">${p.id}</td>
+        <td style="font-weight:500;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</td>
+        <td>${p.category?`<span class="cat-badge ${getCatClass(p.category)}">${p.category}</span>`:'<span class="cat-badge cat-default">—</span>'}</td>
+        <td style="text-align:right" class="val-mono">${fmtDT(p.purchase_price)}</td>
+        <td style="text-align:right" class="val-mono">${fmtDT(p.selling_price_ttc)}</td>
+        <td style="text-align:right" class="val-mono">${fmtInt(p.total_sold)}</td>
+        <td style="text-align:right" class="val-mono">${p.ca>0?fmtDT(p.ca):'<span style="color:var(--text3)">—</span>'}</td>
+        <td style="text-align:right" class="val-mono">${p.cost>0?fmtDT(p.cost):'<span style="color:var(--text3)">—</span>'}</td>
+        <td style="text-align:right"><span class="${benefitClass}">${fmtDT(p.benefit)}</span></td>
+        <td>
+          <div class="margin-cell ${mClass}">
+            <div class="margin-track"><div class="margin-fill" style="width:${marginFillW}%"></div></div>
+            <span class="margin-pct">${fmtPct(p.margin_pct)}</span>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  // TOTALS FOOTER
+  const totalCA = filteredProducts.reduce((s,p)=>s+p.ca,0);
+  const totalCost = filteredProducts.reduce((s,p)=>s+p.cost,0);
+  const totalBenefit = filteredProducts.reduce((s,p)=>s+p.benefit,0);
+  const bClass = totalBenefit>=0?'val-positive':'val-negative';
+  document.getElementById('table-foot').innerHTML = `
+    <tr>
+      <td colspan="6" style="font-size:11px;color:var(--text3);font-weight:500">TOTAL — ${filteredProducts.length} produit(s)</td>
+      <td style="text-align:right" class="val-mono">${fmtDT(totalCA)}</td>
+      <td style="text-align:right" class="val-mono">${fmtDT(totalCost)}</td>
+      <td style="text-align:right"><span class="${bClass}">${fmtDT(totalBenefit)}</span></td>
+      <td></td>
+    </tr>`;
+
+  // RESULTS BAR
+  document.getElementById('results-info').innerHTML = `<strong>${filteredProducts.length}</strong> produit(s) affiché(s)`;
+  document.getElementById('sort-info').textContent = `Trié par ${sortCol} ${sortDir==='desc'?'↓':'↑'}`;
+
+  renderPagination();
+}
+
+/* ══════════════════════════════════════════
+   PAGINATION
+══════════════════════════════════════════ */
+function renderPagination(){
+  const total = filteredProducts.length;
+  const totalPages = Math.max(1, Math.ceil(total/PAGE_SIZE));
+  const start = Math.min((currentPage-1)*PAGE_SIZE+1, total);
+  const end = Math.min(currentPage*PAGE_SIZE, total);
+  const el = document.getElementById('pagination');
+
+  if(total <= PAGE_SIZE){el.innerHTML='';return;}
+
+  let pages = '';
+  for(let i=1;i<=totalPages;i++){
+    if(i===1||i===totalPages||Math.abs(i-currentPage)<=1){
+      pages+=`<button class="page-btn${i===currentPage?' active':''}" onclick="goPage(${i})">${i}</button>`;
+    } else if(Math.abs(i-currentPage)===2){
+      pages+=`<span style="color:var(--text3);padding:0 2px;font-size:12px">…</span>`;
+    }
+  }
+
+  el.innerHTML = `
+    <span class="pagination-info">Affichage <strong>${start}–${end}</strong> sur <strong>${total}</strong></span>
+    <div class="pagination-controls">
+      <button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}><i class="ti ti-chevron-left" style="font-size:12px"></i></button>
+      ${pages}
+      <button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}><i class="ti ti-chevron-right" style="font-size:12px"></i></button>
+    </div>`;
+}
+
+function goPage(p){
+  const totalPages = Math.ceil(filteredProducts.length/PAGE_SIZE);
+  if(p<1||p>totalPages)return;
+  currentPage=p;
+  renderTable();
+}
+
+/* ══════════════════════════════════════════
+   SORT
+══════════════════════════════════════════ */
+function applySort(){
+  filteredProducts.sort((a,b)=>{
+    let va=a[sortCol], vb=b[sortCol];
+    if(typeof va==='string') va=va.toLowerCase(), vb=vb.toLowerCase();
+    if(va<vb)return sortDir==='asc'?-1:1;
+    if(va>vb)return sortDir==='asc'?1:-1;
+    return 0;
+  });
+}
+
+document.querySelectorAll('.sortable').forEach(th=>{
+  th.addEventListener('click',()=>{
+    const col = th.dataset.col;
+    if(sortCol===col){
+      sortDir = sortDir==='asc'?'desc':'asc';
+    } else {
+      sortCol=col; sortDir='desc';
+    }
+    document.querySelectorAll('.sortable').forEach(h=>{
+      h.classList.remove('asc','desc');
+    });
+    th.classList.add(sortDir);
+    currentPage=1;
+    applySort();
+    renderTable();
+  });
+});
+
+/* ══════════════════════════════════════════
+   FILTERS
+══════════════════════════════════════════ */
+let filterTimer = null;
+function onFilterChange(){
+  clearTimeout(filterTimer);
+  filterTimer = setTimeout(()=>{
+    applyFilters();
+    currentPage=1;
+    applySort();
+    renderTable();
+    renderChart();
+    updatePeriodLabel();
+  }, 250);
+}
+
+function applyFilters(){
+  const search = document.getElementById('f-search').value.trim().toLowerCase();
+  const cat = document.getElementById('f-cat').value;
+  filteredProducts = allProducts.filter(p=>{
+    if(search && !p.name.toLowerCase().includes(search) && !p.id.toLowerCase().includes(search)) return false;
+    if(cat && p.category!==cat) return false;
+    return true;
+  });
+}
+
+function resetFilters(){
+  document.getElementById('f-search').value='';
+  document.getElementById('f-cat').value='';
+  document.getElementById('f-from').value='';
+  document.getElementById('f-to').value='';
+  filteredProducts=[...allProducts];
+  sortCol='benefit'; sortDir='desc';
+  currentPage=1;
+  document.querySelectorAll('.sortable').forEach(h=>h.classList.remove('asc','desc'));
+  document.querySelector('[data-col="benefit"]').classList.add('desc');
+  applySort();
+  renderTable();
+  renderChart();
+  updatePeriodLabel();
+}
+
+function updatePeriodLabel(){
+  const from = document.getElementById('f-from').value;
+  const to = document.getElementById('f-to').value;
+  const el = document.getElementById('period-label');
+  if(!from&&!to){el.textContent='Toute période';return;}
+  const parts=[];
+  if(from)parts.push('Du '+new Date(from).toLocaleDateString('fr-FR'));
+  if(to)parts.push('Au '+new Date(to).toLocaleDateString('fr-FR'));
+  el.textContent=parts.join(' · ');
+}
+
+/* ══════════════════════════════════════════
+   CHART
+══════════════════════════════════════════ */
+Chart.defaults.color='#4b5675';
+Chart.defaults.borderColor='#e1e5ef';
+Chart.defaults.font.family='Inter';
+
+function renderChart(){
+  const sorted = [...filteredProducts].sort((a,b)=>b.benefit-a.benefit).slice(0,15);
+  const labels = sorted.map(p=>p.name.length>28?p.name.substring(0,26)+'…':p.name);
+  const values = sorted.map(p=>p.benefit);
+  const colors = values.map(v=>v>=0?'rgba(15,158,106,0.8)':'rgba(220,38,38,0.8)');
+  const borderColors = values.map(v=>v>=0?'#0f9e6a':'#dc2626');
+
+  const ctx = document.getElementById('benefit-chart');
+  if(benefitChart) benefitChart.destroy();
+
+  const minH = Math.max(320, sorted.length * 36);
+  ctx.parentElement.style.minHeight = minH+'px';
+  ctx.style.height = minH+'px';
+
+  benefitChart = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels,
+      datasets:[{
+        label:'Bénéfice',
+        data:values,
+        backgroundColor:colors,
+        borderColor:borderColors,
+        borderWidth:1.5,
+        borderRadius:4,
+        borderSkipped:false,
+      }]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          callbacks:{
+            label(ctx){
+              const p = sorted[ctx.dataIndex];
+              return ` ${fmtDT(ctx.parsed.x)}  ·  marge ${fmtPct(p.margin_pct)}`;
+            }
+          },
+          backgroundColor:'#fff',
+          borderColor:'#e1e5ef',
+          borderWidth:1,
+          titleColor:'#111827',
+          bodyColor:'#4b5675',
+          padding:10,
+        }
+      },
+      scales:{
+        x:{
+          grid:{color:'#e1e5ef80'},
+          ticks:{callback:v=>{
+            if(Math.abs(v)>=1000)return (v/1000).toFixed(0)+'k DT';
+            return v.toFixed(0)+' DT';
+          }}
+        },
+        y:{
+          grid:{display:false},
+          ticks:{font:{size:11.5},color:'#4b5675'}
+        }
+      }
+    }
+  });
+}
+
+/* ══════════════════════════════════════════
+   CSV EXPORT
+══════════════════════════════════════════ */
+function exportCSV(){
+  const headers = ['Code','Produit','Catégorie','Prix Achat (DT)','Prix Vente (DT)','Qté Vendue','CA (DT)','Coût (DT)','Bénéfice (DT)','Marge (%)'];
+  const rows = filteredProducts.map(p=>[
+    p.id, `"${p.name}"`, p.category||'',
+    p.purchase_price.toFixed(3), p.selling_price_ttc.toFixed(3),
+    p.total_sold, p.ca.toFixed(3), p.cost.toFixed(3),
+    p.benefit.toFixed(3), p.margin_pct.toFixed(1)
+  ]);
+  const csv = [headers,...rows].map(r=>r.join(';')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download='benefices-rightway.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ══════════════════════════════════════════
+   REFRESH (simulated)
+══════════════════════════════════════════ */
+function refreshData(){
+  const btn = document.querySelector('.btn-primary');
+  btn.innerHTML='<i class="ti ti-loader" style="animation:spin 1s linear infinite"></i> Actualisation…';
+  btn.disabled=true;
+  setTimeout(()=>{
+    btn.innerHTML='<i class="ti ti-refresh"></i> Actualiser';
+    btn.disabled=false;
+  }, 1200);
+}
+
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+(function init(){
+  // set default sort header
+  document.querySelector('[data-col="benefit"]').classList.add('desc');
+
+  renderKPIs(MOCK_GLOBAL);
+  applyFilters();
+  applySort();
+  renderTable();
+  renderChart();
+})();
+</script>
+<style>
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+</style>
+</body>
+</html>
