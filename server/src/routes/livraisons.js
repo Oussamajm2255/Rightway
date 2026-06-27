@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticate, authorize } = require('../middleware/auth');
+const { signDownloadToken } = require('../utils/jwt');
 const {
   createLivraison,
   listLivraisons,
@@ -62,5 +63,12 @@ router.get('/:id/bon-sortie/pdf', downloadBonSortiePDF);
 router.get('/:id/bon-retour/pdf', downloadBonRetourPDF);
 router.get('/:id/dossier/pdf', downloadDossierPDF);
 router.get('/:id/dossier', getDossier);
+
+// PDF download token — generates short-lived token for window.open() PDFs
+router.get('/:id/pdf-token', authenticate, (req, res) => {
+  const livraisonId = req.params.id;
+  const token = signDownloadToken(req.user.id, livraisonId);
+  res.json({ token });
+});
 
 module.exports = router;

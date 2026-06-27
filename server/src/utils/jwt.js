@@ -40,4 +40,27 @@ function canRefreshToken(token) {
   }
 }
 
-module.exports = { signToken, verifyToken, decodeToken, canRefreshToken, getSecret, JWT_EXPIRES_IN };
+// ============================================================
+// DOWNLOAD TOKENS — short-lived, purpose-bound tokens for PDF
+// downloads via window.open(). These replace passing the JWT in
+// query strings, preventing credential leakage in logs/history.
+// ============================================================
+const DOWNLOAD_TOKEN_EXPIRY = '5m';
+
+function signDownloadToken(userId, livraisonId) {
+  return jwt.sign(
+    { sub: userId, lid: livraisonId, purpose: 'pdf-download' },
+    getSecret(),
+    { expiresIn: DOWNLOAD_TOKEN_EXPIRY }
+  );
+}
+
+function verifyDownloadToken(token) {
+  const decoded = jwt.verify(token, getSecret());
+  if (decoded.purpose !== 'pdf-download') {
+    throw new Error('Invalid token purpose');
+  }
+  return decoded;
+}
+
+module.exports = { signToken, verifyToken, decodeToken, canRefreshToken, getSecret, JWT_EXPIRES_IN, signDownloadToken, verifyDownloadToken };

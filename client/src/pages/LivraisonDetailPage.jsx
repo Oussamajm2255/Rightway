@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { apiGet, apiPost, apiPut } from '../lib/api';
+import { apiGet, apiPost, apiPut, openPdf } from '../lib/api';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
@@ -131,8 +131,7 @@ function LivraisonDetailPage() {
   }
 
   function handlePrintBonSortie() {
-    const token = localStorage.getItem('rightway_token');
-    window.open(`${API_BASE}/livraisons/${id}/bon-sortie/pdf?token=${encodeURIComponent(token)}`, '_blank');
+    openPdf(`/livraisons/${id}/bon-sortie/pdf`, id);
   }
 
   async function handleArchive(e) {

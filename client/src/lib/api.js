@@ -67,3 +67,20 @@ export async function apiDelete(endpoint) {
 }
 
 export default { apiGet, apiPost, apiPut, apiDelete };
+
+const API_BASE_RAW = import.meta.env.VITE_API_URL || '/api';
+
+/**
+ * Open a PDF in a new tab using a short-lived download token.
+ * Replaces JWT-in-query-string pattern to prevent credential leakage.
+ */
+export async function openPdf(pdfPath, livraisonId) {
+  try {
+    const tokenRes = await apiGet(`/livraisons/${livraisonId}/pdf-token`);
+    window.open(`${API_BASE_RAW}${pdfPath}?dtoken=${encodeURIComponent(tokenRes.token)}`, '_blank');
+  } catch (err) {
+    // Fallback: open without token (auth middleware will return 401)
+    console.error('Failed to fetch PDF download token:', err.message);
+    window.open(`${API_BASE_RAW}${pdfPath}`, '_blank');
+  }
+}

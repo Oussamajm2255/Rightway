@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { apiGet } from '../lib/api';
+import { apiGet, openPdf } from '../lib/api';
 import './HistoriquePage.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
@@ -61,8 +61,7 @@ function HistoriquePage() {
   }
 
   function handlePrintDossier(id) {
-    const token = localStorage.getItem('rightway_token');
-    window.open(`${API_BASE}/livraisons/${id}/dossier/pdf?token=${encodeURIComponent(token)}`, '_blank');
+    openPdf(`/livraisons/${id}/dossier/pdf`, id);
   }
 
   return (
