@@ -38,19 +38,18 @@ async function getAllWithStats() {
     commercial_ecoulement AS (
       SELECT
         l.commercial_id,
-        ROUND(AVG(
-          CASE WHEN SUM(li.qte_chargee) > 0
-            THEN SUM(li.qte_vendue)::NUMERIC / SUM(li.qte_chargee)::NUMERIC * 100
-            ELSE 0
-          END
-        )) AS ecoulement_avg
+        l.id AS livraison_id,
+        CASE WHEN SUM(li.qte_chargee) > 0
+          THEN SUM(li.qte_vendue)::NUMERIC / SUM(li.qte_chargee)::NUMERIC * 100
+          ELSE 0
+        END AS sell_through
       FROM livraisons l
       JOIN livraison_items li ON li.livraison_id = l.id
       WHERE l.is_archived = false
       GROUP BY l.commercial_id, l.id
     ),
     ecoulement_final AS (
-      SELECT commercial_id, ROUND(AVG(ecoulement_avg)) AS ecoulement
+      SELECT commercial_id, ROUND(AVG(sell_through)) AS ecoulement
       FROM commercial_ecoulement
       GROUP BY commercial_id
     )
