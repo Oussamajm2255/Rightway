@@ -367,9 +367,9 @@ function SalesPage() {
             const { bg: catBg, text: catText } = catColors(category);
             const isCollapsed = collapsedCats[category];
 
-            // Per-category summary stats
-            const catDeclared = catItems.filter((p) => getPendingQty(p.product_id) > 0).length;
-            const catTotal = catItems.length;
+            // Per-category summary stats (units, not products)
+            const catDeclared = catItems.reduce((sum, p) => sum + getPendingQty(p.product_id), 0);
+            const catTotalStock = catItems.reduce((sum, p) => sum + p.qte_chargee, 0);
             const catCA = catItems.reduce((sum, p) => sum + getPendingQty(p.product_id) * Number(p.prix_ttc), 0);
             const catMax = catItems.reduce((sum, p) => sum + p.qte_chargee * Number(p.prix_ttc), 0);
 
@@ -391,7 +391,7 @@ function SalesPage() {
                     {category}
                   </span>
                   <span className="sales-cat-header-stats">
-                    <span className="cat-stat">{catDeclared}/{catTotal}</span>
+                    <span className="cat-stat">{catDeclared}/{catTotalStock}</span>
                     <span className="cat-stat-sep">·</span>
                     <span className="cat-stat">{fmtShort(catCA)} DT / {fmtShort(catMax)} DT</span>
                   </span>
