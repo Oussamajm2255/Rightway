@@ -499,9 +499,11 @@ select.filter-input { cursor: pointer; }
 .chart-wrap {
   position: relative;
   width: 100%;
+  overflow: hidden;
 }
 .chart-wrap canvas {
   width: 100% !important;
+  max-height: 100%;
 }
 
 /* ─── Responsive ─── */
@@ -516,6 +518,7 @@ select.filter-input { cursor: pointer; }
   .data-table { min-width: 800px; }
   .chart-card { padding: 14px; }
   .chart-card-header h3 { font-size: 12px; }
+  .chart-wrap { max-height: 420px; }
 }
 
 @media (max-width: 640px) {
@@ -530,6 +533,8 @@ select.filter-input { cursor: pointer; }
   .super-admin-badge { display: none; }
   .filter-search { min-width: 140px; }
   .section-header h2 { font-size: 9px; letter-spacing: 0.06em; }
+  .chart-card-header span { display: none; }
+  .chart-wrap { max-height: 350px; }
 }
 
 @media (max-width: 420px) {
@@ -542,8 +547,10 @@ select.filter-input { cursor: pointer; }
   .kpi-label { font-size: 9px; margin-bottom: 4px; }
   .kpi-sub { font-size: 10px; }
   .benefits-content { gap: 14px; padding: 12px; }
-  .chart-card { padding: 12px; }
+  .chart-card { padding: 10px; }
+  .chart-card-header { margin-bottom: 10px; }
   .chart-card-header h3 { font-size: 11px; }
+  .chart-wrap { max-height: 280px; }
 }
 
 @media (max-width: 360px) {
@@ -551,4 +558,5 @@ select.filter-input { cursor: pointer; }
   .kpi-value { font-size: 15px; }
   .benefits-topbar .topbar-title h1 { font-size: 14px; }
   .data-table { min-width: 700px; }
+  .chart-wrap { max-height: 250px; }
 }

@@ -117,47 +117,66 @@ export default function BenefitsPage() {
     if (!products || products.length === 0) return;
     const ctx = document.getElementById('benefit-chart');
     if (!ctx) return;
-    if (chartRef.current) chartRef.current.destroy();
 
-    const top15 = [...products].sort((a, b) => b.benefit - a.benefit).slice(0, 15);
-    const labels = top15.map((p) => p.name.length > 28 ? p.name.substring(0, 26) + '\u2026' : p.name);
-    const values = top15.map((p) => p.benefit);
-    const colors = values.map((v) => v >= 0 ? 'rgba(15,158,106,0.8)' : 'rgba(220,38,38,0.8)');
-    const borderColors = values.map((v) => v >= 0 ? '#0f9e6a' : '#dc2626');
+    function drawChart() {
+      if (chartRef.current) chartRef.current.destroy();
 
-    const minH = Math.max(320, top15.length * 36);
-    ctx.parentElement.style.minHeight = minH + 'px';
+      // Responsive sizing: fewer bars + tighter spacing on small screens
+      const w = window.innerWidth;
+      const take = w <= 420 ? 10 : w <= 768 ? 12 : 15;
+      const perBar = w <= 420 ? 24 : w <= 768 ? 28 : 36;
+      const maxLabel = w <= 420 ? 18 : w <= 768 ? 22 : 28;
+      const tickFont = w <= 420 ? 9 : w <= 768 ? 10 : 11;
 
-    chartRef.current = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [{ label: 'Bénéfice', data: values, backgroundColor: colors, borderColor: borderColors, borderWidth: 1.5, borderRadius: 4, borderSkipped: false }],
-      },
-      options: {
-        indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: { label(ctx) { const p = top15[ctx.dataIndex]; return ` ${fmtDT(ctx.parsed.x)}  \u00b7  marge ${fmtPct(p.margin_pct)}`; } },
-            backgroundColor: '#fff',
-            borderColor: 'var(--color-border)',
-            borderWidth: 1,
-            titleColor: '#111827',
-            bodyColor: '#4b5675',
-            padding: 10,
+      const top = [...products].sort((a, b) => b.benefit - a.benefit).slice(0, take);
+      const labels = top.map((p) => p.name.length > maxLabel ? p.name.substring(0, maxLabel - 2) + '\u2026' : p.name);
+      const values = top.map((p) => p.benefit);
+      const colors = values.map((v) => v >= 0 ? 'rgba(15,158,106,0.8)' : 'rgba(220,38,38,0.8)');
+      const borderColors = values.map((v) => v >= 0 ? '#0f9e6a' : '#dc2626');
+
+      const chartH = Math.max(w <= 420 ? 200 : w <= 768 ? 260 : 320, top.length * perBar);
+      ctx.parentElement.style.minHeight = chartH + 'px';
+
+      chartRef.current = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{ label: 'Bénéfice', data: values, backgroundColor: colors, borderColor: borderColors, borderWidth: 1.5, borderRadius: 4, borderSkipped: false }],
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: { label(ctx) { const p = top[ctx.dataIndex]; return ` ${fmtDT(ctx.parsed.x)}  \u00b7  marge ${fmtPct(p.margin_pct)}`; } },
+              backgroundColor: '#fff',
+              borderColor: 'var(--color-border)',
+              borderWidth: 1,
+              titleColor: '#111827',
+              bodyColor: '#4b5675',
+              padding: 10,
+            },
+          },
+          scales: {
+            x: { grid: { color: '#e1e5ef80' }, ticks: { callback: (v) => Math.abs(v) >= 1000 ? (v / 1000).toFixed(0) + 'k DT' : v.toFixed(0) + ' DT', font: { size: 9 } } },
+            y: { grid: { display: false }, ticks: { font: { size: tickFont }, color: '#4b5675' } },
           },
         },
-        scales: {
-          x: { grid: { color: '#e1e5ef80' }, ticks: { callback: (v) => Math.abs(v) >= 1000 ? (v / 1000).toFixed(0) + 'k DT' : v.toFixed(0) + ' DT', font: { size: 10 } } },
-          y: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#4b5675' } },
-        },
-      },
-    });
+      });
+    }
 
-    return () => { if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; } };
+    drawChart();
+    let resizeTimer;
+    function onResize() { clearTimeout(resizeTimer); resizeTimer = setTimeout(drawChart, 200); }
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      window.removeEventListener('resize', onResize);
+      clearTimeout(resizeTimer);
+      if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; }
+    };
   }, [products]);
 
   // ─── Handlers ───
