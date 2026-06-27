@@ -16,7 +16,11 @@ const isProduction = process.env.NODE_ENV === 'production';
 // Run idempotent DB migrations on every startup (safe — uses IF NOT EXISTS)
 runMigrations()
   .then(() => seedPrelevementCategories())
-  .catch(err => console.error('Startup migration error:', err.message));
+  .catch(err => {
+    console.error('Startup migration error:', err.message);
+    // Best-effort: try seeding even if migrations partially failed
+    seedPrelevementCategories().catch(e => console.error('Fallback seed error:', e.message));
+  });
 
 // Trust Railway's reverse proxy in production for correct client IP
 if (isProduction) {

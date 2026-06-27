@@ -489,8 +489,10 @@ export default function PrelevementPage() {
 
   // Modals
   const [showCatModal, setShowCatModal] = useState(false);
-  const [editingExpense, setEditingExpense] = useState(null); // null=new, object=edit
+  const [editingExpense, setEditingExpense] = useState(null);
   const [deletingExpense, setDeletingExpense] = useState(null);
+  const [migrating, setMigrating] = useState(false);
+  const [migrateResult, setMigrateResult] = useState(null);
 
   const LIMIT = 20;
 
@@ -546,6 +548,22 @@ export default function PrelevementPage() {
     setPage(1);
   }
 
+  async function handleMigrate() {
+    setMigrating(true);
+    setMigrateResult(null);
+    try {
+      const data = await apiPost('/prelevements/migrate', {});
+      setMigrateResult(data);
+      // Refetch everything
+      fetchCategories();
+      fetchExpenses();
+    } catch (err) {
+      setMigrateResult({ error: err.message });
+    } finally {
+      setMigrating(false);
+    }
+  }
+
   const mainCats = categories.filter(c => !c.parent_id);
   const totalPages = Math.ceil(total / LIMIT);
 
@@ -578,6 +596,45 @@ export default function PrelevementPage() {
           {/* Left: Quick-add form */}
           <div className="prel-form-card">
             <h2>Nouveau prélèvement</h2>
+
+            {/* Migration banner — shown when tables don't exist yet */}
+            {categories.length === 0 && (
+              <div style={{
+                background: 'var(--color-warning-bg)',
+                border: '1px solid var(--color-warning-border)',
+                borderRadius: '8px',
+                padding: 'var(--space-3)',
+                marginBottom: 'var(--space-3)',
+                fontSize: '0.85rem',
+              }}>
+                <strong>⚠️ Tables non initialisées</strong>
+                <p style={{margin: '4px 0', color: 'var(--color-text-secondary)'}}>
+                  Cliquez ci-dessous pour créer les tables et catégories.
+                </p>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={handleMigrate}
+                  disabled={migrating}
+                  style={{marginTop: '6px'}}
+                >
+                  {migrating ? 'Initialisation...' : 'Initialiser les tables'}
+                </button>
+                {migrateResult && (
+                  <pre style={{
+                    fontSize: '0.75rem',
+                    marginTop: '8px',
+                    padding: '6px',
+                    background: 'var(--color-surface)',
+                    borderRadius: '4px',
+                    overflow: 'auto',
+                    maxHeight: '120px',
+                  }}>
+                    {JSON.stringify(migrateResult, null, 2)}
+                  </pre>
+                )}
+              </div>
+            )}
+
             <button className="prel-cat-btn" onClick={() => setShowCatModal(true)}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
               Gérer les catégories
