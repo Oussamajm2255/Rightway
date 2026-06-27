@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tableau de bord — Right Way (Light)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+/* ─── TOKENS ─── */
+:root {
+  --p0:#2a78d6; --p1:#0f9e6a; --p2:#c98500; --p3:#7c3aed;
+  --p4:#dc2626; --p5:#db2777; --p6:#d95926; --p7:#16a34a;
+  --p8:#0891b2; --p9:#9333ea; --p10:#e11d48; --p11:#65a30d;
+
+  --bg:#f0f2f7; --surface:#ffffff; --surface2:#f5f7fb;
+  --surface3:#ebeef6; --border:#e1e5ef; --border2:#cdd2e2;
+  --text:#111827; --text2:#4b5675; --text3:#8b93b0;
+  --radius:12px; --radius-sm:8px; --radius-xs:6px;
+  --shadow:0 2px 16px rgba(30,40,80,.09);
+  --transition:0.2s ease;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px;-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--surface2)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* ─── ROLE SWITCHER ─── */
+.role-switcher{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:200;backdrop-filter:blur(8px)}
+.role-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3)}
+.role-tabs{display:flex;gap:4px;background:var(--surface2);border-radius:var(--radius-sm);padding:3px}
+.role-tab{padding:5px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text2);transition:var(--transition);letter-spacing:.04em}
+.role-tab.active{background:var(--p0);color:#fff}
+.role-tab:hover:not(.active){background:var(--surface3);color:var(--text)}
+
+/* ─── LAYOUT ─── */
+.view{display:none;flex-direction:column;gap:0}
+.view.active{display:flex}
+
+/* ─── TOP BAR ─── */
+.topbar{padding:18px 24px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar-left{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.live-badge{display:flex;align-items:center;gap:6px;background:rgba(15,158,106,.12);border:1px solid rgba(15,158,106,.3);border-radius:20px;padding:4px 10px 4px 6px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--p1);animation:pulse 2s ease-in-out infinite}
+.live-text{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--p1)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(15,158,106,.5)}50%{box-shadow:0 0 0 5px rgba(15,158,106,0)}}
+.topbar-title{display:flex;flex-direction:column}
+.topbar-title h1{font-size:17px;font-weight:700;color:var(--text);letter-spacing:-.01em}
+.topbar-title span{font-size:11.5px;color:var(--text2);margin-top:1px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.clock{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2);background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-xs);padding:5px 10px;min-width:192px;text-align:center}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius-xs);font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--text2);transition:var(--transition);text-decoration:none}
+.btn:hover{background:var(--surface3);color:var(--text);border-color:var(--border2)}
+.btn-primary{background:var(--p0);border-color:var(--p0);color:#fff}
+.btn-primary:hover{background:#2068c0;border-color:#2068c0;color:#fff}
+.btn-success{background:rgba(15,158,106,.15);border-color:rgba(15,158,106,.4);color:var(--p1)}
+.btn-success:hover{background:rgba(15,158,106,.25);color:var(--p1)}
+
+/* ─── MAIN CONTENT ─── */
+.content{padding:22px 24px;display:flex;flex-direction:column;gap:22px}
+
+/* ─── SECTION HEADER ─── */
+.section-header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.section-header h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);white-space:nowrap}
+.section-header-line{flex:1;height:1px;background:var(--border)}
+
+/* ─── KPI GRID ─── */
+.kpi-grid{display:grid;gap:14px}
+.kpi-grid-6{grid-template-columns:repeat(6,1fr)}
+.kpi-grid-5{grid-template-columns:repeat(5,1fr)}
+
+.kpi-card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:var(--transition);overflow:hidden}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius) var(--radius) 0 0}
+.kpi-card:hover{border-color:var(--border2);background:var(--surface2);transform:translateY(-1px);box-shadow:var(--shadow)}
+.kpi-card.no-link{cursor:default}
+.kpi-card.no-link:hover{transform:none;box-shadow:none}
+
+.kpi-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.kpi-icon i{font-size:17px}
+.kpi-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:6px}
+.kpi-value{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:var(--text);line-height:1;margin-bottom:5px}
+.kpi-sub{font-size:11px;color:var(--text3)}
+
+/* ─── CHARTS GRID ─── */
+.charts-grid{display:grid;grid-template-columns:2fr 1fr;gap:14px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.chart-card h3{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:16px}
+.chart-wrap{position:relative}
+.chart-wrap canvas{max-height:220px}
+
+/* ─── TABLE ─── */
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.data-table{width:100%;border-collapse:collapse}
+.data-table th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);text-align:left}
+.data-table td{padding:11px 16px;border-bottom:1px solid var(--border);font-size:12.5px;color:var(--text);vertical-align:middle}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:var(--surface2)}
+.data-table tr{cursor:pointer;transition:var(--transition)}
+
+/* ─── PROGRESS BAR ─── */
+.progress-wrap{display:flex;align-items:center;gap:8px}
+.progress-track{flex:1;height:5px;background:var(--surface3);border-radius:20px;overflow:hidden}
+.progress-fill{height:100%;border-radius:20px;transition:width .6s ease}
+.progress-pct{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2);min-width:32px}
+.progress-track.lg{height:8px}
+
+/* ─── RANK ─── */
+.rank-badge{width:24px;height:24px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500}
+.rank-1{background:rgba(201,133,0,.15);color:#a06800}
+.rank-2{background:rgba(100,110,140,.12);color:#5c6385}
+.rank-3{background:rgba(150,80,40,.12);color:#a05030}
+.rank-n{background:var(--surface3);color:var(--text3)}
+
+/* ─── AVATAR ─── */
+.avatar{width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.avatar-name{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:500}
+
+/* ─── STATUS BADGE ─── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em}
+.badge-dot{width:5px;height:5px;border-radius:50%}
+.badge-active{background:rgba(15,158,106,.15);color:var(--p1);border:1px solid rgba(15,158,106,.25)}
+.badge-inactive{background:rgba(92,99,133,.15);color:var(--text3);border:1px solid var(--border)}
+.badge-encours{background:rgba(42,120,214,.15);color:var(--p0);border:1px solid rgba(42,120,214,.25)}
+.badge-retour{background:rgba(217,89,38,.15);color:var(--p6);border:1px solid rgba(217,89,38,.25)}
+.badge-cloture{background:rgba(22,163,74,.15);color:var(--p7);border:1px solid rgba(22,163,74,.25)}
+.badge-annule{background:rgba(220,38,38,.15);color:var(--p4);border:1px solid rgba(220,38,38,.25)}
+.badge-attente{background:rgba(201,133,0,.15);color:var(--p2);border:1px solid rgba(201,133,0,.25)}
+
+/* ─── ACTIVITY FEED ─── */
+.feed{display:flex;flex-direction:column;gap:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.feed-item{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);transition:var(--transition)}
+.feed-item:last-child{border-bottom:none}
+.feed-item:hover{background:var(--surface2)}
+.feed-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.feed-icon i{font-size:15px}
+.feed-content{flex:1;min-width:0}
+.feed-text{font-size:12.5px;color:var(--text);line-height:1.45}
+.feed-text strong{color:var(--text);font-weight:600}
+.feed-time{font-size:11px;color:var(--text3);margin-top:3px}
+
+/* ─── ACTIVE DELIVERY CARD ─── */
+.delivery-hero{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden}
+.delivery-hero::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--p1),var(--p0));border-radius:var(--radius) var(--radius) 0 0}
+.delivery-status-line{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.delivery-ref{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:500;color:var(--text);margin-bottom:4px}
+.delivery-date{font-size:12px;color:var(--text3);margin-bottom:16px}
+.delivery-progress-section{margin-bottom:14px}
+.delivery-progress-labels{display:flex;justify-content:space-between;margin-bottom:7px}
+.delivery-progress-labels span{font-size:12px;color:var(--text2)}
+.delivery-progress-labels strong{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text)}
+.delivery-ca{font-size:13px;color:var(--text2);margin-bottom:16px}
+.delivery-ca strong{font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--p0)}
+.delivery-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+/* ─── PENDING BONS ─── */
+.bon-list{display:flex;flex-direction:column;gap:10px}
+.bon-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:var(--transition)}
+.bon-card:hover{border-color:var(--border2);background:var(--surface2)}
+.bon-icon{width:36px;height:36px;border-radius:8px;background:rgba(22,163,74,.12);border:1px solid rgba(22,163,74,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.bon-icon i{color:var(--p7);font-size:17px}
+.bon-info{flex:1}
+.bon-ref{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;color:var(--text)}
+.bon-meta{font-size:11.5px;color:var(--text3);margin-top:2px}
+
+/* ─── ACTIONS RAPIDES ─── */
+.actions-row{display:flex;gap:12px;flex-wrap:wrap}
+.action-btn{display:flex;align-items:center;gap:8px;padding:12px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;border:1px solid;transition:var(--transition);text-decoration:none}
+.action-btn i{font-size:16px}
+.action-primary{background:var(--p0);border-color:var(--p0);color:#fff}
+.action-primary:hover{background:#2068c0}
+.action-secondary{background:var(--surface2);border-color:var(--border2);color:var(--text2)}
+.action-secondary:hover{background:var(--surface3);color:var(--text)}
+
+/* ─── STOCK ALERTS TABLE ─── */
+.stock-low td{background:rgba(220,38,38,.06)}
+
+/* ─── PERF SUMMARY ROW ─── */
+.perf-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:900px){
+  .kpi-grid-6{grid-template-columns:repeat(3,1fr)}
+  .kpi-grid-5{grid-template-columns:repeat(3,1fr)}
+  .charts-grid{grid-template-columns:1fr}
+  .perf-row{grid-template-columns:1fr}
+}
+@media(max-width:640px){
+  .kpi-grid-6,.kpi-grid-5{grid-template-columns:repeat(2,1fr)}
+  .topbar{padding:14px 16px}
+  .content{padding:16px}
+  .clock{display:none}
+}
+@media(max-width:420px){
+  .kpi-grid-6,.kpi-grid-5{grid-template-columns:1fr}
+  .topbar-right .btn{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ROLE SWITCHER -->
+<div class="role-switcher">
+  <span class="role-label">Vue rôle :</span>
+  <div class="role-tabs">
+    <button class="role-tab active" onclick="switchRole('super_admin')">Super Admin</button>
+    <button class="role-tab" onclick="switchRole('admin')">Admin</button>
+    <button class="role-tab" onclick="switchRole('commercial')">Commercial</button>
+  </div>
+</div>
+
+<!-- ████████████████████████████  SUPER_ADMIN  ███████████████████████████ -->
+<div class="view active" id="view-super_admin">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        <span class="live-text">Live</span>
+      </div>
+      <div class="topbar-title">
+        <h1>Tableau de bord</h1>
+        <span>Vue d'ensemble · STE RIGHT WAY FOR TRADING</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="clock" id="clock-sa">— — : — — : — —</div>
+      <button class="btn"><i class="ti ti-download"></i> Export</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- KPI ROW -->
+    <div class="kpi-grid kpi-grid-6">
+      <div class="kpi-card" onclick="nav('/commercials')" style="--ac:var(--p0)">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--p0);border-radius:var(--radius) var(--radius) 0 0"></div>
+        <div class="kpi-icon" style="background:rgba(42,120,214,.12)"><i class="ti ti-users" style="color:var(--p0)"></i></div>
+        <div class="kpi-label">Commerciaux actifs</div>
+        <div class="kpi-value">6</div>
+        <div class="kpi-sub">comptes activés</div>
+      </div>
+      <div class="kpi-card" onclick="nav('/products')">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--p7);border-radius:var(--radius) var(--radius) 0 0"></div>
+        <div class="kpi-icon" style="background:rgba(22,163,74,.12)"><i class="ti ti-package" style="color:var(--p7)"></i></div>
+        <div class="kpi-label">Produits actifs</div>
+        <div class="kpi-value">120</div>
+        <div class="kpi-sub">catalogue</div>
+      </div>
+      <div class="kpi-card" onclick="nav('/livraisons')">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--p6);border-radius:var(--radius) var(--radius) 0 0"></div>
+        <div class="kpi-icon" style="background:rgba(217,89,38,.12)"><i class="ti ti-truck" style="color:var(--p6)"></i></div>
+        <div class="kpi-label">Livraisons actives</div>
+        <div class="kpi-value">3</div>
+        <div class="kpi-sub">EN_COURS + EN_RETOUR</div>
+      </div>
+      <div class="kpi-card no-link">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--p2);border-radius:var(--radius) var(--radius) 0 0"></div>
+        <div class="kpi-icon" style="background:rgba(201,133,0,.12)"><i class="ti ti-currency-dollar" style="color:var(--p2)"></i></div>
+        <div class="kpi-label">CA Global TTC</div>
+        <div class="kpi-value" style="font-size:15px">301 172,500 DT</div>
+        <div class="kpi-sub">livraisons clôturées</div>
+      </div>
+      <div class="kpi-card no-link">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--p1);border-radius:var(--radius) var(--radius) 0 0"></div>
+        <div class="kpi-icon" style="background:rgba(15,158,106,.12)"><i class="ti ti-percentage" style="color:var(--p1)"></i></div>
+        <div class="kpi-label">Commissions</div>
+        <div class="kpi-value" style="font-size:15px">30 117,250 DT</div>
+        <div class="kpi-sub">10% du CA global</div>
+      </div>
+      <div class="kpi-card" onclick="nav('/stock')">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--p4);border-radius:var(--radius) var(--radius) 0 0"></div>
+        <div class="kpi-icon" style="background:rgba(220,38,38,.12)"><i class="ti ti-alert-triangle" style="color:var(--p4)"></i></div>
+        <div class="kpi-label">Alertes stock</div>
+        <div class="kpi-value" style="color:var(--p4)">5</div>
+        <div class="kpi-sub">produits &lt; 20 unités</div>
+      </div>
+    </div>
+
+    <!-- PERFORMANCE GLOBALE -->
+    <div>
+      <div class="section-header"><h2>Performance</h2><div class="section-header-line"></div></div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3>CA mensuel — 6 derniers mois (tous commerciaux)</h3>
+          <div class="chart-wrap"><canvas id="sa-chart-bar"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Répartition statuts livraisons</h3>
+          <div class="chart-wrap"><canvas id="sa-chart-donut"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOP COMMERCIAUX -->
+    <div>
+      <div class="section-header"><h2>Top 5 Commerciaux</h2><div class="section-header-line"></div></div>
+      <div class="table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Rang</th>
+              <th>Commercial</th>
+              <th>Livraisons</th>
+              <th>CA</th>
+              <th>Écoulement</th>
+              <th>Commission</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody id="sa-top-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ACTIVITÉ RÉCENTE -->
+    <div>
+      <div class="section-header"><h2>Activité récente</h2><div class="section-header-line"></div></div>
+      <div class="feed" id="sa-feed"></div>
+    </div>
+
+  </div>
+</div><!-- /super_admin -->
+
+<!-- ████████████████████████████  ADMIN  ███████████████████████████████ -->
+<div class="view" id="view-admin">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        <span class="live-text">Live</span>
+      </div>
+      <div class="topbar-title">
+        <h1>Tableau de bord</h1>
+        <span>Gestion dépôt</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="clock" id="clock-admin">— — : — — : — —</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- KPI ROW -->
+    <div class="kpi-grid kpi-grid-5">
+      <div class="kpi-card" onclick="nav('/stock')">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--p7);border-radius:var(--radius) var(--radius) 0 0"></div>
+        <div class="kpi-icon" style="background:rgba(22,163,74,.12)"><i class="ti ti-package" style="color:var(--p7)"></i></div>
+        <div class="kpi-label">Produits en stock</div>
+        <div class="kpi-value">120</div>
+        <div class="kpi-sub">4 500 unités totales</div>
+      </div>
+      <div class="kpi-card" onclick="nav('/livraisons')">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--p6);border-radius:var(--radius) var(--radius) 0 0"></div>
+        <div class="kpi-icon" style="background:rgba(217,89,38,.12)"><i class="ti ti-truck" style="color:var(--p6)"></i></div>
+        <div class="kpi-label">Livraisons actives</div>
+        <div class="kpi-value">2</div>
+        <div class="kpi-sub">EN_COURS + EN_RETOUR</div>
+      </div>
+      <div class="kpi-card" onclick="nav('/livraisons')">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--p2);border-radius:var(--radius) var(--radius) 0 0"></div>
+        <div class="kpi-icon" style="background:rgba(201,133,0,.12)"><i class="ti ti-clock" style="color:var(--p2)"></i></div>
+        <div class="kpi-label">En attente commercial</div>
+        <div class="kpi-value">1</div>
+        <div class="kpi-sub">confirmation bon de sortie</div>
+      </div>
+      <div class="kpi-card no-link">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--p0);border-radius:var(--radius) var(--radius) 0 0"></div>
+        <div class="kpi-icon" style="background:rgba(42,120,214,.12)"><i class="ti ti-currency-dollar" style="color:var(--p0)"></i></div>
+        <div class="kpi-label">CA période</div>
+        <div class="kpi-value" style="font-size:15px">85 420,750 DT</div>
+        <div class="kpi-sub">ce mois (Juin)</div>
+      </div>
+      <div class="kpi-card" onclick="nav('/stock')">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--p4);border-radius:var(--radius) var(--radius) 0 0"></div>
+        <div class="kpi-icon" style="background:rgba(220,38,38,.12)"><i class="ti ti-alert-triangle" style="color:var(--p4)"></i></div>
+        <div class="kpi-label">Alertes stock</div>
+        <div class="kpi-value" style="color:var(--p4)">5</div>
+        <div class="kpi-sub">produits &lt; 20 unités</div>
+      </div>
+    </div>
+
+    <!-- MES LIVRAISONS -->
+    <div>
+      <div class="section-header"><h2>Mes livraisons en cours</h2><div class="section-header-line"></div></div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3>CA mensuel — livraisons clôturées</h3>
+          <div class="chart-wrap"><canvas id="admin-chart-bar"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Répartition statuts</h3>
+          <div class="chart-wrap"><canvas id="admin-chart-donut"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALERTES STOCK -->
+    <div>
+      <div class="section-header"><h2>Produits en alerte (&lt; 20 unités)</h2><div class="section-header-line"></div></div>
+      <div class="table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Produit</th>
+              <th>Catégorie</th>
+              <th>Stock actuel</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="admin-stock-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ACTIONS RAPIDES -->
+    <div>
+      <div class="section-header"><h2>Actions rapides</h2><div class="section-header-line"></div></div>
+      <div class="actions-row">
+        <a href="#" class="action-btn action-primary" onclick="nav('/livraisons/nouvelle');return false">
+          <i class="ti ti-plus"></i> Nouvelle livraison
+        </a>
+        <a href="#" class="action-btn action-secondary" onclick="nav('/stock');return false">
+          <i class="ti ti-package"></i> Gérer le stock
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /admin -->
+
+<!-- ████████████████████████████  COMMERCIAL  ███████████████████████████ -->
+<div class="view" id="view-commercial">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        <span class="live-text">Live</span>
+      </div>
+      <div class="topbar-title">
+        <h1>Tableau de bord</h1>
+        <span>Bonjour Youssef 👋</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="clock" id="clock-com">— — : — — : — —</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- KPI ROW -->
+    <div class="kpi-grid kpi-grid-5">
+      <div class="kpi-card no-link">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--p0);border-radius:var(--radius) var(--radius) 0 0"></div>
+        <div class="kpi-icon" style="background:rgba(42,120,214,.12)"><i class="ti ti-currency-dollar" style="color:var(--p0)"></i></div>
+        <div class="kpi-label">Mon CA Total</div>
+        <div class="kpi-value" style="font-size:15px">48 750,500 DT</div>
+        <div class="kpi-sub">livraisons clôturées</div>
+      </div>
+      <div class="kpi-card no-link">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--p1);border-radius:var(--radius) var(--radius) 0 0"></div>
+        <div class="kpi-icon" style="background:rgba(15,158,106,.12)"><i class="ti ti-percentage" style="color:var(--p1)"></i></div>
+        <div class="kpi-label">Ma Commission</div>
+        <div class="kpi-value" style="font-size:15px">4 875,050 DT</div>
+        <div class="kpi-sub">10% du CA</div>
+      </div>
+      <div class="kpi-card no-link">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--p3);border-radius:var(--radius) var(--radius) 0 0"></div>
+        <div class="kpi-icon" style="background:rgba(124,58,237,.12)"><i class="ti ti-chart-pie" style="color:var(--p3)"></i></div>
+        <div class="kpi-label">Taux complétion</div>
+        <div class="kpi-value" style="color:var(--p3)">88%</div>
+        <div class="kpi-sub">30 / 34 livraisons</div>
+      </div>
+      <div class="kpi-card" onclick="nav('/livraisons')">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--p6);border-radius:var(--radius) var(--radius) 0 0"></div>
+        <div class="kpi-icon" style="background:rgba(217,89,38,.12)"><i class="ti ti-truck" style="color:var(--p6)"></i></div>
+        <div class="kpi-label">En tournée</div>
+        <div class="kpi-value">1</div>
+        <div class="kpi-sub">active</div>
+      </div>
+      <div class="kpi-card no-link">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--p2);border-radius:var(--radius) var(--radius) 0 0"></div>
+        <div class="kpi-icon" style="background:rgba(201,133,0,.12)"><i class="ti ti-wallet" style="color:var(--p2)"></i></div>
+        <div class="kpi-label">Avances acceptées</div>
+        <div class="kpi-value" style="font-size:15px">4 200,000 DT</div>
+        <div class="kpi-sub">total</div>
+      </div>
+    </div>
+
+    <!-- LIVRAISON ACTIVE -->
+    <div>
+      <div class="section-header"><h2>Livraison active</h2><div class="section-header-line"></div></div>
+      <div class="delivery-hero">
+        <div class="delivery-status-line">
+          <span class="badge badge-active" style="font-size:11px;padding:5px 12px">
+            <span class="badge-dot" style="background:var(--p1)"></span>
+            EN TOURNÉE
+          </span>
+        </div>
+        <div class="delivery-ref">LIV-20260622-001</div>
+        <div class="delivery-date">Démarrée le 22 Juin 2026</div>
+        <div class="delivery-progress-section">
+          <div class="delivery-progress-labels">
+            <span>Écoulement : <strong>138 / 170 produits vendus</strong></span>
+            <strong style="color:var(--p1)">82%</strong>
+          </div>
+          <div class="progress-track lg">
+            <div class="progress-fill" style="width:82%;background:linear-gradient(90deg,var(--p1),var(--p0))"></div>
+          </div>
+        </div>
+        <div class="delivery-ca">CA en cours : <strong>3 910,500 DT</strong></div>
+        <div class="delivery-actions">
+          <a href="#" class="btn btn-primary" onclick="nav('/ventes/LIV-20260622-001');return false">
+            <i class="ti ti-edit"></i> Déclarer ventes
+          </a>
+          <a href="#" class="btn" onclick="nav('/livraisons/LIV-20260622-001/realtime');return false">
+            <i class="ti ti-clock"></i> Suivre en temps réel
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- BONS EN ATTENTE -->
+    <div>
+      <div class="section-header"><h2>Bons de sortie en attente de confirmation</h2><div class="section-header-line"></div></div>
+      <div class="bon-list">
+        <div class="bon-card" onclick="nav('/livraisons/LIV-20260625-004')">
+          <div class="bon-icon"><i class="ti ti-file-check"></i></div>
+          <div class="bon-info">
+            <div class="bon-ref">LIV-20260625-004</div>
+            <div class="bon-meta">Créé par Admin Dépôt le 25 Juin 2026</div>
+          </div>
+          <button class="btn btn-success" onclick="event.stopPropagation();alert('Livraison confirmée')">
+            <i class="ti ti-check"></i> Confirmer
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MES PERFORMANCES -->
+    <div>
+      <div class="section-header"><h2>Mes performances</h2><div class="section-header-line"></div></div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3>Mon CA mensuel — 6 derniers mois</h3>
+          <div class="chart-wrap"><canvas id="com-chart-bar"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Répartition statuts de mes livraisons</h3>
+          <div class="chart-wrap"><canvas id="com-chart-donut"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORIQUE RÉCENT -->
+    <div>
+      <div class="section-header"><h2>Dernières livraisons</h2><div class="section-header-line"></div></div>
+      <div class="table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Référence</th>
+              <th>Date</th>
+              <th>Statut</th>
+              <th>Chargé</th>
+              <th>Vendu</th>
+              <th>Écoulement</th>
+              <th>CA</th>
+            </tr>
+          </thead>
+          <tbody id="com-history-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /commercial -->
+
+<script>
+/* ─── UTILS ─── */
+function fmtDT(v){return v.toLocaleString('fr-TN',{minimumFractionDigits:3,maximumFractionDigits:3})+' DT'}
+function fmtDTShort(v){if(v>=1000)return (v/1000).toFixed(1)+'k DT';return fmtDT(v)}
+function nav(path){console.log('→ navigate',path)}
+
+/* ─── CLOCK ─── */
+const months=['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
+function updateClocks(){
+  const now=new Date();
+  const d=now.getDate().toString().padStart(2,'0');
+  const m=months[now.getMonth()];
+  const hh=now.getHours().toString().padStart(2,'0');
+  const mm=now.getMinutes().toString().padStart(2,'0');
+  const ss=now.getSeconds().toString().padStart(2,'0');
+  const str=`${d} ${m} ${hh}:${mm}:${ss}`;
+  ['clock-sa','clock-admin','clock-com'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=str;});
+}
+updateClocks();setInterval(updateClocks,1000);
+
+/* ─── ROLE SWITCHER ─── */
+function switchRole(role){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.role-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('view-'+role).classList.add('active');
+  event.target.classList.add('active');
+}
+
+/* ─── CHART DEFAULTS ─── */
+Chart.defaults.color='#4b5675';
+Chart.defaults.borderColor='#e1e5ef';
+Chart.defaults.font.family='Inter';
+const MONTHS6=['Jan','Fév','Mar','Avr','Mai','Juin'];
+const MONTHS_COLORS=['#2a78d6','#0f9e6a','#c98500','#7c3aed','#dc2626','#db2777','#d95926','#16a34a'];
+
+function makeBar(id,data,color,label){
+  const ctx=document.getElementById(id);
+  if(!ctx)return;
+  return new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:MONTHS6,
+      datasets:[{label,data,backgroundColor:color+'bb',borderColor:color,borderWidth:1.5,borderRadius:5,borderSkipped:false}]
+    },
+    options:{
+      responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>fmtDTShort(ctx.parsed.y)}}},
+      scales:{x:{grid:{color:'#e1e5ef80'}},y:{grid:{color:'#e1e5ef80'},ticks:{callback:v=>fmtDTShort(v)}}}
+    }
+  });
+}
+
+function makeDonut(id,data,labels,colors){
+  const ctx=document.getElementById(id);
+  if(!ctx)return;
+  return new Chart(ctx,{
+    type:'doughnut',
+    data:{labels,datasets:[{data,backgroundColor:colors,borderColor:'#ffffff',borderWidth:3,hoverOffset:4}]},
+    options:{
+      cutout:'68%',responsive:true,
+      plugins:{legend:{position:'bottom',labels:{boxWidth:11,padding:14,font:{size:11}}},
+      tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}`}}}
+    }
+  });
+}
+
+/* ─── SUPER ADMIN DATA ─── */
+makeBar('sa-chart-bar',[38200,45100,52300,49800,61500,54250],'#2a78d6','CA Global');
+makeDonut('sa-chart-donut',[142,12,3,6],['Clôturée','Annulée','En cours','En retour'],['#16a34a','#dc2626','#2a78d6','#d95926']);
+
+// Top 5 commerciaux
+const topCommerciaux=[
+  {rank:1,nom:'Youssef Ben Ali',initials:'YB',color:'#2a78d6',livraisons:12,ca:54250,pct:92,commission:5425},
+  {rank:2,nom:'Sarra Trabelsi',initials:'ST',color:'#0f9e6a',livraisons:10,ca:48750,pct:87,commission:4875},
+  {rank:3,nom:'Mehdi Chaabane',initials:'MC',color:'#7c3aed',livraisons:9,ca:42300,pct:81,commission:4230},
+  {rank:4,nom:'Ines Belhadj',initials:'IB',color:'#c98500',livraisons:8,ca:38900,pct:78,commission:3890},
+  {rank:5,nom:'Nizar Abidi',initials:'NA',color:'#d95926',livraisons:7,ca:33100,pct:71,commission:3310},
+];
+const rankClasses=['rank-1','rank-2','rank-3','rank-n','rank-n'];
+const statuts=['ACTIF','ACTIF','ACTIF','ACTIF','EN_RETOUR'];
+const statClasses=['badge-active','badge-active','badge-active','badge-active','badge-retour'];
+const tbody=document.getElementById('sa-top-table');
+topCommerciaux.forEach((c,i)=>{
+  tbody.innerHTML+=`
+  <tr onclick="nav('/commercials/${c.nom}')">
+    <td><span class="rank-badge ${rankClasses[i]}">#${c.rank}</span></td>
+    <td><span class="avatar-name"><span class="avatar" style="background:${c.color}22;color:${c.color}">${c.initials}</span>${c.nom}</span></td>
+    <td style="font-family:'JetBrains Mono',monospace">${c.livraisons}</td>
+    <td style="font-family:'JetBrains Mono',monospace">${fmtDTShort(c.ca)}</td>
+    <td style="min-width:120px">
+      <div class="progress-wrap">
+        <div class="progress-track" style="flex:1"><div class="progress-fill" style="width:${c.pct}%;background:${c.color}"></div></div>
+        <span class="progress-pct">${c.pct}%</span>
+      </div>
+    </td>
+    <td style="font-family:'JetBrains Mono',monospace">${fmtDTShort(c.commission)}</td>
+    <td><span class="badge ${statClasses[i]}">${statuts[i]}</span></td>
+  </tr>`;
+});
+
+// Feed activité
+const feedData=[
+  {icon:'ti-circle-check',color:'var(--p7)',bg:'rgba(22,163,74,.12)',text:'Livraison <strong>LIV-20260622-001</strong> clôturée par <strong>Youssef Ben Ali</strong> — CA : 48 750,500 DT',time:'Il y a 2h'},
+  {icon:'ti-cash',color:'var(--p1)',bg:'rgba(15,158,106,.12)',text:'Avance de <strong>1 200,000 DT</strong> acceptée pour <strong>Sarra Trabelsi</strong>',time:'Il y a 3h'},
+  {icon:'ti-truck',color:'var(--p0)',bg:'rgba(42,120,214,.12)',text:'Livraison <strong>LIV-20260623-002</strong> en cours — commercial <strong>Mehdi Chaabane</strong>',time:'Il y a 4h'},
+  {icon:'ti-user-plus',color:'var(--p3)',bg:'rgba(124,58,237,.12)',text:'Nouveau commercial créé : <strong>Khalil Mansouri</strong>',time:'Il y a 6h'},
+  {icon:'ti-x',color:'var(--p4)',bg:'rgba(220,38,38,.12)',text:'Livraison <strong>LIV-20260620-007</strong> annulée — commercial <strong>Nizar Abidi</strong>',time:'Il y a 8h'},
+  {icon:'ti-circle-check',color:'var(--p7)',bg:'rgba(22,163,74,.12)',text:'Livraison <strong>LIV-20260619-005</strong> clôturée par <strong>Ines Belhadj</strong> — CA : 33 100,000 DT',time:'Il y a 1j'},
+  {icon:'ti-package',color:'var(--p2)',bg:'rgba(201,133,0,.12)',text:'Stock ajusté : <strong>Huile Végétale 1L</strong> — ajout de 200 unités (réapprovisionnement)',time:'Il y a 1j'},
+  {icon:'ti-cash',color:'var(--p1)',bg:'rgba(15,158,106,.12)',text:'Avance de <strong>3 000,000 DT</strong> acceptée pour <strong>Youssef Ben Ali</strong>',time:'Il y a 2j'},
+  {icon:'ti-truck',color:'var(--p6)',bg:'rgba(217,89,38,.12)',text:'Livraison <strong>LIV-20260621-003</strong> en retour — commercial <strong>Sarra Trabelsi</strong>',time:'Il y a 2j'},
+  {icon:'ti-alert-triangle',color:'var(--p4)',bg:'rgba(220,38,38,.12)',text:'Alerte stock : <strong>Sucre Blanc 2kg</strong> — 8 unités restantes',time:'Il y a 3j'},
+];
+const feed=document.getElementById('sa-feed');
+feedData.forEach(f=>{
+  feed.innerHTML+=`
+  <div class="feed-item">
+    <div class="feed-icon" style="background:${f.bg}"><i class="ti ${f.icon}" style="color:${f.color}"></i></div>
+    <div class="feed-content">
+      <div class="feed-text">${f.text}</div>
+      <div class="feed-time">${f.time}</div>
+    </div>
+  </div>`;
+});
+
+/* ─── ADMIN DATA ─── */
+makeBar('admin-chart-bar',[14200,17800,22100,19400,24600,21320],'#0891b2','CA Livraisons');
+makeDonut('admin-chart-donut',[34,4,2,2],['Clôturée','Annulée','En cours','En retour'],['#16a34a','#dc2626','#2a78d6','#d95926']);
+
+const stockAlerts=[
+  {code:'PRD-0042',nom:'Sucre Blanc 2kg',cat:'Épicerie',stock:8},
+  {code:'PRD-0071',nom:'Café Moulu 250g',cat:'Boissons',stock:12},
+  {code:'PRD-0015',nom:'Thé Vert Boîte',cat:'Boissons',stock:14},
+  {code:'PRD-0093',nom:'Sel Fin 1kg',cat:'Épicerie',stock:17},
+  {code:'PRD-0108',nom:'Vinaigre Blanc 1L',cat:'Épicerie',stock:19},
+];
+const stockTbody=document.getElementById('admin-stock-table');
+stockAlerts.forEach(s=>{
+  stockTbody.innerHTML+=`
+  <tr class="${s.stock<10?'stock-low':''}">
+    <td style="font-family:'JetBrains Mono',monospace;color:var(--text3)">${s.code}</td>
+    <td style="font-weight:500">${s.nom}</td>
+    <td><span class="badge badge-inactive">${s.cat}</span></td>
+    <td><span style="font-family:'JetBrains Mono',monospace;color:${s.stock<10?'var(--p4)':'var(--p2)'};font-weight:600">${s.stock}</span> unités</td>
+    <td><button class="btn" onclick="nav('/stock/${s.code}')"><i class="ti ti-adjustments"></i> Ajuster</button></td>
+  </tr>`;
+});
+
+/* ─── COMMERCIAL DATA ─── */
+makeBar('com-chart-bar',[5200,6800,8100,7400,9200,7950],'#7c3aed','Mon CA');
+makeDonut('com-chart-donut',[30,2,1,1],['Clôturée','Annulée','En cours','En retour'],['#16a34a','#dc2626','#2a78d6','#d95926']);
+
+const historique=[
+  {ref:'LIV-20260622-001',date:'22/06/2026',statut:'EN_COURS',sc:'badge-encours',charge:170,vendu:138,ca:3910.500},
+  {ref:'LIV-20260618-008',date:'18/06/2026',statut:'CLOTURE',sc:'badge-cloture',charge:200,vendu:198,ca:7420.750},
+  {ref:'LIV-20260613-006',date:'13/06/2026',statut:'CLOTURE',sc:'badge-cloture',charge:180,vendu:176,ca:6580.000},
+  {ref:'LIV-20260609-004',date:'09/06/2026',statut:'CLOTURE',sc:'badge-cloture',charge:150,vendu:148,ca:5320.500},
+  {ref:'LIV-20260604-002',date:'04/06/2026',statut:'CLOTURE',sc:'badge-cloture',charge:190,vendu:183,ca:6810.250},
+  {ref:'LIV-20260528-012',date:'28/05/2026',statut:'ANNULE',sc:'badge-annule',charge:160,vendu:0,ca:0},
+  {ref:'LIV-20260522-010',date:'22/05/2026',statut:'CLOTURE',sc:'badge-cloture',charge:200,vendu:195,ca:7200.000},
+  {ref:'LIV-20260516-007',date:'16/05/2026',statut:'CLOTURE',sc:'badge-cloture',charge:175,vendu:170,ca:6290.500},
+  {ref:'LIV-20260510-005',date:'10/05/2026',statut:'CLOTURE',sc:'badge-cloture',charge:140,vendu:136,ca:5100.000},
+  {ref:'LIV-20260504-001',date:'04/05/2026',statut:'CLOTURE',sc:'badge-cloture',charge:160,vendu:155,ca:5830.750},
+];
+const histTbody=document.getElementById('com-history-table');
+historique.forEach(h=>{
+  const pct=h.charge>0?Math.round(h.vendu/h.charge*100):0;
+  histTbody.innerHTML+=`
+  <tr onclick="nav('/livraisons/${h.ref}')">
+    <td style="font-family:'JetBrains Mono',monospace;font-size:12px">${h.ref}</td>
+    <td style="color:var(--text2);font-size:12px">${h.date}</td>
+    <td><span class="badge ${h.sc}">${h.statut.replace('_',' ')}</span></td>
+    <td style="font-family:'JetBrains Mono',monospace">${h.charge}</td>
+    <td style="font-family:'JetBrains Mono',monospace">${h.vendu}</td>
+    <td style="min-width:100px">
+      <div class="progress-wrap">
+        <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:${pct===100?'var(--p7)':pct>70?'var(--p0)':'var(--p2)'}"></div></div>
+        <span class="progress-pct">${pct}%</span>
+      </div>
+    </td>
+    <td style="font-family:'JetBrains Mono',monospace;color:var(--p0)">${h.ca>0?fmtDTShort(h.ca):'—'}</td>
+  </tr>`;
+});
+</script>
+</body>
+</html>
