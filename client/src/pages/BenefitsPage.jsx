@@ -131,8 +131,11 @@ export default function BenefitsPage() {
       const top = [...products].sort((a, b) => b.benefit - a.benefit).slice(0, take);
       const labels = top.map((p) => p.name.length > maxLabel ? p.name.substring(0, maxLabel - 2) + '\u2026' : p.name);
       const values = top.map((p) => p.benefit);
-      const colors = values.map((v) => v >= 0 ? 'rgba(15,158,106,0.8)' : 'rgba(220,38,38,0.8)');
-      const borderColors = values.map((v) => v >= 0 ? '#0f9e6a' : '#dc2626');
+      const colors = top.map((p) => {
+        const { bar } = catColors(p.category);
+        return bar + 'cc'; // 80% opacity hex
+      });
+      const borderColors = top.map((p) => catColors(p.category).bar);
 
       const chartH = Math.max(w <= 420 ? 200 : w <= 768 ? 260 : 320, top.length * perBar);
       ctx.parentElement.style.minHeight = chartH + 'px';
@@ -439,7 +442,7 @@ export default function BenefitsPage() {
             <div className="chart-card">
               <div className="chart-card-header">
                 <h3>Classement des produits les plus rentables</h3>
-                <span>Barres vertes = bénéfice positif · Barres rouges = perte</span>
+                <span>Couleur par catégorie de produit</span>
               </div>
               <div className="chart-wrap">
                 <canvas id="benefit-chart" />
