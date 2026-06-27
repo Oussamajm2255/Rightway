@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate, authorize } = require('../middleware/auth');
 const { signDownloadToken } = require('../utils/jwt');
+const pool = require('../db/pool');
 const {
   createLivraison,
   listLivraisons,
@@ -36,6 +37,32 @@ function ensureDownloadTokenScope(req, res, next) {
   next();
 }
 
+// Ownership guard: COMMERCIAL users may only access their own livraisons.
+// Download tokens are their own auth mechanism (scope-checked by ensureDownloadTokenScope).
+// SUPER_ADMIN and ADMIN retain unrestricted access.
+async function requireLivraisonOwnership(req, res, next) {
+  // Download tokens are purpose-bound — scope checked separately
+  if (req.downloadTokenLivraisonId) return next();
+  // SUPER_ADMIN and ADMIN have unrestricted access
+  if (req.user.role !== 'COMMERCIAL') return next();
+  try {
+    const { rows } = await pool.query(
+      'SELECT commercial_id FROM livraisons WHERE id = $1',
+      [req.params.id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Livraison introuvable.' });
+    }
+    if (rows[0].commercial_id !== req.user.id) {
+      return res.status(403).json({ error: 'Accès refusé.' });
+    }
+    next();
+  } catch (err) {
+    console.error('requireLivraisonOwnership error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
 router.post('/', authorize('SUPER_ADMIN', 'ADMIN'), createLivraison);
 router.get('/', listLivraisons);
 router.get('/:id', getLivraison);
@@ -50,12 +77,12 @@ router.put('/:id/confirmer-annulation', authorize('SUPER_ADMIN', 'ADMIN'), confi
 
 // Avances (advance payments during EN_COURS)
 router.post('/:id/avances', authorize('COMMERCIAL'), declarerAvance);
-router.get('/:id/avances', authorize('SUPER_ADMIN', 'ADMIN', 'COMMERCIAL'), getAvances);
+router.get('/:id/avances', authorize('SUPER_ADMIN', 'ADMIN', 'COMMERCIAL'), requireLivraisonOwnership, getAvances);
 router.put('/:id/avances/:avanceId/accepter', authorize('SUPER_ADMIN', 'ADMIN'), accepterAvance);
 router.put('/:id/avances/:avanceId/refuser', authorize('SUPER_ADMIN', 'ADMIN'), refuserAvance);
 
 // Real-time monitoring route
-router.get('/:id/realtime', authorize('SUPER_ADMIN', 'ADMIN', 'COMMERCIAL'), realtimeData);
+router.get('/:id/realtime', authorize('SUPER_ADMIN', 'ADMIN', 'COMMERCIAL'), requireLivraisonOwnership, realtimeData);
 
 // Sales routes
 router.get('/:id/sales', authorize('COMMERCIAL'), getSales);
@@ -66,11 +93,11 @@ router.post('/:id/sales/sync', authorize('COMMERCIAL'), syncOfflineSales);
 router.put('/:id/terminer', authorize('COMMERCIAL'), terminerLivraison);
 router.put('/:id/confirmer-retour', authorize('SUPER_ADMIN', 'ADMIN', 'COMMERCIAL'), confirmerRetour);
 
-// PDF routes — download token scope must match the requested livraison
-router.get('/:id/bon-sortie/pdf', ensureDownloadTokenScope, downloadBonSortiePDF);
-router.get('/:id/bon-retour/pdf', ensureDownloadTokenScope, downloadBonRetourPDF);
-router.get('/:id/dossier/pdf', ensureDownloadTokenScope, downloadDossierPDF);
-router.get('/:id/dossier', ensureDownloadTokenScope, getDossier);
+// PDF routes — ownership + download token scope must match the requested livraison
+router.get('/:id/bon-sortie/pdf', requireLivraisonOwnership, ensureDownloadTokenScope, downloadBonSortiePDF);
+router.get('/:id/bon-retour/pdf', requireLivraisonOwnership, ensureDownloadTokenScope, downloadBonRetourPDF);
+router.get('/:id/dossier/pdf', requireLivraisonOwnership, ensureDownloadTokenScope, downloadDossierPDF);
+router.get('/:id/dossier', requireLivraisonOwnership, ensureDownloadTokenScope, getDossier);
 
 // PDF download token — generates short-lived token for window.open() PDFs
 router.get('/:id/pdf-token', authenticate, (req, res) => {

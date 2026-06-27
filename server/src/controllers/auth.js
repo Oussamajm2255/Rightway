@@ -15,28 +15,61 @@ async function login(req, res) {
       return res.status(400).json({ error: 'Email et mot de passe sont requis.' });
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+
     const { rows } = await pool.query(
-      'SELECT id, full_name, email, password_hash, role, phone, vehicle_name, vehicle_plate, is_active FROM users WHERE email = $1',
-      [email.toLowerCase().trim()]
+      `SELECT id, full_name, email, password_hash, role, phone, vehicle_name, vehicle_plate,
+              is_active, failed_login_attempts, locked_until
+       FROM users WHERE email = $1`,
+      [normalizedEmail]
     );
 
     if (rows.length === 0) {
+      // Account does not exist — do NOT leak existence.
+      // IP-based rate limiter handles brute-force from the network layer.
       return res.status(401).json({ error: 'Email ou mot de passe incorrect.' });
     }
 
     const user = rows[0];
 
+    // Per-account brute-force protection: exponential backoff lockout.
+    // Never permanently lock — lockout expires based on attempt count.
+    if (user.locked_until && new Date(user.locked_until) > new Date()) {
+      return res.status(401).json({ error: 'Email ou mot de passe incorrect.' });
+    }
+
     if (!user.is_active) {
+      // Clear failed attempts for deactivated accounts (don't keep them locked)
+      await pool.query(
+        'UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = $1',
+        [user.id]
+      );
       return res.status(403).json({ error: 'Votre compte a été désactivé. Contactez un administrateur.' });
     }
 
     const valid = await verifyPassword(password, user.password_hash);
     if (!valid) {
+      // Increment failed attempts with exponential backoff lockout.
+      // Lockout duration = 2^(attempts-1) seconds, capped at 15 minutes.
+      const newAttempts = (user.failed_login_attempts || 0) + 1;
+      const lockSeconds = Math.min(Math.pow(2, newAttempts - 1), 900);
+      await pool.query(
+        `UPDATE users
+         SET failed_login_attempts = $1,
+             locked_until = NOW() + INTERVAL '1 second' * $2
+         WHERE id = $3`,
+        [newAttempts, lockSeconds, user.id]
+      );
       return res.status(401).json({ error: 'Email ou mot de passe incorrect.' });
     }
 
-    // Update last_login_at
-    await pool.query('UPDATE users SET last_login_at = NOW() WHERE id = $1', [user.id]);
+    // Successful login — reset lockout counter
+    await pool.query(
+      `UPDATE users
+       SET last_login_at = NOW(), failed_login_attempts = 0, locked_until = NULL
+       WHERE id = $1`,
+      [user.id]
+    );
 
     const token = signToken({
       id: user.id,

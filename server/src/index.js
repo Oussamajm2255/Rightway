@@ -69,8 +69,10 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],  // needed for Vite inline scripts
-      styleSrc: ["'self'", "'unsafe-inline'"],   // needed for React CSS-in-JS
+      scriptSrc: isProduction
+        ? ["'self'"]                          // production build has no inline scripts
+        : ["'self'", "'unsafe-inline'"],      // Vite HMR requires inline in development
+      styleSrc: ["'self'", "'unsafe-inline'"], // React style={{}} requires inline style attributes
       imgSrc: ["'self'", 'data:', 'blob:'],
       fontSrc: ["'self'"],
       connectSrc: ["'self'"],

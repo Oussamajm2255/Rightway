@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS users (
   vehicle_name VARCHAR(100),
   vehicle_plate VARCHAR(30),
   is_active BOOLEAN DEFAULT true,
+  failed_login_attempts INTEGER DEFAULT 0,
+  locked_until TIMESTAMPTZ,
   last_login_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

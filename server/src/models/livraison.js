@@ -534,9 +534,12 @@ async function terminerLivraison(id, commercial_id) {
     const livraison = await findById(id);
     const ca_total = livraison.items.reduce((sum, i) => sum + i.qte_vendue * Number(i.prix_ttc), 0);
     const commission = Number((ca_total * COMMISSION_RATE).toFixed(3));
-    const net_a_reverser = Number((ca_total - commission).toFixed(3));
+    const total_avances = (livraison.avances || [])
+      .filter(a => a.status === 'ACCEPTE')
+      .reduce((sum, a) => sum + Number(a.amount), 0);
+    const net_a_reverser = Number((ca_total - commission - total_avances).toFixed(3));
 
-    return { livraison, ca_total: Number(ca_total.toFixed(3)), commission, net_a_reverser };
+    return { livraison, ca_total: Number(ca_total.toFixed(3)), commission, total_avances, net_a_reverser };
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;
@@ -610,13 +613,17 @@ async function confirmerRetour(id, user_id, role) {
     const livraison = await findById(id);
     const ca_total = livraison.items.reduce((sum, i) => sum + i.qte_vendue * Number(i.prix_ttc), 0);
     const commission = Number((ca_total * COMMISSION_RATE).toFixed(3));
-    const net_a_reverser = Number((ca_total - commission).toFixed(3));
+    const total_avances = (livraison.avances || [])
+      .filter(a => a.status === 'ACCEPTE')
+      .reduce((sum, a) => sum + Number(a.amount), 0);
+    const net_a_reverser = Number((ca_total - commission - total_avances).toFixed(3));
 
     return {
       livraison,
       bothConfirmed,
       ca_total: Number(ca_total.toFixed(3)),
       commission,
+      total_avances,
       net_a_reverser,
     };
   } catch (err) {
