@@ -196,7 +196,7 @@ CREATE TABLE IF NOT EXISTS prelevements (
   amount          NUMERIC(12,2) NOT NULL CHECK(amount > 0),
   description     TEXT,
   reference       VARCHAR(100),
-  declared_by     INTEGER NOT NULL REFERENCES users(id),
+  declared_by     UUID NOT NULL REFERENCES users(id),
   declared_at     TIMESTAMPTZ DEFAULT NOW(),
   expense_date    DATE NOT NULL DEFAULT CURRENT_DATE,
   created_at      TIMESTAMPTZ DEFAULT NOW(),
