@@ -296,4 +296,15 @@ async function refuserAvance(req, res) {
   } catch (err) { console.error('refuserAvance error:', err); res.status(500).json({ error: 'Erreur interne du serveur' }); }
 }
 
-module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier, archiveLivraison, demanderAnnulation, confirmerAnnulation, declarerAvance, getAvances, accepterAvance, refuserAvance };
+async function realtimeData(req, res) {
+  try {
+    const data = await livraisonModel.getRealtimeData(req.params.id);
+    if (!data) return res.status(404).json({ error: 'Livraison introuvable.' });
+    res.json(data);
+  } catch (err) {
+    console.error('realtimeData error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier, archiveLivraison, demanderAnnulation, confirmerAnnulation, declarerAvance, getAvances, accepterAvance, refuserAvance, realtimeData };

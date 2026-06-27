@@ -331,7 +331,67 @@ async function syncSales(livraison_id, sales) {
   return results;
 }
 
-module.exports = { generateReference, create, findById, findAll, confirmSortie, getSalesState, recordSales, syncSales, terminerLivraison, confirmerRetour, archiveLivraison, demanderAnnulation, confirmerAnnulation };
+/**
+ * Get real-time monitoring data for a livraison.
+ * Aggregates sales per category.
+ */
+async function getRealtimeData(id) {
+  const { rows: livRows } = await pool.query(
+    'SELECT reference, status FROM livraisons WHERE id = $1', [id]
+  );
+  if (livRows.length === 0) return null;
+
+  const livraison = livRows[0];
+
+  const { rows: catRows } = await pool.query(
+    `SELECT
+       COALESCE(p.category, 'Sans catégorie') AS category,
+       SUM(li.qte_chargee) AS stock,
+       SUM(li.qte_vendue) AS sold,
+       SUM(li.qte_vendue * li.prix_ttc) AS ca,
+       COUNT(*) AS product_count
+     FROM livraison_items li
+     JOIN products p ON li.product_id = p.id
+     WHERE li.livraison_id = $1
+     GROUP BY p.category
+     ORDER BY p.category`,
+    [id]
+  );
+
+  const categories = catRows.map(row => ({
+    name: String(row.category),
+    stock: Number(row.stock),
+    sold: Number(row.sold),
+    remaining: Number(row.stock) - Number(row.sold),
+    ca: Number(Number(row.ca).toFixed(3)),
+    sell_through_pct: row.stock > 0
+      ? Math.round((Number(row.sold) / Number(row.stock)) * 100)
+      : 0,
+    product_count: Number(row.product_count),
+  }));
+
+  const total_stock = categories.reduce((s, c) => s + c.stock, 0);
+  const total_sold = categories.reduce((s, c) => s + c.sold, 0);
+  const total_ca = Number(categories.reduce((s, c) => s + c.ca, 0).toFixed(3));
+  const total_remaining = total_stock - total_sold;
+  const sell_through_pct = total_stock > 0
+    ? Math.round((total_sold / total_stock) * 100)
+    : 0;
+
+  return {
+    livraison: { reference: livraison.reference, status: livraison.status },
+    overall: {
+      total_stock,
+      total_sold,
+      total_remaining,
+      total_ca,
+      sell_through_pct,
+    },
+    categories,
+  };
+}
+
+module.exports = { generateReference, create, findById, findAll, confirmSortie, getSalesState, recordSales, syncSales, terminerLivraison, confirmerRetour, archiveLivraison, demanderAnnulation, confirmerAnnulation, getRealtimeData };
 
 // ============================================================
 // END LIVRAISON & BON DE RETOUR

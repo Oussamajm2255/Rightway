@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Real-time Distribution — Livraison KPI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.30.0/webfont/tabler-icons.min.css" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #f5f6f8;
+      --bg2:        #ffffff;
+      --bg3:        #eef0f4;
+      --border:     rgba(0,0,0,0.08);
+      --border-s:   rgba(0,0,0,0.15);
+      --text:       #111318;
+      --text-2:     #52566a;
+      --text-3:     #9ea3b5;
+      --radius:     12px;
+      --radius-sm:  8px;
+      --font:       'Inter', system-ui, sans-serif;
+      --mono:       'JetBrains Mono', monospace;
+
+      --c1: #2a78d6;
+      --c2: #0f9e6a;
+      --c3: #c98500;
+      --c4: #7c3aed;
+      --c5: #dc2626;
+      --c6: #db2777;
+      --c7: #d95926;
+      --c8: #16a34a;
+
+      --sold-bar:   rgba(0,0,0,0.07);
+    }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ── LAYOUT ── */
+    .shell {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 28px 24px 48px;
+    }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(27, 175, 122, 0.12);
+      border: 1px solid rgba(27, 175, 122, 0.25);
+      border-radius: 20px;
+      padding: 4px 12px 4px 8px;
+      font-size: 11px;
+      font-weight: 500;
+      color: #1baf7a;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .live-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #1baf7a;
+      animation: pulse 1.6s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1; box-shadow: 0 0 0 0 rgba(27,175,122,.5); }
+      50% { opacity:.7; box-shadow: 0 0 0 5px rgba(27,175,122,0); }
+    }
+
+    .page-title { font-size: 20px; font-weight: 600; letter-spacing: -.01em; }
+    .page-sub   { font-size: 12px; color: var(--text-3); margin-top: 2px; font-family: var(--mono); }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .clock {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text-2);
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 6px 12px;
+      white-space: nowrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-2);
+      background: var(--bg2);
+      border: 1px solid var(--border-s);
+      border-radius: var(--radius-sm);
+      padding: 6px 13px;
+      cursor: pointer;
+      transition: color .15s, border-color .15s, background .15s;
+      font-family: var(--font);
+    }
+    .btn:hover { color: var(--text); border-color: rgba(0,0,0,.22); background: var(--bg3); }
+    .btn i { font-size: 15px; }
+
+    /* ── KPI ROW ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 900px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 560px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .kpi-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .2s;
+    }
+    .kpi-card:hover { border-color: var(--border-s); }
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--accent, #2a78d6);
+      opacity: .7;
+    }
+    .kpi-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 6px;
+    }
+    .kpi-val {
+      font-size: 26px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+      letter-spacing: -.02em;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .kpi-sub { font-size: 11px; color: var(--text-3); }
+
+    /* ── CATEGORY GRID ── */
+    .cat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(295px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .cat-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      transition: border-color .2s, transform .2s;
+    }
+    .cat-card:hover { border-color: var(--border-s); transform: translateY(-1px); }
+
+    .cat-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .cat-left { display: flex; align-items: flex-start; gap: 10px; }
+    .cat-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      margin-top: 3px;
+      flex-shrink: 0;
+    }
+    .cat-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1.35;
+    }
+    .cat-code {
+      font-size: 10px;
+      color: var(--text-3);
+      font-family: var(--mono);
+      margin-top: 1px;
+    }
+
+    .status-pill {
+      font-size: 10px;
+      font-weight: 500;
+      padding: 3px 9px;
+      border-radius: 20px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .bar-outer {
+      position: relative;
+      height: 5px;
+      background: var(--sold-bar);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .bar-inner {
+      height: 100%;
+      border-radius: 6px;
+      transition: width 1.4s cubic-bezier(.22,1,.36,1);
+    }
+
+    .cat-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+    }
+    .st {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .st-val {
+      font-size: 15px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+    }
+    .st-lbl {
+      font-size: 10px;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    /* ── CHART PANEL ── */
+    .chart-panel {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+    }
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .panel-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-2);
+    }
+    .legend {
+      display: flex;
+      gap: 16px;
+      font-size: 11px;
+      color: var(--text-3);
+    }
+    .leg-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .leg-sq {
+      width: 9px; height: 9px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      height: 240px;
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 20px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .footer-note {
+      font-size: 11px;
+      color: var(--text-3);
+      font-family: var(--mono);
+    }
+
+    /* ── TICK FLASH ── */
+    @keyframes tick-flash {
+      0% { opacity:1; }
+      25% { opacity:.5; }
+      50% { opacity:1; }
+    }
+    .ticking { animation: tick-flash .35s ease; }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">
+    Real-time distribution dashboard — sold vs remaining stock across 8 product families
+  </h2>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="brand">
+      <span class="live-badge"><span class="live-dot"></span>Live</span>
+      <div>
+        <div class="page-title">Real-time Distribution</div>
+        <div class="page-sub">Livraison #LIV-2024 · 8 familles produit</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="clock" id="clock">—</div>
+      <button class="btn" onclick="forceUpdate()">
+        <i class="ti ti-refresh"></i> Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI ROW -->
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--accent:#2a78d6">
+      <div class="kpi-label">Stock livraison</div>
+      <div class="kpi-val" id="kv-stock">—</div>
+      <div class="kpi-sub">unités expédiées</div>
+    </div>
+    <div class="kpi-card" style="--accent:#1baf7a">
+      <div class="kpi-label">Unités vendues</div>
+      <div class="kpi-val" id="kv-sold" style="color:#0f9e6a">—</div>
+      <div class="kpi-sub">ventes confirmées</div>
+    </div>
+    <div class="kpi-card" style="--accent:#8b5cf6">
+      <div class="kpi-label">Restantes</div>
+      <div class="kpi-val" id="kv-rem">—</div>
+      <div class="kpi-sub">en circulation</div>
+    </div>
+    <div class="kpi-card" style="--accent:#eda100">
+      <div class="kpi-label">CA Total TTC</div>
+      <div class="kpi-val" id="kv-rev" style="color:#c98500">—</div>
+      <div class="kpi-sub">Dinars tunisiens</div>
+    </div>
+    <div class="kpi-card" style="--accent:#dc2626">
+      <div class="kpi-label">Taux d'écoulement</div>
+      <div class="kpi-val" id="kv-pct" style="color:#dc2626">—</div>
+      <div class="kpi-sub">de la livraison totale</div>
+    </div>
+  </div>
+
+  <!-- CATEGORY CARDS -->
+  <div class="cat-grid" id="cat-grid"></div>
+
+  <!-- BAR CHART -->
+  <div class="chart-panel">
+    <div class="panel-header">
+      <div class="panel-title">Taux d'écoulement par catégorie (live)</div>
+      <div class="legend">
+        <span class="leg-item"><span class="leg-sq" style="background:rgba(0,0,0,.25)"></span>Vendu</span>
+        <span class="leg-item"><span class="leg-sq" style="background:rgba(0,0,0,.07)"></span>Restant</span>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="barChart" role="img" aria-label="Horizontal stacked bar chart showing sell-through per product category"></canvas>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-note">⟳ Mise à jour automatique toutes les 4 secondes · Snapshot livraison</div>
+    <button class="btn" onclick="sendToChat()">
+      <i class="ti ti-arrow-up-right"></i> Voir détails ↗
+    </button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+/* ─── DATA ─────────────────────────────────────────────────── */
+const CATEGORIES = [
+  { code:'BISCUIT-190G',  name:'BISCUIT 190G',              color:'#2a78d6', stock:5,   price:28.5,  sold:3 },
+  { code:'CAKE-MARIO',    name:'Cake MARIO',                 color:'#0f9e6a', stock:2,   price:18.5,  sold:1 },
+  { code:'CAKE-VALENT',   name:'Cake VALENTINO',             color:'#c98500', stock:2,   price:23.5,  sold:2 },
+  { code:'GAUFR-80G',     name:'GAUFRETTE 80G',              color:'#7c3aed', stock:13,  price:19.0,  sold:3 },
+  { code:'KAKITO-FOUR',   name:'KAKITO FOUR',                color:'#dc2626', stock:100, price:10.5,  sold:1 },
+  { code:'KAKITO-MOKLI',  name:'KAKITO MOKLI',               color:'#db2777', stock:42,  price:7.5,   sold:9 },
+  { code:'LANGUE-CHAT',   name:'LANGUE DE CHAT GOUTINEL',    color:'#d95926', stock:2,   price:27.0,  sold:1 },
+  { code:'SABLE-CSS',     name:'SABLE COOKIES SANS SUCRE',   color:'#16a34a', stock:6,   price:22.0,  sold:5 },
+];
+
+let state = CATEGORIES.map(c => ({ ...c }));
+
+/* ─── HELPERS ───────────────────────────────────────────────── */
+const pct   = s => s.stock === 0 ? 0 : Math.round((s.sold / s.stock) * 100);
+const ri    = (lo, hi) => Math.floor(Math.random() * (hi - lo + 1)) + lo;
+const fmtDT = v => parseFloat(v).toLocaleString('fr-TN', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) + ' DT';
+
+function badge(p) {
+  if (p >= 100) return { bg:'rgba(15,158,106,.12)',  color:'#0a7a52', label:'Épuisé'  };
+  if (p >=  80) return { bg:'rgba(15,158,106,.10)',  color:'#0a7a52', label:'Très bon' };
+  if (p >=  50) return { bg:'rgba(201,133,0,.10)',   color:'#946000', label:'En cours' };
+  if (p >=  20) return { bg:'rgba(220,38,38,.10)',   color:'#b91c1c', label:'Lent'     };
+  return                { bg:'rgba(82,86,106,.08)',  color:'#52566a', label:'Départ'   };
+}
+
+/* ─── SIMULATION ────────────────────────────────────────────── */
+function simulateTick() {
+  state = state.map(c => {
+    const rem = c.stock - c.sold;
+    if (rem <= 0) return c;
+    const delta = Math.random() < 0.55 ? ri(0, Math.min(2, rem)) : 0;
+    return { ...c, sold: Math.min(c.stock, c.sold + delta) };
+  });
+}
+
+/* ─── RENDER CARDS ──────────────────────────────────────────── */
+function renderCards() {
+  const grid = document.getElementById('cat-grid');
+  if (!grid._init) {
+    // first render — create cards
+    grid.innerHTML = '';
+    state.forEach((c, i) => {
+      const p = pct(c);
+      const b = badge(p);
+      const rem = c.stock - c.sold;
+      const rev = fmtDT(c.sold * c.price);
+      const div = document.createElement('div');
+      div.className = 'cat-card';
+      div.id = `cc-${i}`;
+      div.innerHTML = `
+        <div class="cat-header">
+          <div class="cat-left">
+            <div class="cat-dot" style="background:${c.color}"></div>
+            <div>
+              <div class="cat-name">${c.name}</div>
+              <div class="cat-code">${c.code}</div>
+            </div>
+          </div>
+          <span class="status-pill" id="pill-${i}" style="background:${b.bg};color:${b.color}">${b.label} ${p}%</span>
+        </div>
+        <div class="bar-outer">
+          <div class="bar-inner" id="bar-${i}" style="width:${p}%;background:${c.color}"></div>
+        </div>
+        <div class="cat-stats">
+          <div class="st">
+            <span class="st-val" id="sv-sold-${i}" style="color:${c.color}">${c.sold}</span>
+            <span class="st-lbl">Vendus</span>
+          </div>
+          <div class="st">
+            <span class="st-val" id="sv-rem-${i}">${rem}</span>
+            <span class="st-lbl">Restants</span>
+          </div>
+          <div class="st">
+            <span class="st-val">${c.stock}</span>
+            <span class="st-lbl">Livraison</span>
+          </div>
+          <div class="st">
+            <span class="st-val" id="sv-rev-${i}" style="font-size:11px;letter-spacing:-.01em">${rev}</span>
+            <span class="st-lbl">CA</span>
+          </div>
+        </div>`;
+      grid.appendChild(div);
+    });
+    grid._init = true;
+  } else {
+    // subsequent renders — patch in-place
+    state.forEach((c, i) => {
+      const p = pct(c);
+      const b = badge(p);
+      const rem = c.stock - c.sold;
+      document.getElementById(`bar-${i}`).style.width = p + '%';
+      const pill = document.getElementById(`pill-${i}`);
+      pill.style.background = b.bg;
+      pill.style.color = b.color;
+      pill.textContent = `${b.label} ${p}%`;
+      document.getElementById(`sv-sold-${i}`).textContent = c.sold;
+      document.getElementById(`sv-rem-${i}`).textContent = rem;
+      document.getElementById(`sv-rev-${i}`).textContent = fmtDT(c.sold * c.price);
+    });
+  }
+}
+
+/* ─── RENDER KPIs ───────────────────────────────────────────── */
+function renderKPIs() {
+  const totalStock = state.reduce((a, c) => a + c.stock, 0);
+  const totalSold  = state.reduce((a, c) => a + c.sold,  0);
+  const totalRev   = state.reduce((a, c) => a + c.sold * c.price, 0);
+  const totalRem   = totalStock - totalSold;
+  const overallPct = Math.round((totalSold / totalStock) * 100);
+
+  document.getElementById('kv-stock').textContent = totalStock.toLocaleString('fr-TN');
+  document.getElementById('kv-sold').textContent  = totalSold.toLocaleString('fr-TN');
+  document.getElementById('kv-rem').textContent   = totalRem.toLocaleString('fr-TN');
+  document.getElementById('kv-rev').textContent   = fmtDT(totalRev);
+  document.getElementById('kv-pct').textContent   = overallPct + '%';
+}
+
+/* ─── CLOCK ─────────────────────────────────────────────────── */
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleDateString('fr-TN', { day:'2-digit', month:'short', year:'numeric' }) +
+    '  ' +
+    now.toLocaleTimeString('fr-TN', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+
+/* ─── CHART ─────────────────────────────────────────────────── */
+let chart;
+
+function initChart() {
+  const ctx = document.getElementById('barChart');
+  const labels   = state.map(c => c.name.length > 24 ? c.name.slice(0,24) + '…' : c.name);
+  const soldData = state.map(c => pct(c));
+  const remData  = state.map(c => 100 - pct(c));
+
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Vendu %',
+          data: soldData,
+          backgroundColor: state.map(c => c.color),
+          borderRadius: { topLeft:4, topRight:4, bottomLeft:0, bottomRight:0 },
+          barThickness: 18,
+        },
+        {
+          label: 'Restant %',
+          data: remData,
+          backgroundColor: 'rgba(0,0,0,0.06)',
+          borderRadius: { topLeft:4, topRight:4, bottomLeft:0, bottomRight:0 },
+          barThickness: 18,
+        }
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 800, easing: 'easeInOutQuart' },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#ffffff',
+          borderColor: 'rgba(0,0,0,.1)',
+          borderWidth: 1,
+          titleColor: '#52566a',
+          bodyColor: '#111318',
+          padding: 10,
+          cornerRadius: 8,
+          callbacks: {
+            label: ctx => ctx.datasetIndex === 0
+              ? ` Vendus: ${ctx.raw}%  (${state[ctx.dataIndex].sold} / ${state[ctx.dataIndex].stock} u.)`
+              : ` Restants: ${ctx.raw}%`
+          }
+        }
+      },
+      scales: {
+        x: {
+          stacked: true,
+          max: 100,
+          grid: { color: 'rgba(0,0,0,.05)' },
+          border: { color: 'rgba(0,0,0,.08)' },
+          ticks: {
+            color: '#9ea3b5',
+            font: { family: "'JetBrains Mono', monospace", size: 11 },
+            callback: v => v + '%'
+          }
+        },
+        y: {
+          stacked: true,
+          grid: { display: false },
+          border: { display: false },
+          ticks: {
+            color: '#52566a',
+            font: { family: "'Inter', sans-serif", size: 11 },
+          }
+        }
+      }
+    }
+  });
+}
+
+function updateChart() {
+  if (!chart) return;
+  chart.data.datasets[0].data = state.map(c => pct(c));
+  chart.data.datasets[1].data = state.map(c => 100 - pct(c));
+  chart.update();
+}
+
+/* ─── FORCE UPDATE ──────────────────────────────────────────── */
+function forceUpdate() {
+  simulateTick();
+  renderCards();
+  renderKPIs();
+  updateChart();
+  // flash the clock for feedback
+  const cl = document.getElementById('clock');
+  cl.classList.remove('ticking');
+  void cl.offsetWidth;
+  cl.classList.add('ticking');
+}
+
+/* ─── SEND TO CHAT (hook for Claude Code integration) ─────── */
+function sendToChat() {
+  if (typeof window.sendPrompt === 'function') {
+    window.sendPrompt('Affiche le détail complet des ventes par catégorie et par produit');
+  }
+}
+
+/* ─── INIT ──────────────────────────────────────────────────── */
+renderCards();
+renderKPIs();
+updateClock();
+setTimeout(initChart, 80);
+
+setInterval(() => {
+  simulateTick();
+  renderCards();
+  renderKPIs();
+  updateChart();
+}, 4000);
+
+setInterval(updateClock, 1000);
+</script>
+</body>
+</html>

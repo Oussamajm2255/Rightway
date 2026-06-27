@@ -14,6 +14,7 @@ import LivraisonsListPage from './pages/LivraisonsListPage';
 import CreateLivraisonPage from './pages/CreateLivraisonPage';
 import LivraisonDetailPage from './pages/LivraisonDetailPage';
 import SalesPage from './pages/SalesPage';
+import RealtimeMonitorPage from './pages/RealtimeMonitorPage';
 import HistoriquePage from './pages/HistoriquePage';
 import DashboardPage from './pages/DashboardPage';
 
@@ -98,6 +99,14 @@ function AppRoutesInner() {
             <RoleGuard roles={['COMMERCIAL']}>
               <SalesPage />
             </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/livraisons/:id/realtime"
+        element={
+          <ProtectedRoute>
+            <RealtimeMonitorPage />
           </ProtectedRoute>
         }
       />
