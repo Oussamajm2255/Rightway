@@ -228,7 +228,7 @@ function SalesPage() {
     if (!search.trim()) return items;
     const q = search.toLowerCase();
     return items.filter(
-      (p) => p.product_name.toLowerCase().includes(q) || (p.barcode || '').toLowerCase().includes(q)
+      (p) => p.product_name.toLowerCase().includes(q) || (p.barcode || '').toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q)
     );
   }
 
