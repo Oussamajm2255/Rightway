@@ -35,9 +35,16 @@ const migrations = [
 async function runMigrations() {
   const client = await pool.connect();
   try {
-    for (const sql of migrations) {
-      await client.query(sql);
+    console.log('[migrate] Running startup migrations...');
+    for (let i = 0; i < migrations.length; i++) {
+      try {
+        await client.query(migrations[i]);
+        console.log(`[migrate] ✓ Migration ${i + 1}/${migrations.length} OK`);
+      } catch (err) {
+        console.error(`[migrate] ✗ Migration ${i + 1}/${migrations.length} FAILED:`, err.message);
+      }
     }
+    console.log('[migrate] Startup migrations complete');
   } finally {
     client.release();
   }

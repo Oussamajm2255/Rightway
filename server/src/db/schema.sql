@@ -171,3 +171,33 @@ CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications(user_id, is
 -- Performance indexes for dashboard queries
 CREATE INDEX IF NOT EXISTS idx_livraisons_closed_at ON livraisons(closed_at DESC) WHERE status = 'CLOTURE' AND is_archived = false;
 CREATE INDEX IF NOT EXISTS idx_stock_movements_created_at ON stock_movements(created_at DESC);
+
+-- ============================================================
+-- PRELEVEMENT (Expense Management — SUPER_ADMIN only)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS prelevement_categories (
+  id            SERIAL PRIMARY KEY,
+  name          VARCHAR(150) NOT NULL,
+  parent_id     INTEGER REFERENCES prelevement_categories(id) ON DELETE CASCADE,
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(name, COALESCE(parent_id, 0))
+);
+
+CREATE TABLE IF NOT EXISTS prelevements (
+  id              SERIAL PRIMARY KEY,
+  category_id     INTEGER NOT NULL REFERENCES prelevement_categories(id),
+  amount          NUMERIC(12,2) NOT NULL CHECK(amount > 0),
+  description     TEXT,
+  reference       VARCHAR(100),
+  declared_by     INTEGER NOT NULL REFERENCES users(id),
+  declared_at     TIMESTAMPTZ DEFAULT NOW(),
+  expense_date    DATE NOT NULL DEFAULT CURRENT_DATE,
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_prelevements_category ON prelevements(category_id);
+CREATE INDEX IF NOT EXISTS idx_prelevements_date ON prelevements(expense_date DESC);
+CREATE INDEX IF NOT EXISTS idx_prelevements_declared_by ON prelevements(declared_by);
