@@ -122,6 +122,16 @@ function IconBenefits() {
   );
 }
 
+function IconPrelevement() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M12 6v6l4 2"/>
+      <path d="M8 12h8"/>
+    </svg>
+  );
+}
+
 const ICON_MAP = {
   dashboard: IconDashboard,
   users: IconUsers,
@@ -131,6 +141,7 @@ const ICON_MAP = {
   historique: IconHistorique,
   commercials: IconCommercials,
   benefits: IconBenefits,
+  prelevement: IconPrelevement,
   logout: IconLogout,
 };
 
@@ -199,6 +210,7 @@ function AppLayout({ children }) {
     navItems.push({ to: '/livraisons', label: 'Livraisons', icon: 'livraisons' });
     navItems.push({ to: '/commercials', label: 'Commerciaux', icon: 'commercials' });
     navItems.push({ to: '/benefits', label: 'Bénéfices', icon: 'benefits' });
+    navItems.push({ to: '/prelevements', label: 'Prélèvements', icon: 'prelevement' });
     navItems.push({ to: '/historique', label: 'Historique', icon: 'historique' });
   } else if (role === 'ADMIN') {
     navItems.push({ to: '/', label: 'Tableau de bord', icon: 'dashboard' });
@@ -234,6 +246,7 @@ function AppLayout({ children }) {
     if (path.startsWith('/ventes')) return 'Déclaration des ventes';
     if (path.startsWith('/commercials')) return 'Commerciaux';
     if (path.startsWith('/benefits')) return 'Bénéfices & Rentabilité';
+    if (path.startsWith('/prelevements')) return 'Prélèvements';
     if (path.startsWith('/historique')) return 'Historique';
     return '';
   }

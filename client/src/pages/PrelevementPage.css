@@ -1,0 +1,539 @@
+/* ═══════════════════════════════════════════
+   PrelevementPage — Super Admin Expenses
+   ═══════════════════════════════════════════ */
+
+/* ===== Tab Navigation ===== */
+.prel-tabs {
+  display: flex;
+  gap: var(--space-1);
+  margin-bottom: var(--space-6);
+  border-bottom: 2px solid var(--color-border);
+  padding-bottom: 0;
+}
+
+.prel-tab {
+  padding: var(--space-3) var(--space-5);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+
+.prel-tab:hover {
+  color: var(--color-text);
+}
+
+.prel-tab.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+/* ===== Layout: Declaration ===== */
+.prel-decl-layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .prel-decl-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== Form Card ===== */
+.prel-form-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--space-3);
+  padding: var(--space-5);
+  position: sticky;
+  top: var(--space-4);
+}
+
+.prel-form-card h2 {
+  font-size: 1.05rem;
+  margin: 0 0 var(--space-4) 0;
+  color: var(--color-text);
+}
+
+.prel-form-group {
+  margin-bottom: var(--space-4);
+}
+
+.prel-form-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-1);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.prel-form-input,
+.prel-form-select,
+.prel-form-textarea {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+  transition: border-color .15s;
+  box-sizing: border-box;
+}
+
+.prel-form-input:focus,
+.prel-form-select:focus,
+.prel-form-textarea:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 3px var(--color-primary-subtle);
+}
+
+.prel-form-textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.prel-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.prel-form-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.prel-form-actions button {
+  flex: 1;
+}
+
+/* ===== Category Management ===== */
+.prel-cat-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.8rem;
+  color: var(--color-text-link);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-1) 0;
+  margin-bottom: var(--space-3);
+}
+
+.prel-cat-btn:hover {
+  text-decoration: underline;
+}
+
+.prel-cat-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.4);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: prelFadeIn .15s;
+}
+
+.prel-cat-modal {
+  background: var(--color-surface);
+  border-radius: var(--space-3);
+  padding: var(--space-5);
+  width: 520px;
+  max-width: 95vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,.15);
+}
+
+.prel-cat-modal h3 {
+  margin: 0 0 var(--space-4) 0;
+  font-size: 1.05rem;
+}
+
+.prel-cat-tree {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.prel-cat-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-2);
+  border-radius: 6px;
+  transition: background .1s;
+}
+
+.prel-cat-item:hover {
+  background: var(--color-surface-hover);
+}
+
+.prel-cat-item--child {
+  padding-left: var(--space-6);
+  font-size: 0.9rem;
+}
+
+.prel-cat-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.prel-cat-item--child .prel-cat-name {
+  font-weight: 400;
+  color: var(--color-text-secondary);
+}
+
+.prel-cat-name-input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border-focus);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.prel-cat-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity .1s;
+}
+
+.prel-cat-item:hover .prel-cat-actions {
+  opacity: 1;
+}
+
+.prel-cat-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  color: var(--color-text-tertiary);
+  display: flex;
+  align-items: center;
+}
+
+.prel-cat-icon-btn:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.prel-cat-icon-btn.danger:hover {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.prel-cat-add-row {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.prel-cat-add-row select {
+  flex: 1;
+}
+
+/* ===== Table Area ===== */
+.prel-table-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--space-3);
+  overflow: hidden;
+}
+
+.prel-table-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  flex-wrap: wrap;
+}
+
+.prel-table-header h2 {
+  font-size: 1rem;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.prel-table-filters {
+  display: flex;
+  gap: var(--space-2);
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.prel-search {
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  min-width: 180px;
+  font-family: inherit;
+}
+
+.prel-filter-select {
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.prel-table-wrap {
+  overflow-x: auto;
+}
+
+.prel-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.prel-table th {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-tertiary);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.prel-table td {
+  padding: var(--space-2) var(--space-3);
+  font-size: 0.88rem;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.prel-table tr:last-child td {
+  border-bottom: none;
+}
+
+.prel-table tr:hover td {
+  background: var(--color-surface-hover);
+}
+
+.prel-amount {
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.prel-row-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity .1s;
+}
+
+.prel-table tr:hover .prel-row-actions {
+  opacity: 1;
+}
+
+.prel-empty {
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+  color: var(--color-text-tertiary);
+}
+
+.prel-empty svg {
+  opacity: 0.3;
+  margin-bottom: var(--space-3);
+}
+
+.prel-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+/* ===== Edit Modal ===== */
+.prel-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.4);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: prelFadeIn .15s;
+}
+
+.prel-modal {
+  background: var(--color-surface);
+  border-radius: var(--space-3);
+  padding: var(--space-5);
+  width: 440px;
+  max-width: 95vw;
+  box-shadow: 0 20px 60px rgba(0,0,0,.15);
+}
+
+.prel-modal h3 {
+  margin: 0 0 var(--space-4) 0;
+  font-size: 1.05rem;
+}
+
+.prel-modal-actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  margin-top: var(--space-4);
+}
+
+/* ===== Analyse Tab ===== */
+.prel-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+@media (max-width: 1000px) {
+  .prel-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 500px) {
+  .prel-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.prel-kpi-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--space-3);
+  padding: var(--space-4);
+}
+
+.prel-kpi-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-2);
+}
+
+.prel-kpi-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.prel-kpi-value.primary {
+  color: var(--color-primary);
+}
+
+.prel-kpi-sub {
+  font-size: 0.8rem;
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-1);
+}
+
+/* ===== Charts Grid ===== */
+.prel-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+@media (max-width: 900px) {
+  .prel-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.prel-chart-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--space-3);
+  padding: var(--space-4);
+}
+
+.prel-chart-card h3 {
+  font-size: 0.9rem;
+  margin: 0 0 var(--space-3) 0;
+  color: var(--color-text-secondary);
+}
+
+.prel-chart-wrap {
+  position: relative;
+  max-height: 320px;
+}
+
+.prel-chart-wrap canvas {
+  max-height: 320px;
+}
+
+/* ===== Top Expenses Table ===== */
+.prel-top-table-wrap {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--space-3);
+  overflow: hidden;
+}
+
+.prel-top-table-wrap h3 {
+  font-size: 0.9rem;
+  margin: 0;
+  padding: var(--space-4);
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* ===== Animations ===== */
+@keyframes prelFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ===== Toast Override ===== */
+.prel-error {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  padding: var(--space-3);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  margin-bottom: var(--space-3);
+  border: 1px solid var(--color-danger-border);
+}
+
+/* ===== Responsive Form Card ===== */
+@media (max-width: 900px) {
+  .prel-form-card {
+    position: static;
+  }
+}

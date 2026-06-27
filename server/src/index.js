@@ -169,6 +169,7 @@ const dashboardRoutes = require('./routes/dashboard');
 const notificationsRoutes = require('./routes/notifications');
 const commercialsRoutes = require('./routes/commercials');
 const benefitsRoutes = require('./routes/benefits');
+const prelevementsRoutes = require('./routes/prelevements');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
@@ -179,6 +180,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/commercials', commercialsRoutes);
 app.use('/api/benefits', benefitsRoutes);
+app.use('/api/prelevements', prelevementsRoutes);
 
 // ============================================================
 // SPA FALLBACK (production) / 404 (dev)

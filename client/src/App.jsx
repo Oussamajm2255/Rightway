@@ -24,6 +24,7 @@ const RealtimeMonitorPage = lazy(() => import('./pages/RealtimeMonitorPage'));
 const HistoriquePage = lazy(() => import('./pages/HistoriquePage'));
 const CommercialsPage = lazy(() => import('./pages/CommercialsPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const PrelevementPage = lazy(() => import('./pages/PrelevementPage'));
 
 function PageLoader() {
   return (
@@ -88,6 +89,16 @@ function AppRoutesInner() {
           <ProtectedRoute>
             <RoleGuard roles={['SUPER_ADMIN']}>
               <ProductsPage />
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+        <Route
+        path="/prelevements"
+        element={
+          <ProtectedRoute>
+            <RoleGuard roles={['SUPER_ADMIN']}>
+              <PrelevementPage />
             </RoleGuard>
           </ProtectedRoute>
         }
