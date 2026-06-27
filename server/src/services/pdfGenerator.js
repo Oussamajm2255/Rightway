@@ -1,4 +1,5 @@
 const PdfPrinter = require('pdfmake');
+const { COMMISSION_RATE } = require('../models/livraison');
 
 const COMPANY = {
   name: 'Right Way',
@@ -145,7 +146,7 @@ function generateBonDeSortie(livraison) {
 // ============================================================
 function generateBonDeRetour(livraison) {
   const ca = livraison.items.reduce((sum, i) => sum + i.qte_vendue * Number(i.prix_ttc), 0);
-  const commission = Number((ca * 0.10).toFixed(3));
+  const commission = Number((ca * COMMISSION_RATE).toFixed(3));
   const net = Number((ca - commission).toFixed(3));
   const totalAvances = (livraison.avances || [])
     .filter(a => a.status === 'ACCEPTE')
@@ -200,7 +201,7 @@ function generateBonDeRetour(livraison) {
         { width: '*', text: '' },
         { width: 'auto', stack: [
           { text: [{ text: 'Total CA: ', bold: true }, formatDT(ca)], style: 'tableCell', margin: [0, 2] },
-          { text: [{ text: 'Commission (10%): ' }, formatDT(commission)], style: 'tableCell', margin: [0, 2] },
+          { text: [{ text: `Commission (${Math.round(COMMISSION_RATE * 100)}%): ` }, formatDT(commission)], style: 'tableCell', margin: [0, 2] },
           { text: [{ text: 'Net à reverser: ', bold: true }, formatDT(net)], style: 'tableCell', margin: [0, 2] },
           ...(totalAvances > 0 ? [
             { text: [{ text: 'Avances acceptées: ' }, formatDT(totalAvances)], style: 'tableCell', margin: [4, 2, 0, 2], color: '#1a3c34' },
@@ -237,7 +238,7 @@ function generateBonDeRetour(livraison) {
 // ============================================================
 function generateDossierComplet(livraison, salesLog) {
   const ca = livraison.items.reduce((sum, i) => sum + i.qte_vendue * Number(i.prix_ttc), 0);
-  const commission = Number((ca * 0.10).toFixed(3));
+  const commission = Number((ca * COMMISSION_RATE).toFixed(3));
   const net = Number((ca - commission).toFixed(3));
   const totalAvances = (livraison.avances || [])
     .filter(a => a.status === 'ACCEPTE')
@@ -324,7 +325,7 @@ function generateDossierComplet(livraison, salesLog) {
       { width: '*', text: '' },
       { width: 'auto', stack: [
         { text: [{ text: 'CA Total: ', bold: true }, formatDT(ca)], margin: [0, 2] },
-        { text: [{ text: 'Commission (10%): ' }, formatDT(commission)], margin: [0, 2] },
+        { text: [{ text: `Commission (${Math.round(COMMISSION_RATE * 100)}%): ` }, formatDT(commission)], margin: [0, 2] },
         { text: [{ text: 'Net à reverser: ', bold: true }, formatDT(net)], margin: [0, 2] },
         ...(totalAvances > 0 ? [
           { text: [{ text: 'Avances acceptées: ' }, formatDT(totalAvances)], margin: [6, 2, 0, 2], color: '#1a3c34' },

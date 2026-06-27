@@ -269,7 +269,16 @@ process.on('uncaughtException', (err) => {
     message: err.message,
     stack: err.stack?.split('\n').slice(0, 8).join('\n'),
   }));
-  process.exit(1);
+
+  // Best-effort graceful shutdown: stop accepting connections, drain pool
+  try { server.close(); } catch {}
+  try {
+    const pool = require('./db/pool');
+    pool.end().catch(() => {});
+  } catch {}
+
+  // Give cleanup a short window, then force exit
+  setTimeout(() => process.exit(1), 3000).unref();
 });
 
 module.exports = app;

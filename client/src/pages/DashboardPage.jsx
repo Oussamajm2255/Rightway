@@ -653,15 +653,38 @@ const FEED_COLORS = {
 
 function FeedItem({ event }) {
   const iconCfg = FEED_COLORS[event.icon] || FEED_COLORS.check;
+  const text = formatFeedText(event);
   return (
     <div className="feed-item">
       <div className="feed-icon" style={{ background: iconCfg.bg }}>
         <span style={{ color: iconCfg.color }}>{FEED_ICONS[event.icon] || FEED_ICONS.check}</span>
       </div>
       <div className="feed-content">
-        <div className="feed-text" dangerouslySetInnerHTML={{ __html: event.text }} />
+        <div className="feed-text">{text}</div>
         <div className="feed-time">{event.time}</div>
       </div>
     </div>
   );
+}
+
+// Safe JSX-only renderer — never uses dangerouslySetInnerHTML.
+// Every event type builds its display text from structured params.
+function formatFeedText(event) {
+  const p = event.params || {};
+  switch (event.type) {
+    case 'livraison_cloturee':
+      return <>Livraison <strong>{p.reference}</strong> clôturée par {p.name}</>;
+    case 'avance_acceptee':
+      return <>Avance de <strong>{p.amount} DT</strong> acceptée pour {p.name}</>;
+    case 'nouveau_commercial':
+      return <>Nouveau commercial : <strong>{p.name}</strong></>;
+    case 'livraison_annulee':
+      return <>Livraison <strong>{p.reference}</strong> annulée ({p.name})</>;
+    case 'livraison_en_retour':
+      return <>Livraison <strong>{p.reference}</strong> en retour ({p.name})</>;
+    case 'stock_ajuste':
+      return <>Stock : <strong>{p.product_name}</strong> — {p.description}</>;
+    default:
+      return null;
+  }
 }

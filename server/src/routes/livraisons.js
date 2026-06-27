@@ -28,6 +28,14 @@ const {
 
 router.use(authenticate);
 
+// Validate download token scope: dtokens are bound to a specific livraison ID
+function ensureDownloadTokenScope(req, res, next) {
+  if (req.downloadTokenLivraisonId && req.downloadTokenLivraisonId !== req.params.id) {
+    return res.status(403).json({ error: 'Token de téléchargement invalide pour cette livraison.' });
+  }
+  next();
+}
+
 router.post('/', authorize('SUPER_ADMIN', 'ADMIN'), createLivraison);
 router.get('/', listLivraisons);
 router.get('/:id', getLivraison);
@@ -42,12 +50,12 @@ router.put('/:id/confirmer-annulation', authorize('SUPER_ADMIN', 'ADMIN'), confi
 
 // Avances (advance payments during EN_COURS)
 router.post('/:id/avances', authorize('COMMERCIAL'), declarerAvance);
-router.get('/:id/avances', getAvances);
+router.get('/:id/avances', authorize('SUPER_ADMIN', 'ADMIN', 'COMMERCIAL'), getAvances);
 router.put('/:id/avances/:avanceId/accepter', authorize('SUPER_ADMIN', 'ADMIN'), accepterAvance);
 router.put('/:id/avances/:avanceId/refuser', authorize('SUPER_ADMIN', 'ADMIN'), refuserAvance);
 
 // Real-time monitoring route
-router.get('/:id/realtime', realtimeData);
+router.get('/:id/realtime', authorize('SUPER_ADMIN', 'ADMIN', 'COMMERCIAL'), realtimeData);
 
 // Sales routes
 router.get('/:id/sales', authorize('COMMERCIAL'), getSales);
@@ -58,11 +66,11 @@ router.post('/:id/sales/sync', authorize('COMMERCIAL'), syncOfflineSales);
 router.put('/:id/terminer', authorize('COMMERCIAL'), terminerLivraison);
 router.put('/:id/confirmer-retour', authorize('SUPER_ADMIN', 'ADMIN', 'COMMERCIAL'), confirmerRetour);
 
-// PDF routes
-router.get('/:id/bon-sortie/pdf', downloadBonSortiePDF);
-router.get('/:id/bon-retour/pdf', downloadBonRetourPDF);
-router.get('/:id/dossier/pdf', downloadDossierPDF);
-router.get('/:id/dossier', getDossier);
+// PDF routes — download token scope must match the requested livraison
+router.get('/:id/bon-sortie/pdf', ensureDownloadTokenScope, downloadBonSortiePDF);
+router.get('/:id/bon-retour/pdf', ensureDownloadTokenScope, downloadBonRetourPDF);
+router.get('/:id/dossier/pdf', ensureDownloadTokenScope, downloadDossierPDF);
+router.get('/:id/dossier', ensureDownloadTokenScope, getDossier);
 
 // PDF download token — generates short-lived token for window.open() PDFs
 router.get('/:id/pdf-token', authenticate, (req, res) => {

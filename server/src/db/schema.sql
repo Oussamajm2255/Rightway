@@ -166,3 +166,6 @@ CREATE INDEX IF NOT EXISTS idx_livraison_avances_livraison ON livraison_avances(
 CREATE INDEX IF NOT EXISTS idx_livraison_avances_status ON livraison_avances(livraison_id, status);
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications(user_id, is_read) WHERE is_read = false;
+-- Performance indexes for dashboard queries
+CREATE INDEX IF NOT EXISTS idx_livraisons_closed_at ON livraisons(closed_at DESC) WHERE status = 'CLOTURE' AND is_archived = false;
+CREATE INDEX IF NOT EXISTS idx_stock_movements_created_at ON stock_movements(created_at DESC);

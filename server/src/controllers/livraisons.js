@@ -15,22 +15,18 @@ async function createLivraison(req, res) {
     if (comRows.length === 0 || comRows[0].role !== 'COMMERCIAL' || !comRows[0].is_active) return res.status(400).json({ error: 'Commercial invalide ou inactif.' });
     for (const item of items) {
       if (!item.product_id || !item.qte_chargee || item.qte_chargee <= 0) return res.status(400).json({ error: 'Chaque produit doit avoir un ID et une quantité positive.' });
-      const { rows: stockRows } = await pool.query('SELECT quantity FROM depot_stock WHERE product_id = $1', [item.product_id]);
-      const available = stockRows.length > 0 ? stockRows[0].quantity : 0;
-      if (item.qte_chargee > available) {
-        const { rows: prodRows } = await pool.query('SELECT name FROM products WHERE id = $1', [item.product_id]);
-        const pname = prodRows.length > 0 ? prodRows[0].name : item.product_id;
-        return res.status(400).json({ error: `Stock insuffisant pour "${pname}". Disponible: ${available}, Demandé: ${item.qte_chargee}.` });
-      }
-      const { rows: priceRows } = await pool.query('SELECT selling_price_ttc FROM products WHERE id = $1', [item.product_id]);
-      if (priceRows.length === 0) return res.status(400).json({ error: `Produit ${item.product_id} introuvable.` });
-      item.prix_ttc = priceRows[0].selling_price_ttc;
     }
+    // Stock validation and price resolution now happen inside the model's
+    // create() transaction with FOR UPDATE — no TOCTOU.
     const livraison = await livraisonModel.create({ commercial_id, admin_id: req.user.id, items });
     await notificationModel.create(commercial_id, `Nouveau bon de sortie ${livraison.reference} en attente de votre confirmation.`, livraison.id);
     const full = await livraisonModel.findById(livraison.id);
     res.status(201).json({ livraison: full });
-  } catch (err) { console.error('createLivraison error:', err); res.status(500).json({ error: 'Erreur interne du serveur' }); }
+  } catch (err) {
+    if (err.status === 400) return res.status(400).json({ error: err.message });
+    console.error('createLivraison error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
 }
 
 async function listLivraisons(req, res) {
@@ -101,9 +97,9 @@ async function syncOfflineSales(req, res) {
     if (!livraison) return res.status(404).json({ error: 'Livraison introuvable.' });
     if (livraison.status !== 'EN_COURS') return res.status(400).json({ error: `Statut: ${livraison.status}.` });
     if (livraison.commercial_id !== req.user.id) return res.status(403).json({ error: 'Non assignée.' });
-    const results = await livraisonModel.syncSales(req.params.id, sales);
-    const { rows: caRows } = await pool.query('SELECT SUM(qte_vendue * prix_ttc)::NUMERIC(10,3) AS ca_total FROM livraison_items WHERE livraison_id = $1', [req.params.id]);
-    res.json({ synced: results.length, ca_total: Number(caRows[0].ca_total || 0), message: `${results.length} vente(s) synchronisée(s).` });
+    const result = await livraisonModel.syncSales(req.params.id, sales);
+    if (result.error) return res.status(400).json({ error: result.error, item: result.item });
+    res.json({ synced: result.results.length, ca_total: result.ca_total, message: `${result.results.length} vente(s) synchronisée(s).` });
   } catch (err) { console.error('syncOfflineSales error:', err); res.status(500).json({ error: 'Erreur interne du serveur' }); }
 }
 

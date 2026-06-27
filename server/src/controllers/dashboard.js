@@ -104,11 +104,13 @@ async function superAdminDashboard(req, res) {
         WHERE u.role = 'COMMERCIAL'
         ORDER BY s.ca DESC NULLS LAST
         LIMIT 5`),
-      // Activity feed: recent events
+      // Activity feed: recent events — returns STRUCTURED data (type + params).
+      // Never embed user-provided strings into HTML. Frontend renders with safe JSX.
       pool.query(`
         (SELECT
           'check' AS icon,
-          'Livraison <strong>' || l.reference || '</strong> clôturée par <strong>' || u.full_name || '</strong>' AS text,
+          'livraison_cloturee' AS type,
+          json_build_object('reference', l.reference, 'name', u.full_name) AS params,
           l.closed_at AS event_time
         FROM livraisons l
         JOIN users u ON l.commercial_id = u.id
@@ -117,7 +119,11 @@ async function superAdminDashboard(req, res) {
         UNION ALL
         (SELECT
           'cash' AS icon,
-          'Avance de <strong>' || TRIM(TRAILING '.' FROM TRIM(TRAILING '0' FROM la.amount::TEXT)) || ' DT</strong> acceptée pour <strong>' || u.full_name || '</strong>' AS text,
+          'avance_acceptee' AS type,
+          json_build_object(
+            'amount', TRIM(TRAILING '.' FROM TRIM(TRAILING '0' FROM la.amount::TEXT)),
+            'name', u.full_name
+          ) AS params,
           la.confirmed_at AS event_time
         FROM livraison_avances la
         JOIN users u ON la.commercial_id = u.id
@@ -126,14 +132,16 @@ async function superAdminDashboard(req, res) {
         UNION ALL
         (SELECT
           'user' AS icon,
-          'Nouveau commercial créé : <strong>' || full_name || '</strong>' AS text,
+          'nouveau_commercial' AS type,
+          json_build_object('name', full_name) AS params,
           created_at AS event_time
         FROM users WHERE role = 'COMMERCIAL'
         ORDER BY created_at DESC LIMIT 2)
         UNION ALL
         (SELECT
           'x' AS icon,
-          'Livraison <strong>' || l.reference || '</strong> annulée — commercial <strong>' || u.full_name || '</strong>' AS text,
+          'livraison_annulee' AS type,
+          json_build_object('reference', l.reference, 'name', u.full_name) AS params,
           l.annulation_confirmed_by_admin_at AS event_time
         FROM livraisons l
         JOIN users u ON l.commercial_id = u.id
@@ -142,7 +150,8 @@ async function superAdminDashboard(req, res) {
         UNION ALL
         (SELECT
           'truck' AS icon,
-          'Livraison <strong>' || l.reference || '</strong> en retour — commercial <strong>' || u.full_name || '</strong>' AS text,
+          'livraison_en_retour' AS type,
+          json_build_object('reference', l.reference, 'name', u.full_name) AS params,
           l.retour_confirmed_by_admin_at AS event_time
         FROM livraisons l
         JOIN users u ON l.commercial_id = u.id
@@ -151,10 +160,16 @@ async function superAdminDashboard(req, res) {
         UNION ALL
         (SELECT
           'package' AS icon,
-          'Stock ajusté : <strong>' || p.name || '</strong> — ' ||
-            CASE WHEN sm.type = 'AJUSTEMENT' AND sm.quantity > 0 THEN 'ajout de ' || sm.quantity::TEXT || ' unités'
-                 WHEN sm.type = 'AJUSTEMENT' THEN 'retrait de ' || ABS(sm.quantity)::TEXT || ' unités'
-                 ELSE sm.type END AS text,
+          'stock_ajuste' AS type,
+          json_build_object(
+            'product_name', p.name,
+            'description',
+            CASE WHEN sm.type = 'AJUSTEMENT' AND sm.quantity > 0
+              THEN 'ajout de ' || sm.quantity::TEXT || ' unités'
+              WHEN sm.type = 'AJUSTEMENT'
+              THEN 'retrait de ' || ABS(sm.quantity)::TEXT || ' unités'
+              ELSE sm.type END
+          ) AS params,
           sm.created_at AS event_time
         FROM stock_movements sm
         JOIN products p ON sm.product_id = p.id
@@ -194,10 +209,11 @@ async function superAdminDashboard(req, res) {
       };
     });
 
-    // Build activity feed
+    // Build activity feed — pass structured type + params for safe frontend JSX rendering
     const feed = feedEvents.rows.map(e => ({
       icon: e.icon,
-      text: e.text,
+      type: e.type,
+      params: e.params,
       time: relativeTime(e.event_time),
     }));
 

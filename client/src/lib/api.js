@@ -30,8 +30,35 @@ async function request(endpoint, options = {}) {
   return response;
 }
 
+/**
+ * Retry a request on transient failures with exponential backoff.
+ * Only retries GET requests (safe/idempotent) and only on network
+ * errors or 5xx server errors (not 4xx client errors).
+ */
+async function withRetry(fn, maxRetries = 2) {
+  let lastError;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await fn();
+      // Only retry on server errors (5xx) or 429 rate limit
+      if ((res.status >= 500 || res.status === 429) && attempt < maxRetries) {
+        await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 500));
+        continue;
+      }
+      return res;
+    } catch (err) {
+      // Network error (fetch threw) — retry if attempts remain
+      lastError = err;
+      if (attempt < maxRetries) {
+        await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 500));
+      }
+    }
+  }
+  throw lastError;
+}
+
 export async function apiGet(endpoint) {
-  const res = await request(endpoint);
+  const res = await withRetry(() => request(endpoint));
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     throw new Error(data.error || `Erreur ${res.status}`);

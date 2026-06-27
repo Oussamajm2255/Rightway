@@ -3,17 +3,20 @@ const COMMISSION_RATE = 0.10;  // 10% — single source of truth
 
 /**
  * Generate reference: LIV-YYYYMMDD-NNN with daily counter.
- * Uses pg_try_advisory_lock to prevent race condition under concurrent creates.
- * Lock ID is derived from date string hash to serialize same-day inserts.
+ * Uses pg_advisory_lock to serialize same-day reference generation.
+ * When a client is passed (transactional use), the lock stays held after
+ * this function returns — the caller MUST release it after the INSERT.
+ * When no client is passed (standalone use), this function manages the
+ * lock lifecycle fully.
  */
-async function generateReference() {
+async function generateReference(clientParam) {
   const today = new Date();
   const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
   const prefix = `LIV-${dateStr}-`;
-
-  // Advisory lock: serialize reference generation per day
   const lockKey = Math.abs(hashCode(dateStr)) % 2147483647;
-  const client = await pool.connect();
+
+  const ownsClient = !clientParam;
+  const client = clientParam || await pool.connect();
   try {
     await client.query('SELECT pg_advisory_lock($1)', [lockKey]);
 
@@ -31,10 +34,19 @@ async function generateReference() {
       nextNum = lastNum + 1;
     }
 
-    return `${prefix}${String(nextNum).padStart(3, '0')}`;
+    const reference = `${prefix}${String(nextNum).padStart(3, '0')}`;
+
+    // Standalone use: release lock now (backward compatible).
+    // Transactional use: caller releases after INSERT.
+    if (ownsClient) {
+      await client.query('SELECT pg_advisory_unlock($1)', [lockKey]);
+    }
+
+    return reference;
   } finally {
-    await client.query('SELECT pg_advisory_unlock($1)', [lockKey]);
-    client.release();
+    if (ownsClient) {
+      client.release();
+    }
   }
 }
 
@@ -53,13 +65,52 @@ function hashCode(str) {
 /**
  * Create a new livraison with items.
  * Does NOT deduct stock — that happens on commercial confirmation.
+ * Validates stock availability and resolves prices within the transaction
+ * to eliminate TOCTOU between check and create.
  */
 async function create({ commercial_id, admin_id, items }) {
   const client = await pool.connect();
+  // Advisory lock key for this date (must match generateReference's key)
+  const today = new Date();
+  const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
+  const lockKey = Math.abs(hashCode(dateStr)) % 2147483647;
   try {
     await client.query('BEGIN');
 
-    const reference = await generateReference();
+    // generateReference acquires the lock on our client and holds it —
+    // we must release it after the INSERT below.
+    const reference = await generateReference(client);
+
+    // Validate stock and resolve prices WITHIN the transaction (FOR UPDATE)
+    for (const item of items) {
+      const { rows: stockRows } = await client.query(
+        'SELECT quantity FROM depot_stock WHERE product_id = $1 FOR UPDATE',
+        [item.product_id]
+      );
+      const available = stockRows.length > 0 ? stockRows[0].quantity : 0;
+      if (item.qte_chargee > available) {
+        const { rows: prodRows } = await client.query(
+          'SELECT name FROM products WHERE id = $1', [item.product_id]
+        );
+        const pname = prodRows.length > 0 ? prodRows[0].name : item.product_id;
+        throw Object.assign(
+          new Error(`Stock insuffisant pour "${pname}". Disponible: ${available}, Demandé: ${item.qte_chargee}.`),
+          { status: 400 }
+        );
+      }
+
+      const { rows: priceRows } = await client.query(
+        'SELECT selling_price_ttc FROM products WHERE id = $1 FOR UPDATE',
+        [item.product_id]
+      );
+      if (priceRows.length === 0) {
+        throw Object.assign(
+          new Error(`Produit ${item.product_id} introuvable.`),
+          { status: 400 }
+        );
+      }
+      item.prix_ttc = priceRows[0].selling_price_ttc;
+    }
 
     const { rows: livRows } = await client.query(
       `INSERT INTO livraisons (reference, commercial_id, admin_id, status)
@@ -77,12 +128,17 @@ async function create({ commercial_id, admin_id, items }) {
       );
     }
 
+    // Release advisory lock now that INSERT is done
+    await client.query('SELECT pg_advisory_unlock($1)', [lockKey]);
+
     await client.query('COMMIT');
     return livraison;
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;
   } finally {
+    // Safety: release lock even on error paths
+    try { await client.query('SELECT pg_advisory_unlock($1)', [lockKey]); } catch {}
     client.release();
   }
 }
@@ -218,20 +274,25 @@ async function confirmSortie(id, commercial_id) {
       [id]
     );
 
-    // Deduct stock for each item
+    // Deduct stock for each item — SELECT FOR UPDATE first to avoid
+    // PostgreSQL CHECK constraint errors producing opaque 500 responses.
     for (const item of items) {
       const { rows: stockRows } = await client.query(
-        `UPDATE depot_stock
-         SET quantity = quantity - $1, last_updated = NOW()
-         WHERE product_id = $2
-         RETURNING quantity`,
-        [item.qte_chargee, item.product_id]
+        'SELECT quantity FROM depot_stock WHERE product_id = $1 FOR UPDATE',
+        [item.product_id]
       );
-
-      if (stockRows.length === 0 || stockRows[0].quantity < 0) {
+      const available = stockRows.length > 0 ? stockRows[0].quantity : 0;
+      if (available < item.qte_chargee) {
         await client.query('ROLLBACK');
-        return { error: `Stock insuffisant pour le produit ${item.product_id}.` };
+        return { error: `Stock insuffisant pour le produit ${item.product_id}. Disponible: ${available}, Demandé: ${item.qte_chargee}.` };
       }
+
+      await client.query(
+        `UPDATE depot_stock
+         SET quantity = $1, last_updated = NOW()
+         WHERE product_id = $2`,
+        [available - item.qte_chargee, item.product_id]
+      );
     }
 
     // Write stock movements (SORTIE)
@@ -286,11 +347,14 @@ async function getSalesState(id) {
 /**
  * Record sales delta for a specific product.
  * Writes to sales log and updates qte_vendue.
+ * When clientParam is provided, uses the caller's transaction (does NOT commit/release).
+ * When not provided, creates its own transaction (standalone use, backward compatible).
  */
-async function recordSales(livraison_id, product_id, new_qte_vendue) {
-  const client = await pool.connect();
+async function recordSales(livraison_id, product_id, new_qte_vendue, clientParam) {
+  const ownsClient = !clientParam;
+  const client = clientParam || await pool.connect();
   try {
-    await client.query('BEGIN');
+    if (ownsClient) await client.query('BEGIN');
 
     // Get current item
     const { rows: itemRows } = await client.query(
@@ -298,14 +362,14 @@ async function recordSales(livraison_id, product_id, new_qte_vendue) {
       [livraison_id, product_id]
     );
     if (itemRows.length === 0) {
-      await client.query('ROLLBACK');
+      if (ownsClient) await client.query('ROLLBACK');
       return { error: 'Produit non trouvé dans cette livraison.' };
     }
 
     const { qte_chargee, qte_vendue: current_vendue } = itemRows[0];
 
     if (new_qte_vendue < 0 || new_qte_vendue > qte_chargee) {
-      await client.query('ROLLBACK');
+      if (ownsClient) await client.query('ROLLBACK');
       return { error: `Quantité vendue invalide. Doit être entre 0 et ${qte_chargee}.` };
     }
 
@@ -326,7 +390,7 @@ async function recordSales(livraison_id, product_id, new_qte_vendue) {
       );
     }
 
-    await client.query('COMMIT');
+    if (ownsClient) await client.query('COMMIT');
 
     // Compute total CA server-side
     const { rows: caRows } = await client.query(
@@ -337,23 +401,46 @@ async function recordSales(livraison_id, product_id, new_qte_vendue) {
 
     return { delta, qte_vendue: new_qte_vendue, ca_total: Number(caRows[0].ca_total || 0) };
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (ownsClient) await client.query('ROLLBACK');
     throw err;
   } finally {
-    client.release();
+    if (ownsClient) client.release();
   }
 }
 
 /**
  * Sync offline sales queue — process array of {product_id, qte_vendue}
+ * in a SINGLE transaction. If any sale fails validation, all roll back.
+ * Per-item results are preserved for the caller.
  */
 async function syncSales(livraison_id, sales) {
-  const results = [];
-  for (const sale of sales) {
-    const result = await recordSales(livraison_id, sale.product_id, sale.qte_vendue);
-    results.push(result);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const results = [];
+    for (const sale of sales) {
+      const result = await recordSales(livraison_id, sale.product_id, sale.qte_vendue, client);
+      if (result.error) {
+        await client.query('ROLLBACK');
+        return { error: result.error, item: sale };
+      }
+      results.push(result);
+    }
+    await client.query('COMMIT');
+
+    // Single CA query after commit
+    const { rows: caRows } = await pool.query(
+      'SELECT SUM(qte_vendue * prix_ttc)::NUMERIC(10,3) AS ca_total FROM livraison_items WHERE livraison_id = $1',
+      [livraison_id]
+    );
+
+    return { results, ca_total: Number(caRows[0].ca_total || 0) };
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
   }
-  return results;
 }
 
 /**
@@ -544,14 +631,32 @@ async function confirmerRetour(id, user_id, role) {
  * Archive a livraison (soft-delete) — SUPER_ADMIN only with password
  */
 async function archiveLivraison(id) {
-  const result = await pool.query(
-    `UPDATE livraisons SET is_archived = true
-     WHERE id = $1 AND is_archived = false
-     RETURNING id, reference`,
-    [id]
-  );
-  if (result.rows.length === 0) return null;
-  return result.rows[0];
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Only archive terminal-state livraisons to prevent stock loss
+    const { rows } = await client.query(
+      `UPDATE livraisons SET is_archived = true
+       WHERE id = $1 AND is_archived = false
+         AND status IN ('CLOTURE', 'ANNULE')
+       RETURNING id, reference`,
+      [id]
+    );
+
+    if (rows.length === 0) {
+      await client.query('ROLLBACK');
+      return null;
+    }
+
+    await client.query('COMMIT');
+    return rows[0];
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 /**

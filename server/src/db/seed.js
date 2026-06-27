@@ -11,9 +11,9 @@ async function seed() {
     // ============================================================
     // Hash passwords
     // ============================================================
-    const superAdminHash = await bcrypt.hash('RightWay@2026', BCRYPT_ROUNDS);
-    const adminHash = await bcrypt.hash('Admin@2026', BCRYPT_ROUNDS);
-    const commercialHash = await bcrypt.hash('Commercial@2026', BCRYPT_ROUNDS);
+    const superAdminHash = await bcrypt.hash(process.env.SEED_SUPER_ADMIN_PASSWORD || 'RightWay@2026', BCRYPT_ROUNDS);
+    const adminHash = await bcrypt.hash(process.env.SEED_ADMIN_PASSWORD || 'Admin@2026', BCRYPT_ROUNDS);
+    const commercialHash = await bcrypt.hash(process.env.SEED_COMMERCIAL_PASSWORD || 'Commercial@2026', BCRYPT_ROUNDS);
 
     // ============================================================
     // USERS
