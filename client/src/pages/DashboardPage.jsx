@@ -409,7 +409,7 @@ function AdminView({ data, navigate, user }) {
                       <td className="td-name">{s.name}</td>
                       <td><span className="badge-db badge-inactive">{s.category || '—'}</span></td>
                       <td><span className="td-mono" style={{color: s.quantity < 10 ? PALETTE.red : PALETTE.amber, fontWeight: 600}}>{s.quantity}</span> unités</td>
-                      <td><button className="btn btn-sm btn-outline" onClick={() => navigate(`/stock`)}><Icons.adjust /> Ajuster</button></td>
+                      <td><button className="btn btn-sm btn-outline" onClick={() => navigate(`/stock`)}>{Icons.adjust} Ajuster</button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -529,7 +529,7 @@ function CommercialView({ data, navigate, user }) {
             <div className="bon-list">
               {data.pending_bons.map((bon) => (
                 <div key={bon.id} className="bon-card" onClick={() => navigate(`/livraisons/${bon.id}`)}>
-                  <div className="bon-icon"><Icons.check /></div>
+                  <div className="bon-icon">{Icons.check}</div>
                   <div className="bon-info">
                     <div className="bon-ref">{bon.reference}</div>
                     <div className="bon-meta">Créé par {bon.admin_name} le {new Date(bon.created_at).toLocaleDateString('fr-FR', {day:'2-digit', month:'long', year:'numeric'})}</div>
