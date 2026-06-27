@@ -14,6 +14,24 @@ const PALETTE = {
 const DONUT_COLORS = [PALETTE.emerald, PALETTE.red, PALETTE.blue, PALETTE.orange];
 const DONUT_LABELS = ['Clôturée', 'Annulée', 'En cours', 'En retour'];
 
+// ─── Shared Chart Configs (mobile-friendly legend sizing) ───
+function barOptions() {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => fmtDTShort(ctx.parsed.y) } } },
+    scales: { x: { grid: { color: '#e1e5ef80' }, ticks: { font: { size: 10 } } }, y: { grid: { color: '#e1e5ef80' }, ticks: { callback: (v) => fmtDTShort(v), font: { size: 10 } } } },
+  };
+}
+function donutOptions() {
+  return {
+    cutout: '68%', responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 9, padding: 10, font: { size: 10 }, usePointStyle: false } },
+      tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.parsed}` } },
+    },
+  };
+}
+
 // ─── Helpers ───
 function fmtDT(v) {
   if (v === null || v === undefined) return '—';
@@ -206,21 +224,9 @@ function SuperAdminView({ data, navigate, user }) {
         type: 'bar',
         data: {
           labels: data.monthly_labels || MONTH_NAMES.slice(0, 6),
-          datasets: [{
-            label: 'CA Global',
-            data: data.monthly_ca,
-            backgroundColor: PALETTE.blue + 'bb',
-            borderColor: PALETTE.blue,
-            borderWidth: 1.5,
-            borderRadius: 5,
-            borderSkipped: false,
-          }],
+          datasets: [{ label: 'CA Global', data: data.monthly_ca, backgroundColor: PALETTE.blue + 'bb', borderColor: PALETTE.blue, borderWidth: 1.5, borderRadius: 5, borderSkipped: false }],
         },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => fmtDTShort(ctx.parsed.y) } } },
-          scales: { x: { grid: { color: '#e1e5ef80' } }, y: { grid: { color: '#e1e5ef80' }, ticks: { callback: (v) => fmtDTShort(v) } } },
-        },
+        options: barOptions(),
       });
     }
     if (donutCtx && data.status_distribution) {
@@ -229,18 +235,9 @@ function SuperAdminView({ data, navigate, user }) {
         type: 'doughnut',
         data: {
           labels: DONUT_LABELS,
-          datasets: [{
-            data: [dist.CLOTURE || 0, dist.ANNULE || 0, dist.EN_COURS || 0, dist.EN_RETOUR || 0],
-            backgroundColor: DONUT_COLORS,
-            borderColor: '#ffffff',
-            borderWidth: 3,
-            hoverOffset: 4,
-          }],
+          datasets: [{ data: [dist.CLOTURE || 0, dist.ANNULE || 0, dist.EN_COURS || 0, dist.EN_RETOUR || 0], backgroundColor: DONUT_COLORS, borderColor: '#ffffff', borderWidth: 3, hoverOffset: 4 }],
         },
-        options: {
-          cutout: '68%', responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { boxWidth: 11, padding: 14, font: { size: 11 } } }, tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.parsed}` } } },
-        },
+        options: donutOptions(),
       });
     }
     return () => {
@@ -344,21 +341,9 @@ function AdminView({ data, navigate, user }) {
         type: 'bar',
         data: {
           labels: data.monthly_labels || MONTH_NAMES.slice(0, 6),
-          datasets: [{
-            label: 'CA Livraisons',
-            data: data.monthly_ca,
-            backgroundColor: PALETTE.cyan + 'bb',
-            borderColor: PALETTE.cyan,
-            borderWidth: 1.5,
-            borderRadius: 5,
-            borderSkipped: false,
-          }],
+          datasets: [{ label: 'CA Livraisons', data: data.monthly_ca, backgroundColor: PALETTE.cyan + 'bb', borderColor: PALETTE.cyan, borderWidth: 1.5, borderRadius: 5, borderSkipped: false }],
         },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => fmtDTShort(ctx.parsed.y) } } },
-          scales: { x: { grid: { color: '#e1e5ef80' } }, y: { grid: { color: '#e1e5ef80' }, ticks: { callback: (v) => fmtDTShort(v) } } },
-        },
+        options: barOptions(),
       });
     }
     if (donutCtx && data.status_distribution) {
@@ -367,18 +352,9 @@ function AdminView({ data, navigate, user }) {
         type: 'doughnut',
         data: {
           labels: DONUT_LABELS,
-          datasets: [{
-            data: [dist.CLOTURE || 0, dist.ANNULE || 0, dist.EN_COURS || 0, dist.EN_RETOUR || 0],
-            backgroundColor: DONUT_COLORS,
-            borderColor: '#ffffff',
-            borderWidth: 3,
-            hoverOffset: 4,
-          }],
+          datasets: [{ data: [dist.CLOTURE || 0, dist.ANNULE || 0, dist.EN_COURS || 0, dist.EN_RETOUR || 0], backgroundColor: DONUT_COLORS, borderColor: '#ffffff', borderWidth: 3, hoverOffset: 4 }],
         },
-        options: {
-          cutout: '68%', responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { boxWidth: 11, padding: 14, font: { size: 11 } } }, tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.parsed}` } } },
-        },
+        options: donutOptions(),
       });
     }
     return () => {
@@ -477,21 +453,9 @@ function CommercialView({ data, navigate, user }) {
         type: 'bar',
         data: {
           labels: data.monthly_labels || MONTH_NAMES.slice(0, 6),
-          datasets: [{
-            label: 'Mon CA',
-            data: data.monthly_ca,
-            backgroundColor: PALETTE.purple + 'bb',
-            borderColor: PALETTE.purple,
-            borderWidth: 1.5,
-            borderRadius: 5,
-            borderSkipped: false,
-          }],
+          datasets: [{ label: 'Mon CA', data: data.monthly_ca, backgroundColor: PALETTE.purple + 'bb', borderColor: PALETTE.purple, borderWidth: 1.5, borderRadius: 5, borderSkipped: false }],
         },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => fmtDTShort(ctx.parsed.y) } } },
-          scales: { x: { grid: { color: '#e1e5ef80' } }, y: { grid: { color: '#e1e5ef80' }, ticks: { callback: (v) => fmtDTShort(v) } } },
-        },
+        options: barOptions(),
       });
     }
     if (donutCtx && data.status_distribution) {
@@ -500,18 +464,9 @@ function CommercialView({ data, navigate, user }) {
         type: 'doughnut',
         data: {
           labels: DONUT_LABELS,
-          datasets: [{
-            data: [dist.CLOTURE || 0, dist.ANNULE || 0, dist.EN_COURS || 0, dist.EN_RETOUR || 0],
-            backgroundColor: DONUT_COLORS,
-            borderColor: '#ffffff',
-            borderWidth: 3,
-            hoverOffset: 4,
-          }],
+          datasets: [{ data: [dist.CLOTURE || 0, dist.ANNULE || 0, dist.EN_COURS || 0, dist.EN_RETOUR || 0], backgroundColor: DONUT_COLORS, borderColor: '#ffffff', borderWidth: 3, hoverOffset: 4 }],
         },
-        options: {
-          cutout: '68%', responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { boxWidth: 11, padding: 14, font: { size: 11 } } }, tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.parsed}` } } },
-        },
+        options: donutOptions(),
       });
     }
     return () => {

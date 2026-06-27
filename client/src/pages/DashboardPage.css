@@ -759,6 +759,8 @@
   .kpi-card { padding: 14px; }
   .kpi-value { font-size: 19px; }
   .kpi-icon-wrap { width: 30px; height: 30px; }
+  .chart-wrap { height: 160px; }
+  .chart-wrap canvas { max-height: 160px; }
   .delivery-hero { padding: 16px; }
   .delivery-ref { font-size: 16px; }
   .delivery-ca strong { font-size: 14px; }
@@ -786,6 +788,10 @@
   .actions-row { flex-direction: column; }
   .action-btn { width: 100%; justify-content: center; }
   .dash-content { gap: 12px; padding: 12px; }
+  .chart-card { padding: 12px; }
+  .chart-card h3 { font-size: 10px; margin-bottom: 8px; }
+  .chart-wrap { height: 140px; }
+  .chart-wrap canvas { max-height: 140px; }
   .feed-text { font-size: 11px; }
   .feed-time { font-size: 10px; }
   .delivery-ref { font-size: 15px; }
@@ -799,6 +805,8 @@
   .data-table-db { min-width: 480px; }
   .data-table-db th { padding: 8px 10px; font-size: 9px; }
   .data-table-db td { padding: 8px 10px; font-size: 11px; }
+  .chart-wrap { height: 125px; }
+  .chart-wrap canvas { max-height: 125px; }
   .dash-topbar .topbar-title h1 { font-size: 14px; }
   .dash-topbar .topbar-title span { font-size: 10px; }
   .live-badge { padding: 2px 6px 2px 4px; }
