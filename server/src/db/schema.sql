@@ -159,6 +159,7 @@ CREATE INDEX IF NOT EXISTS idx_livraisons_status ON livraisons(status);
 CREATE INDEX IF NOT EXISTS idx_livraisons_commercial ON livraisons(commercial_id);
 CREATE INDEX IF NOT EXISTS idx_livraisons_admin ON livraisons(admin_id);
 CREATE INDEX IF NOT EXISTS idx_livraison_items_livraison ON livraison_items(livraison_id);
+CREATE INDEX IF NOT EXISTS idx_livraison_items_product ON livraison_items(livraison_id, product_id);
 CREATE INDEX IF NOT EXISTS idx_livraison_sales_log_livraison ON livraison_sales_log(livraison_id);
 CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements(product_id);
 CREATE INDEX IF NOT EXISTS idx_livraison_avances_livraison ON livraison_avances(livraison_id);

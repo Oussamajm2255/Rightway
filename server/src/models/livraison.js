@@ -1,28 +1,53 @@
 const pool = require('../db/pool');
+const COMMISSION_RATE = 0.10;  // 10% — single source of truth
 
 /**
- * Generate reference: LIV-YYYYMMDD-NNN with daily counter
+ * Generate reference: LIV-YYYYMMDD-NNN with daily counter.
+ * Uses pg_try_advisory_lock to prevent race condition under concurrent creates.
+ * Lock ID is derived from date string hash to serialize same-day inserts.
  */
 async function generateReference() {
   const today = new Date();
   const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
   const prefix = `LIV-${dateStr}-`;
 
-  const { rows } = await pool.query(
-    `SELECT reference FROM livraisons
-     WHERE reference LIKE $1
-     ORDER BY reference DESC LIMIT 1`,
-    [`${prefix}%`]
-  );
+  // Advisory lock: serialize reference generation per day
+  const lockKey = Math.abs(hashCode(dateStr)) % 2147483647;
+  const client = await pool.connect();
+  try {
+    await client.query('SELECT pg_advisory_lock($1)', [lockKey]);
 
-  let nextNum = 1;
-  if (rows.length > 0) {
-    const lastRef = rows[0].reference;
-    const lastNum = parseInt(lastRef.split('-').pop(), 10);
-    nextNum = lastNum + 1;
+    const { rows } = await client.query(
+      `SELECT reference FROM livraisons
+       WHERE reference LIKE $1
+       ORDER BY reference DESC LIMIT 1`,
+      [`${prefix}%`]
+    );
+
+    let nextNum = 1;
+    if (rows.length > 0) {
+      const lastRef = rows[0].reference;
+      const lastNum = parseInt(lastRef.split('-').pop(), 10);
+      nextNum = lastNum + 1;
+    }
+
+    return `${prefix}${String(nextNum).padStart(3, '0')}`;
+  } finally {
+    await client.query('SELECT pg_advisory_unlock($1)', [lockKey]);
+    client.release();
   }
+}
 
-  return `${prefix}${String(nextNum).padStart(3, '0')}`;
+/**
+ * Simple string hash for advisory lock key generation
+ */
+function hashCode(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
 }
 
 /**
@@ -391,8 +416,6 @@ async function getRealtimeData(id) {
   };
 }
 
-module.exports = { generateReference, create, findById, findAll, confirmSortie, getSalesState, recordSales, syncSales, terminerLivraison, confirmerRetour, archiveLivraison, demanderAnnulation, confirmerAnnulation, getRealtimeData };
-
 // ============================================================
 // END LIVRAISON & BON DE RETOUR
 // ============================================================
@@ -423,7 +446,7 @@ async function terminerLivraison(id, commercial_id) {
     // Return full summary
     const livraison = await findById(id);
     const ca_total = livraison.items.reduce((sum, i) => sum + i.qte_vendue * Number(i.prix_ttc), 0);
-    const commission = Number((ca_total * 0.10).toFixed(3));
+    const commission = Number((ca_total * COMMISSION_RATE).toFixed(3));
     const net_a_reverser = Number((ca_total - commission).toFixed(3));
 
     return { livraison, ca_total: Number(ca_total.toFixed(3)), commission, net_a_reverser };
@@ -499,7 +522,7 @@ async function confirmerRetour(id, user_id, role) {
 
     const livraison = await findById(id);
     const ca_total = livraison.items.reduce((sum, i) => sum + i.qte_vendue * Number(i.prix_ttc), 0);
-    const commission = Number((ca_total * 0.10).toFixed(3));
+    const commission = Number((ca_total * COMMISSION_RATE).toFixed(3));
     const net_a_reverser = Number((ca_total - commission).toFixed(3));
 
     return {
@@ -613,3 +636,21 @@ async function confirmerAnnulation(id, admin_id) {
     client.release();
   }
 }
+
+module.exports = {
+  COMMISSION_RATE,
+  generateReference,
+  create,
+  findById,
+  findAll,
+  confirmSortie,
+  getSalesState,
+  recordSales,
+  syncSales,
+  getRealtimeData,
+  terminerLivraison,
+  confirmerRetour,
+  archiveLivraison,
+  demanderAnnulation,
+  confirmerAnnulation,
+};

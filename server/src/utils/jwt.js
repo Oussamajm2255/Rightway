@@ -1,15 +1,26 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'right-way-jwt-secret-key-2026-production';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('CRITICAL: JWT_SECRET must be set in production environment.');
+  }
+  // Development-only fallback — never used in production
+  console.warn('⚠ JWT_SECRET not set. Using insecure development key. NEVER deploy to production without JWT_SECRET.');
+  module.exports.__DEV_SECRET = 'right-way-dev-only-2026';
+}
+function getSecret() {
+  return JWT_SECRET || module.exports.__DEV_SECRET;
+}
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
 const REFRESH_WINDOW = 5 * 60 * 1000; // 5 minutes before expiry
 
 function signToken(payload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return jwt.sign(payload, getSecret(), { expiresIn: JWT_EXPIRES_IN });
 }
 
 function verifyToken(token) {
-  return jwt.verify(token, JWT_SECRET);
+  return jwt.verify(token, getSecret());
 }
 
 function decodeToken(token) {
@@ -29,4 +40,4 @@ function canRefreshToken(token) {
   }
 }
 
-module.exports = { signToken, verifyToken, decodeToken, canRefreshToken, JWT_SECRET, JWT_EXPIRES_IN };
+module.exports = { signToken, verifyToken, decodeToken, canRefreshToken, getSecret, JWT_EXPIRES_IN };

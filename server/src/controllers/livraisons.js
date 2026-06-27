@@ -1,6 +1,7 @@
 const livraisonModel = require('../models/livraison');
 const avanceModel = require('../models/livraisonAvance');
 const notificationModel = require('../models/notification');
+const { COMMISSION_RATE } = require('../models/livraison');
 const { verifyPassword } = require('../utils/password');
 const pool = require('../db/pool');
 const pdfGenerator = require('../services/pdfGenerator');
@@ -187,7 +188,7 @@ async function getDossier(req, res) {
       [req.params.id]
     );
     const ca_total = livraison.items.reduce((sum, i) => sum + i.qte_vendue * Number(i.prix_ttc), 0);
-    const commission = Number((ca_total * 0.10).toFixed(3));
+    const commission = Number((ca_total * COMMISSION_RATE).toFixed(3));
     const net_a_reverser = Number((ca_total - commission).toFixed(3));
     const duration = livraison.closed_at ? Math.round((new Date(livraison.closed_at) - new Date(livraison.created_at)) / 3600000) : null;
     res.json({ dossier: { livraison, sales_log: salesLog, financials: { ca_total: Number(ca_total.toFixed(3)), commission, net_a_reverser }, meta: { duration, is_locked: livraison.status === 'CLOTURE' } } });

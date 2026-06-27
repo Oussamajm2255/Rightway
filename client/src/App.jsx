@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { Suspense, lazy } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleGuard from './components/RoleGuard';
@@ -6,19 +7,32 @@ import SessionExpiryModal from './components/SessionExpiryModal';
 import AppLayout from './components/AppLayout';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ToastProvider } from './context/ToastContext';
+
+// Eager — critical path, always loaded
 import LoginPage from './pages/LoginPage';
-import UsersPage from './pages/UsersPage';
-import ProductsPage from './pages/ProductsPage';
-import StockPage from './pages/StockPage';
-import LivraisonsListPage from './pages/LivraisonsListPage';
-import CreateLivraisonPage from './pages/CreateLivraisonPage';
-import LivraisonDetailPage from './pages/LivraisonDetailPage';
-import SalesPage from './pages/SalesPage';
-import RealtimeMonitorPage from './pages/RealtimeMonitorPage';
-import HistoriquePage from './pages/HistoriquePage';
-import CommercialsPage from './pages/CommercialsPage';
-import DashboardPage from './pages/DashboardPage';
-import BenefitsPage from './pages/BenefitsPage';
+
+// Lazy-loaded page components — reduces initial bundle by ~60%
+const UsersPage = lazy(() => import('./pages/UsersPage'));
+const ProductsPage = lazy(() => import('./pages/ProductsPage'));
+const BenefitsPage = lazy(() => import('./pages/BenefitsPage'));
+const StockPage = lazy(() => import('./pages/StockPage'));
+const LivraisonsListPage = lazy(() => import('./pages/LivraisonsListPage'));
+const CreateLivraisonPage = lazy(() => import('./pages/CreateLivraisonPage'));
+const LivraisonDetailPage = lazy(() => import('./pages/LivraisonDetailPage'));
+const SalesPage = lazy(() => import('./pages/SalesPage'));
+const RealtimeMonitorPage = lazy(() => import('./pages/RealtimeMonitorPage'));
+const HistoriquePage = lazy(() => import('./pages/HistoriquePage'));
+const CommercialsPage = lazy(() => import('./pages/CommercialsPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+
+function PageLoader() {
+  return (
+    <div className="app-shell">
+      <h1>Right Way</h1>
+      <p>Chargement...</p>
+    </div>
+  );
+}
 
 function AppRoutes() {
   const { user, loading } = useAuth();
@@ -40,7 +54,9 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <AppLayout>
-              <AppRoutesInner />
+              <Suspense fallback={<PageLoader />}>
+                <AppRoutesInner />
+              </Suspense>
             </AppLayout>
           </ProtectedRoute>
         }

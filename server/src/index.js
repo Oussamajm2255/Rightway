@@ -3,6 +3,9 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
+const compression = require('compression');
+const rateLimit = require('express-rate-limit');
+const { randomUUID } = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -13,30 +16,143 @@ if (isProduction) {
   app.set('trust proxy', 1);
 }
 
-// --- Middleware ---
+// ============================================================
+// REQUEST ID — attaches unique ID to every request for tracing
+// ============================================================
+app.use((req, res, next) => {
+  const id = req.headers['x-request-id'] || randomUUID();
+  req.requestId = id;
+  res.setHeader('X-Request-ID', id);
+  next();
+});
+
+// ============================================================
+// STRUCTURED REQUEST LOGGING
+// ============================================================
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const level = res.statusCode >= 500 ? 'ERROR' : res.statusCode >= 400 ? 'WARN' : 'INFO';
+    console.log(JSON.stringify({
+      ts: new Date().toISOString(),
+      level,
+      rid: req.requestId,
+      method: req.method,
+      path: req.originalUrl,
+      status: res.statusCode,
+      ms: duration,
+      ip: req.ip,
+      ua: req.headers['user-agent']?.slice(0, 80) || '',
+    }));
+  });
+  next();
+});
+
+// ============================================================
+// GLOBAL RATE LIMITER — 300 req/min per IP (generous for SPA)
+// ============================================================
+const globalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop de requêtes. Veuillez réessayer dans une minute.' },
+  keyGenerator: (req) => req.ip,
+});
+app.use(globalLimiter);
+
+// ============================================================
+// SECURITY HEADERS
+// ============================================================
 app.use(helmet({
-  contentSecurityPolicy: false, // Allow inline scripts for Vite build
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],  // needed for Vite inline scripts
+      styleSrc: ["'self'", "'unsafe-inline'"],   // needed for React CSS-in-JS
+      imgSrc: ["'self'", 'data:', 'blob:'],
+      fontSrc: ["'self'"],
+      connectSrc: ["'self'"],
+      frameAncestors: ["'none'"],
+      formAction: ["'self'"],
+    },
+  },
   crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: 'same-origin' },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
 }));
 
-// In production, allow all origins since client is served from same domain.
-// In development, limit to localhost.
+// ============================================================
+// CORS — in production, same-origin only; dev allows Vite
+// ============================================================
 app.use(cors({
-  origin: isProduction ? true : ['http://localhost:5173', 'http://127.0.0.1:5173'],
+  origin: isProduction
+    ? false  // same-origin only in production (client served from same domain)
+    : ['http://localhost:5173', 'http://127.0.0.1:5173'],
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
 }));
 
+// ============================================================
+// REQUEST TIMEOUT — 30s for all routes
+// ============================================================
+app.use((req, _res, next) => {
+  req.setTimeout(30_000, () => {
+    const err = new Error('Request timeout');
+    err.status = 408;
+    next(err);
+  });
+  next();
+});
+
+// ============================================================
+// BODY PARSING + COMPRESSION
+// ============================================================
+app.use(compression({ level: 6, threshold: 1024 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// --- Serve client build in production ---
+// ============================================================
+// STATIC FILES (production only)
+// ============================================================
 if (isProduction) {
   const clientDist = path.join(__dirname, '..', '..', 'client', 'dist');
-  app.use(express.static(clientDist));
+  app.use(express.static(clientDist, {
+    maxAge: '7d',
+    immutable: true,
+  }));
   console.log('Serving static files from:', clientDist);
 }
 
-// --- API Routes ---
+// ============================================================
+// HEALTH CHECK — tests DB connectivity
+// ============================================================
+app.get('/api/health', async (_req, res) => {
+  const health = {
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memory: process.memoryUsage().rss,
+    db: 'unknown',
+  };
+  try {
+    const pool = require('./db/pool');
+    const start = Date.now();
+    await pool.query('SELECT 1');
+    health.db = { status: 'connected', ms: Date.now() - start };
+  } catch (err) {
+    health.status = 'degraded';
+    health.db = { status: 'disconnected', error: err.message };
+    return res.status(503).json(health);
+  }
+  res.json(health);
+});
+
+// ============================================================
+// API ROUTES
+// ============================================================
 const authRoutes = require('./routes/auth');
 const usersRoutes = require('./routes/users');
 const productsRoutes = require('./routes/products');
@@ -46,10 +162,6 @@ const dashboardRoutes = require('./routes/dashboard');
 const notificationsRoutes = require('./routes/notifications');
 const commercialsRoutes = require('./routes/commercials');
 const benefitsRoutes = require('./routes/benefits');
-
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
@@ -61,30 +173,103 @@ app.use('/api/notifications', notificationsRoutes);
 app.use('/api/commercials', commercialsRoutes);
 app.use('/api/benefits', benefitsRoutes);
 
-// --- SPA fallback (production only) ---
+// ============================================================
+// SPA FALLBACK (production) / 404 (dev)
+// ============================================================
 if (isProduction) {
   app.get('*', (_req, res) => {
     res.sendFile(path.join(__dirname, '..', '..', 'client', 'dist', 'index.html'));
   });
 } else {
-  // 404 for API routes in dev
   app.use((_req, res) => {
     res.status(404).json({ error: 'Route non trouvée' });
   });
 }
 
-// --- Global Error Handler ---
-app.use((err, _req, res, _next) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({
-    error: 'Erreur interne du serveur',
-    message: process.env.NODE_ENV === 'development' ? err.message : undefined,
+// ============================================================
+// GLOBAL ERROR HANDLER — never leaks internals
+// ============================================================
+app.use((err, req, res, _next) => {
+  const status = err.status || 500;
+  console.error(JSON.stringify({
+    ts: new Date().toISOString(),
+    level: 'ERROR',
+    rid: req.requestId,
+    message: err.message,
+    stack: isProduction ? undefined : err.stack?.split('\n').slice(0, 5).join('\n'),
+  }));
+  res.status(status).json({
+    error: status === 500 ? 'Erreur interne du serveur' : err.message,
+    rid: req.requestId,
+    ...(isProduction ? {} : { detail: err.message }),
   });
 });
 
-app.listen(PORT, () => {
+// ============================================================
+// GRACEFUL SHUTDOWN
+// ============================================================
+let server;
+const connections = new Set();
+
+server = app.listen(PORT, () => {
   console.log(`Right Way server running on http://localhost:${PORT}`);
   console.log(`Environment: ${isProduction ? 'production' : 'development'}`);
+});
+
+// Track open connections for draining
+server.on('connection', (conn) => {
+  connections.add(conn);
+  conn.on('close', () => connections.delete(conn));
+});
+
+async function shutdown(signal) {
+  console.log(`\n[shutdown] ${signal} received. Draining connections...`);
+
+  // Stop accepting new connections
+  server.close(() => console.log('[shutdown] Server closed.'));
+
+  // Force-close idle keep-alive connections after 5s
+  setTimeout(() => {
+    for (const conn of connections) {
+      conn.destroy();
+    }
+  }, 5000).unref();
+
+  // Close DB pool
+  try {
+    const pool = require('./db/pool');
+    await pool.end();
+    console.log('[shutdown] Database pool closed.');
+  } catch (err) {
+    console.error('[shutdown] Error closing pool:', err.message);
+  }
+
+  process.exit(0);
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
+// Prevent unhandled rejections from crashing silently
+process.on('unhandledRejection', (reason) => {
+  console.error(JSON.stringify({
+    ts: new Date().toISOString(),
+    level: 'FATAL',
+    event: 'unhandledRejection',
+    message: reason?.message || String(reason),
+    stack: reason?.stack?.split('\n').slice(0, 8).join('\n'),
+  }));
+});
+
+process.on('uncaughtException', (err) => {
+  console.error(JSON.stringify({
+    ts: new Date().toISOString(),
+    level: 'FATAL',
+    event: 'uncaughtException',
+    message: err.message,
+    stack: err.stack?.split('\n').slice(0, 8).join('\n'),
+  }));
+  process.exit(1);
 });
 
 module.exports = app;

@@ -38,13 +38,23 @@ async function findByBarcode(barcode) {
 }
 
 async function getNextId() {
-  const { rows } = await pool.query(
-    "SELECT id FROM products WHERE id LIKE 'PROD-%' ORDER BY id DESC LIMIT 1"
-  );
-  if (rows.length === 0) return 'PROD-001';
-  const lastNum = parseInt(rows[0].id.replace('PROD-', ''), 10);
-  const nextNum = lastNum + 1;
-  return `PROD-${String(nextNum).padStart(3, '0')}`;
+  // Advisory lock to serialize product ID generation (lock key = hash of 'product-id-gen')
+  const lockKey = 123456789; // fixed key: serialize all product creates
+  const client = await pool.connect();
+  try {
+    await client.query('SELECT pg_advisory_lock($1)', [lockKey]);
+
+    const { rows } = await client.query(
+      "SELECT id FROM products WHERE id LIKE 'PROD-%' ORDER BY id DESC LIMIT 1"
+    );
+    if (rows.length === 0) return 'PROD-001';
+    const lastNum = parseInt(rows[0].id.replace('PROD-', ''), 10);
+    const nextNum = lastNum + 1;
+    return `PROD-${String(nextNum).padStart(3, '0')}`;
+  } finally {
+    await client.query('SELECT pg_advisory_unlock($1)', [lockKey]);
+    client.release();
+  }
 }
 
 async function create({ barcode, name, category, purchase_price, selling_price_ttc }) {

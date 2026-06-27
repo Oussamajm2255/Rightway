@@ -1,4 +1,5 @@
 const pool = require('../db/pool');
+const { COMMISSION_RATE } = require('../models/livraison');
 
 // ─── Helpers ───
 
@@ -188,7 +189,7 @@ async function superAdminDashboard(req, res) {
         livraisons: c.livraisons,
         ca,
         ecoulement: c.ecoulement,
-        commission: Number((ca * 0.10).toFixed(3)),
+        commission: Number((ca * COMMISSION_RATE).toFixed(3)),
         status,
       };
     });
@@ -207,7 +208,7 @@ async function superAdminDashboard(req, res) {
       products_count: products.rows[0].count,
       active_livraisons: activeL.rows[0].count,
       ca_total: caGlobal,
-      commissions: Number((caGlobal * 0.10).toFixed(3)),
+      commissions: Number((caGlobal * COMMISSION_RATE).toFixed(3)),
       stock_alerts_count: alerts.rows[0].count,
       monthly_ca: buildMonthlyArray(caMap),
       monthly_labels: monthLabels(),
@@ -423,7 +424,7 @@ async function commercialDashboard(req, res) {
 
     res.json({
       ca_total: caTotal,
-      commission: Number((caTotal * 0.10).toFixed(3)),
+      commission: Number((caTotal * COMMISSION_RATE).toFixed(3)),
       completion_rate: completionRate,
       completion_details: { cloturees, total: totalLivs },
       en_tournee: active ? 1 : 0,

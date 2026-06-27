@@ -1,4 +1,5 @@
 const pool = require('../db/pool');
+const { COMMISSION_RATE } = require('./livraison');
 
 /**
  * Get all COMMERCIAL users with aggregated performance stats.
@@ -161,7 +162,7 @@ async function getHistory({ commercial_id, date_from, date_to, status } = {}) {
     const vendu = Number(row.total_vendu);
     const ca = Number(row.ca);
     const avances = Number(row.avances);
-    const commission = Number((ca * 0.10).toFixed(3));
+    const commission = Number((ca * COMMISSION_RATE).toFixed(3));
     const net = Number((ca - commission - avances).toFixed(3));
     const ecoulement = charge > 0 ? Math.round((vendu / charge) * 100) : 0;
     const duree = row.closed_at
