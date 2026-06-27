@@ -42,11 +42,21 @@ router.post('/migrate', authenticate, async (req, res) => {
           name          VARCHAR(150) NOT NULL,
           parent_id     INTEGER REFERENCES prelevement_categories(id) ON DELETE CASCADE,
           created_at    TIMESTAMPTZ DEFAULT NOW(),
-          updated_at    TIMESTAMPTZ DEFAULT NOW(),
-          UNIQUE(name, COALESCE(parent_id, 0))
+          updated_at    TIMESTAMPTZ DEFAULT NOW()
         )
       `);
       results.push('prelevement_categories: OK');
+
+      // Partial unique indexes (can't use expression in inline UNIQUE)
+      await client.query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_prelevement_cat_root_name
+        ON prelevement_categories (name) WHERE parent_id IS NULL
+      `);
+      await client.query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_prelevement_cat_child_name
+        ON prelevement_categories (parent_id, name) WHERE parent_id IS NOT NULL
+      `);
+      results.push('unique indexes: OK');
 
       // Create expenses table
       await client.query(`

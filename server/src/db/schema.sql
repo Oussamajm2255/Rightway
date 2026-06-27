@@ -181,9 +181,14 @@ CREATE TABLE IF NOT EXISTS prelevement_categories (
   name          VARCHAR(150) NOT NULL,
   parent_id     INTEGER REFERENCES prelevement_categories(id) ON DELETE CASCADE,
   created_at    TIMESTAMPTZ DEFAULT NOW(),
-  updated_at    TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(name, COALESCE(parent_id, 0))
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Partial unique indexes: enforce (name, COALESCE(parent_id, 0)) uniqueness
+CREATE UNIQUE INDEX IF NOT EXISTS idx_prelevement_cat_root_name
+  ON prelevement_categories (name) WHERE parent_id IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_prelevement_cat_child_name
+  ON prelevement_categories (parent_id, name) WHERE parent_id IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS prelevements (
   id              SERIAL PRIMARY KEY,

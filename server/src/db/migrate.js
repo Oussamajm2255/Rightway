@@ -15,9 +15,12 @@ const migrations = [
     name          VARCHAR(150) NOT NULL,
     parent_id     INTEGER REFERENCES prelevement_categories(id) ON DELETE CASCADE,
     created_at    TIMESTAMPTZ DEFAULT NOW(),
-    updated_at    TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(name, COALESCE(parent_id, 0))
+    updated_at    TIMESTAMPTZ DEFAULT NOW()
   )`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_prelevement_cat_root_name
+    ON prelevement_categories (name) WHERE parent_id IS NULL`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_prelevement_cat_child_name
+    ON prelevement_categories (parent_id, name) WHERE parent_id IS NOT NULL`,
   `CREATE TABLE IF NOT EXISTS prelevements (
     id              SERIAL PRIMARY KEY,
     category_id     INTEGER NOT NULL REFERENCES prelevement_categories(id),
@@ -30,6 +33,9 @@ const migrations = [
     created_at      TIMESTAMPTZ DEFAULT NOW(),
     updated_at      TIMESTAMPTZ DEFAULT NOW()
   )`,
+  `CREATE INDEX IF NOT EXISTS idx_prelevements_category ON prelevements(category_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_prelevements_date ON prelevements(expense_date DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_prelevements_declared_by ON prelevements(declared_by)`,
 ];
 
 async function runMigrations() {
