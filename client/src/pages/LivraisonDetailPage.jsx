@@ -370,25 +370,6 @@ function LivraisonDetailPage() {
         ))}
       </div>
 
-      {/* Commercial: En attente → Confirm sortie */}
-      {isEnAttente && isAssignedCommercial && (
-        <div className="alert-card">
-          <div className="alert-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
-              <rect x="3" y="3" width="18" height="18" rx="3" />
-              <path d="M9 12l2 2 4-4" />
-            </svg>
-          </div>
-          <div className="alert-body">
-            <strong>Bon de sortie en attente</strong>
-            <p>Ce bon de sortie nécessite votre confirmation. Vérifiez les produits et les quantités, puis confirmez.</p>
-          </div>
-          <button className="btn btn-primary" onClick={() => setShowConfirmSortie(true)}>
-            Confirmer le bon de sortie
-          </button>
-        </div>
-      )}
-
       {/* Commercial: En cours → Terminer button */}
       {isEnCours && isAssignedCommercial && !showTerminer && (
         <div className="alert-card">
@@ -770,6 +751,25 @@ function LivraisonDetailPage() {
           </table>
         </div>
       </div>
+
+      {/* Commercial: En attente → Confirm sortie */}
+      {isEnAttente && isAssignedCommercial && (
+        <div className="alert-card">
+          <div className="alert-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
+              <rect x="3" y="3" width="18" height="18" rx="3" />
+              <path d="M9 12l2 2 4-4" />
+            </svg>
+          </div>
+          <div className="alert-body">
+            <strong>Bon de sortie en attente</strong>
+            <p>Ce bon de sortie nécessite votre confirmation. Vérifiez les produits et les quantités, puis confirmez.</p>
+          </div>
+          <button className="btn btn-primary" onClick={() => setShowConfirmSortie(true)}>
+            Confirmer le bon de sortie
+          </button>
+        </div>
+      )}
 
       {/* Confirm Sortie modal */}
       {showConfirmSortie && (
