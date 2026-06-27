@@ -748,7 +748,6 @@ function LivraisonDetailPage() {
                 <th>Produit</th>
                 <th>PU TTC</th>
                 <th style={{ textAlign: 'center' }}>Qté</th>
-                <th style={{ textAlign: 'right' }}>Total</th>
                 {(isEnCours || isEnRetour || isCloture) && <th style={{ textAlign: 'center' }}>Vendu</th>}
               </tr>
             </thead>
@@ -762,19 +761,11 @@ function LivraisonDetailPage() {
                   <td>{item.product_name}</td>
                   <td className="td-price">{formatDT(item.prix_ttc)}</td>
                   <td className="td-qty">{item.qte_chargee}</td>
-                  <td className="td-price">{formatDT(item.qte_chargee * Number(item.prix_ttc))}</td>
                   {(isEnCours || isEnRetour || isCloture) && <td className="td-qty">{item.qte_vendue}</td>}
                 </tr>
               ));
               })()}
             </tbody>
-            <tfoot>
-              <tr>
-                <td colSpan={5} style={{ textAlign: 'right' }}><strong>Total</strong></td>
-                <td className="td-price"><strong>{formatDT(computeTotal())}</strong></td>
-                {(isEnCours || isEnRetour || isCloture) && <td></td>}
-              </tr>
-            </tfoot>
           </table>
         </div>
       </div>
