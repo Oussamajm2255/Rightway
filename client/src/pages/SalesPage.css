@@ -245,6 +245,38 @@
   transition: width var(--transition-fast);
 }
 .sale-card:active::before { width: 6px; }
+/* Card saving overlay */
+.sale-card.saving {
+  pointer-events: none;
+}
+.sale-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,.72);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  animation: overlayIn .15s ease-out;
+}
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.sale-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 
 /* Pending state */
 .sale-card.pending {

@@ -63,6 +63,7 @@ function SalesPage() {
   const [collapsedCats, setCollapsedCats] = useState({});
   const [changedQtys, setChangedQtys] = useState({});  // animation tracking
   const [showTerminer, setShowTerminer] = useState(false);
+  const [validating, setValidating] = useState(new Set());  // products currently being saved
   const saveTimerRef = useRef(null);
   const lastSavedRef = useRef(null);
   const catRefs = useRef({});  // scroll targets
@@ -137,8 +138,10 @@ function SalesPage() {
     const qty = pendingChanges[productId];
     const item = items.find((i) => i.product_id === productId);
     if (!item || qty === undefined) return;
+    if (validating.has(productId)) return;  // already saving
 
     if (isOnline) {
+      setValidating((prev) => new Set(prev).add(productId));  // lock card
       saveSingleSale(productId, qty);
     } else {
       addToOfflineQueue(productId, qty);
@@ -166,6 +169,8 @@ function SalesPage() {
       lastSavedRef.current = new Date();
     } catch (err) {
       setError(err.message);
+    } finally {
+      setValidating((prev) => { const next = new Set(prev); next.delete(productId); return next; });
     }
   }
 
@@ -413,11 +418,12 @@ function SalesPage() {
                       const hasPending = pendingChanges[item.product_id] !== undefined;
                       const { bar: catBar } = catColors(category);
                       const qtyChanged = changedQtys[item.product_id];
+                      const isSaving = validating.has(item.product_id);
 
                       return (
                         <div
                           key={item.product_id}
-                          className={`sale-card ${hasPending ? 'pending' : ''}`}
+                          className={`sale-card ${hasPending ? 'pending' : ''} ${isSaving ? 'saving' : ''}`}
                           style={{
                             background: hasPending
                               ? `linear-gradient(135deg, var(--color-surface) 0%, rgba(184,134,11,.03) 100%)`
@@ -475,7 +481,7 @@ function SalesPage() {
                             <button
                               className="qty-btn"
                               onClick={() => handleQtyChange(item.product_id, -1)}
-                              disabled={sold <= 0}
+                              disabled={sold <= 0 || isSaving}
                               aria-label="Diminuer"
                             >−</button>
 
@@ -487,7 +493,7 @@ function SalesPage() {
                             <button
                               className="qty-btn"
                               onClick={() => handleQtyChange(item.product_id, 1)}
-                              disabled={sold >= item.qte_chargee}
+                              disabled={sold >= item.qte_chargee || isSaving}
                               aria-label="Augmenter"
                             >+</button>
 
@@ -495,11 +501,18 @@ function SalesPage() {
                               <button
                                 className="btn-valider"
                                 onClick={() => handleValider(item.product_id)}
+                                disabled={isSaving}
                               >
                                 Valider
                               </button>
                             )}
                           </div>
+
+                          {isSaving && (
+                            <div className="sale-card-overlay">
+                              <div className="sale-spinner" />
+                            </div>
+                          )}
                         </div>
                       );
                     })}
