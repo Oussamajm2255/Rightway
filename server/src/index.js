@@ -7,9 +7,14 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const { randomUUID } = require('crypto');
 
+const { runMigrations } = require('./db/migrate');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 const isProduction = process.env.NODE_ENV === 'production';
+
+// Run idempotent DB migrations on every startup (safe — uses IF NOT EXISTS)
+runMigrations().catch(err => console.error('Startup migration error:', err.message));
 
 // Trust Railway's reverse proxy in production for correct client IP
 if (isProduction) {
