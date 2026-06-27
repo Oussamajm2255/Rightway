@@ -62,7 +62,6 @@ function SalesPage() {
   const [search, setSearch] = useState('');
   const [collapsedCats, setCollapsedCats] = useState({});
   const [changedQtys, setChangedQtys] = useState({});  // animation tracking
-  const [showTerminer, setShowTerminer] = useState(false);
   const [validating, setValidating] = useState(new Set());  // products currently being saved
   const saveTimerRef = useRef(null);
   const lastSavedRef = useRef(null);
@@ -78,13 +77,6 @@ function SalesPage() {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
-
-  /* ─── Scroll-aware Terminer ─── */
-  useEffect(() => {
-    function onScroll() { setShowTerminer(window.scrollY > 300); }
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   /* ─── Fetch ─── */
@@ -325,34 +317,6 @@ function SalesPage() {
         </div>
       </div>
 
-      {/* ─── Category Chips ─── */}
-      <div className="sales-chips">
-        <button
-          className={`sales-chip ${!search ? 'active' : ''}`}
-          style={!search ? { background: 'var(--color-primary)' } : {}}
-          onClick={() => setSearch('')}
-        >
-          Tous
-          <span className="sales-chip-count">{items.length}</span>
-        </button>
-        {allCategories.map((cat) => {
-          const { bg, text } = catColors(cat);
-          const count = items.filter((p) => (p.category || 'Sans catégorie') === cat).length;
-          const isActive = search && grouped.some(([c]) => c === cat);
-          return (
-            <button
-              key={cat}
-              className={`sales-chip ${isActive ? 'active' : ''}`}
-              style={isActive ? { background: text } : { background: bg, color: text, borderColor: 'transparent' }}
-              onClick={() => { setSearch(cat); scrollToCategory(cat); }}
-            >
-              {cat}
-              <span className="sales-chip-count">{count}</span>
-            </button>
-          );
-        })}
-      </div>
-
       {/* ─── Error ─── */}
       {error && (
         <div className="sales-content">
@@ -360,7 +324,7 @@ function SalesPage() {
         </div>
       )}
 
-      {/* ─── Product Cards ─── */}
+      {/* ─── Product Cards (displayed first for quick access) ─── */}
       <div className="sales-content">
         {grouped.length === 0 ? (
           <div className="sales-empty">
@@ -524,8 +488,36 @@ function SalesPage() {
         )}
       </div>
 
-      {/* ─── Terminer Button ─── */}
-      <div className={`sales-terminer-wrap ${showTerminer ? 'visible' : ''}`}>
+      {/* ─── Category Chips (filter bar below cards) ─── */}
+      <div className="sales-chips sales-chips-bottom">
+        <button
+          className={`sales-chip ${!search ? 'active' : ''}`}
+          style={!search ? { background: 'var(--color-primary)' } : {}}
+          onClick={() => setSearch('')}
+        >
+          Tous
+          <span className="sales-chip-count">{items.length}</span>
+        </button>
+        {allCategories.map((cat) => {
+          const { bg, text } = catColors(cat);
+          const count = items.filter((p) => (p.category || 'Sans catégorie') === cat).length;
+          const isActive = search && grouped.some(([c]) => c === cat);
+          return (
+            <button
+              key={cat}
+              className={`sales-chip ${isActive ? 'active' : ''}`}
+              style={isActive ? { background: text } : { background: bg, color: text, borderColor: 'transparent' }}
+              onClick={() => { setSearch(cat); scrollToCategory(cat); }}
+            >
+              {cat}
+              <span className="sales-chip-count">{count}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ─── Terminer Button (always visible at bottom) ─── */}
+      <div className="sales-terminer-wrap visible">
         <button className="btn-terminer" onClick={handleTerminer}>
           Terminer la livraison
         </button>
