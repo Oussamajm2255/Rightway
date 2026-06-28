@@ -491,15 +491,18 @@ export default function PrelevementPage() {
   const [showCatModal, setShowCatModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
   const [deletingExpense, setDeletingExpense] = useState(null);
+  const [categoriesError, setCategoriesError] = useState(null);
 
   const LIMIT = 20;
 
   const fetchCategories = useCallback(async () => {
     try {
+      setCategoriesError(null);
       const data = await apiGet('/prelevements/categories');
       setCategories(data.categories || []);
     } catch (err) {
       console.error('[Prelevement] fetchCategories error:', err.message);
+      setCategoriesError(err.message || 'Erreur inconnue');
     }
   }, []);
 
@@ -578,6 +581,20 @@ export default function PrelevementPage() {
           {/* Left: Quick-add form */}
           <div className="prel-form-card">
             <h2>Nouveau prélèvement</h2>
+
+            {categoriesError && (
+              <div style={{
+                background: 'var(--color-danger-bg,#fff0f0)',
+                border: '1px solid var(--color-danger-border,#e74c3c)',
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '12px',
+                fontSize: '0.85rem',
+                color: 'var(--color-danger,#c0392b)',
+              }}>
+                <strong>Erreur chargement catégories :</strong> {categoriesError}
+              </div>
+            )}
 
             <button className="prel-cat-btn" onClick={() => setShowCatModal(true)}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
