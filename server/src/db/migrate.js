@@ -54,6 +54,14 @@ async function runMigrations() {
   } finally {
     client.release();
   }
+
+  // Auto-seed after migration (idempotent)
+  try {
+    await seedPrelevementCategories();
+    console.log('[migrate] Categories seeded');
+  } catch (err) {
+    console.error('[migrate] Seed error:', err.message);
+  }
 }
 
 /**
