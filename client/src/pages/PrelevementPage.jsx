@@ -499,7 +499,11 @@ export default function PrelevementPage() {
     try {
       setCategoriesError(null);
       const data = await apiGet('/prelevements/categories');
-      setCategories(data.categories || []);
+      const cats = data.categories || [];
+      setCategories(cats);
+      if (cats.length === 0) {
+        setCategoriesError('Aucune catégorie trouvée (table vide). Cliquez sur "Gérer les catégories" pour en créer.');
+      }
     } catch (err) {
       console.error('[Prelevement] fetchCategories error:', err.message);
       setCategoriesError(err.message || 'Erreur inconnue');

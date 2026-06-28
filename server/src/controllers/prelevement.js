@@ -9,7 +9,15 @@ const pool = require('../db/pool');
 
 async function listCategories(_req, res) {
   try {
-    const tree = await prelevementModel.getCategoryTree();
+    let tree = await prelevementModel.getCategoryTree();
+
+    // Auto-seed 6 preset categories if table is empty (self-healing)
+    if (tree.length === 0) {
+      const { seedPrelevementCategories } = require('../db/migrate');
+      await seedPrelevementCategories();
+      tree = await prelevementModel.getCategoryTree();
+    }
+
     res.json({ categories: tree });
   } catch (err) {
     console.error('listCategories error:', err);
