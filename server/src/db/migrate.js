@@ -83,7 +83,7 @@ async function seedPrelevementCategories() {
     for (const name of categories) {
       await client.query(
         `INSERT INTO prelevement_categories (name, parent_id)
-         SELECT $1, NULL
+         SELECT $1::VARCHAR(150), NULL
          WHERE NOT EXISTS (
            SELECT 1 FROM prelevement_categories
            WHERE name = $1 AND parent_id IS NULL
