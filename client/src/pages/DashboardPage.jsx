@@ -65,6 +65,7 @@ const Icons = {
   monit:   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>,
   circleCheck: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5"/></svg>,
   adjust: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="5" cy="6" r="2"/><path d="M7 6h14M3 12h14"/><circle cx="19" cy="12" r="2"/><path d="M3 18h14"/><circle cx="19" cy="18" r="2"/></svg>,
+  receipt: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>,
 };
 
 // ─── KPI Card ───
@@ -259,6 +260,54 @@ function SuperAdminView({ data, navigate, user }) {
           <KpiCard icon={Icons.percent} label="Commissions" value={fmtDT(data.commissions)} sub="10% du CA global" color={PALETTE.green} />
           <KpiCard icon={Icons.alert} label="Alertes stock" value={<span style={{color:PALETTE.red}}>{fmtInt(data.stock_alerts_count)}</span>} sub="produits &lt; 20 unités" color={PALETTE.red} onClick={() => navigate('/stock')} />
         </div>
+
+        {/* Prelevements KPI */}
+        {data.prelevement_total !== undefined && (
+          <div>
+            <SectionHeader title="Prélèvements" />
+            <div className="prelevement-dash-row">
+              <KpiCard
+                icon={Icons.receipt}
+                label="Total Dépenses"
+                value={fmtDT(data.prelevement_total)}
+                sub={`${data.prelevement_count} déclaration${data.prelevement_count !== 1 ? 's' : ''} · ${fmtDTShort(data.prelevement_current_month)} ce mois`}
+                color={PALETTE.red}
+              />
+              {data.prelevement_top_categories?.length > 0 && (
+                <div className="chart-card" style={{flex: 1}}>
+                  <h3>Top 3 Raisons</h3>
+                  <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
+                    {data.prelevement_top_categories.map((c, i) => {
+                      const pct = data.prelevement_total > 0
+                        ? Math.round((c.total / data.prelevement_total) * 100)
+                        : 0;
+                      const colors = [PALETTE.red, PALETTE.amber, PALETTE.blue];
+                      return (
+                        <div key={i} style={{display:'flex', alignItems:'center', gap:'10px'}}>
+                          <RankBadge rank={i + 1} />
+                          <div style={{flex:1, minWidth:0}}>
+                            <div style={{fontSize:'12.5px', fontWeight:500}}>{c.name}</div>
+                            <div style={{display:'flex', alignItems:'center', gap:'8px', marginTop:'4px'}}>
+                              <ProgressBar pct={pct} color={colors[i]} />
+                            </div>
+                          </div>
+                          <div style={{textAlign:'right', flexShrink:0}}>
+                            <div style={{fontFamily:'var(--font-mono)', fontSize:'13px', fontWeight:500}}>
+                              {fmtDTShort(c.total)}
+                            </div>
+                            <div style={{fontSize:'10px', color:'var(--color-text-tertiary)'}}>
+                              {c.count} déclaration{c.count > 1 ? 's' : ''}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Performance Charts */}
         <div>

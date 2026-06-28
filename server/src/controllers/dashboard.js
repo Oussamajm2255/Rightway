@@ -47,6 +47,8 @@ async function superAdminDashboard(req, res) {
       statusDist,
       topCommerciaux,
       feedEvents,
+      prelevementTotals,
+      prelevementTopCats,
     ] = await Promise.all([
       // KPI: active users
       pool.query('SELECT COUNT(*)::INT AS count FROM users WHERE is_active = true'),
@@ -176,6 +178,19 @@ async function superAdminDashboard(req, res) {
         ORDER BY sm.created_at DESC LIMIT 3)
         ORDER BY event_time DESC NULLS LAST
         LIMIT 15`),
+      // Prelevement KPIs: totals
+      pool.query(`SELECT
+          COALESCE(SUM(amount), 0)::NUMERIC(12,3) AS total,
+          COUNT(*)::int AS count,
+          COALESCE(SUM(amount) FILTER (WHERE DATE_TRUNC('month', expense_date) = DATE_TRUNC('month', CURRENT_DATE)), 0)::NUMERIC(12,3) AS current_month
+        FROM prelevements`),
+      // Prelevement KPIs: top 3 categories
+      pool.query(`SELECT c.name, COALESCE(SUM(p.amount), 0)::NUMERIC(12,3) AS total, COUNT(p.id)::int AS count
+        FROM prelevement_categories c
+        JOIN prelevements p ON p.category_id = c.id
+        WHERE c.parent_id IS NULL
+        GROUP BY c.id, c.name
+        ORDER BY total DESC LIMIT 3`),
     ]);
 
     // Build monthly CA array
@@ -231,6 +246,14 @@ async function superAdminDashboard(req, res) {
       status_distribution: statusMap,
       top_commerciaux: top5,
       activity_feed: feed,
+      prelevement_total: Number(prelevementTotals.rows[0]?.total || 0),
+      prelevement_count: prelevementTotals.rows[0]?.count || 0,
+      prelevement_current_month: Number(prelevementTotals.rows[0]?.current_month || 0),
+      prelevement_top_categories: prelevementTopCats.rows.map(r => ({
+        name: r.name,
+        total: Number(r.total),
+        count: r.count,
+      })),
     });
   } catch (err) {
     console.error('superAdminDashboard error:', err);
