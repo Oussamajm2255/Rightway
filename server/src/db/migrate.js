@@ -57,28 +57,22 @@ async function runMigrations() {
 }
 
 /**
- * Seed default prelevement categories — idempotent via ON CONFLICT DO NOTHING.
- * Only runs after the prelevement_categories table is created.
+ * Seed 6 preset prelevement categories (flat — no children).
+ * Idempotent: skips existing entries via WHERE NOT EXISTS.
  */
 async function seedPrelevementCategories() {
+  const categories = [
+    'Transport & Déplacement',
+    'Fournitures & Consommables',
+    'Charges du personnel',
+    'Services & Abonnements',
+    'Impôts & Taxes',
+    'Autres',
+  ];
+
   const client = await pool.connect();
   try {
-    await client.query('BEGIN');
-
-    // Main categories (parent_id IS NULL)
-    const mainCats = [
-      'Transport & Déplacement',
-      'Fournitures & Consommables',
-      'Ressources Humaines',
-      'Services & Charges Fixes',
-      'Marketing & Communication',
-      'Maintenance & Équipement',
-      'Frais Financiers',
-      'Impôts & Taxes',
-      'Divers & Imprévus',
-    ];
-
-    for (const name of mainCats) {
+    for (const name of categories) {
       await client.query(
         `INSERT INTO prelevement_categories (name, parent_id)
          SELECT $1, NULL
@@ -89,75 +83,6 @@ async function seedPrelevementCategories() {
         [name]
       );
     }
-
-    // Child categories — look up parent IDs by name
-    const children = [
-      ['Transport & Déplacement', 'Carburant'],
-      ['Transport & Déplacement', 'Entretien véhicule'],
-      ['Transport & Déplacement', 'Parking & Péage'],
-      ['Transport & Déplacement', 'Assurance véhicule'],
-      ['Transport & Déplacement', 'Location véhicule'],
-      ['Transport & Déplacement', 'Transport public / Taxi'],
-      ['Fournitures & Consommables', 'Papeterie & Bureau'],
-      ['Fournitures & Consommables', 'Produits d\'entretien'],
-      ['Fournitures & Consommables', 'Emballage & Conditionnement'],
-      ['Fournitures & Consommables', 'Eau minérale & Boissons'],
-      ['Fournitures & Consommables', 'Petit matériel'],
-      ['Ressources Humaines', 'Salaires & Rémunérations'],
-      ['Ressources Humaines', 'Primes & Gratifications'],
-      ['Ressources Humaines', 'Formation & Séminaires'],
-      ['Ressources Humaines', 'Charges sociales'],
-      ['Ressources Humaines', 'Indemnités de déplacement'],
-      ['Ressources Humaines', 'Tenue de travail'],
-      ['Services & Charges Fixes', 'Loyer & Charges locatives'],
-      ['Services & Charges Fixes', 'Électricité'],
-      ['Services & Charges Fixes', 'Eau'],
-      ['Services & Charges Fixes', 'Internet & Téléphonie'],
-      ['Services & Charges Fixes', 'Abonnements logiciels'],
-      ['Services & Charges Fixes', 'Assurances (hors véhicule)'],
-      ['Services & Charges Fixes', 'Sécurité & Gardiennage'],
-      ['Marketing & Communication', 'Publicité en ligne'],
-      ['Marketing & Communication', 'Publicité imprimée'],
-      ['Marketing & Communication', 'Événements & Salons'],
-      ['Marketing & Communication', 'Goodies & Cadeaux clients'],
-      ['Marketing & Communication', 'Site web & Référencement'],
-      ['Marketing & Communication', 'Réseaux sociaux & Community mgmt'],
-      ['Maintenance & Équipement', 'Réparations'],
-      ['Maintenance & Équipement', 'Achat équipement'],
-      ['Maintenance & Équipement', 'Pièces de rechange'],
-      ['Maintenance & Équipement', 'Maintenance informatique'],
-      ['Frais Financiers', 'Frais bancaires'],
-      ['Frais Financiers', 'Intérêts d\'emprunt'],
-      ['Frais Financiers', 'Commissions'],
-      ['Frais Financiers', 'Change & Conversion'],
-      ['Impôts & Taxes', 'TVA à payer'],
-      ['Impôts & Taxes', 'Impôt sur les sociétés'],
-      ['Impôts & Taxes', 'Taxe professionnelle'],
-      ['Impôts & Taxes', 'Droits de douane'],
-      ['Divers & Imprévus', 'Dépenses diverses'],
-      ['Divers & Imprévus', 'Cadeaux & Hospitalité'],
-      ['Divers & Imprévus', 'Pertes & Vols'],
-      ['Divers & Imprévus', 'Dons & Sponsoring'],
-    ];
-
-    for (const [parentName, childName] of children) {
-      await client.query(
-        `INSERT INTO prelevement_categories (name, parent_id)
-         SELECT $1, id FROM prelevement_categories WHERE name = $2 AND parent_id IS NULL
-         AND NOT EXISTS (
-           SELECT 1 FROM prelevement_categories c2
-           WHERE c2.name = $1 AND c2.parent_id = (SELECT id FROM prelevement_categories WHERE name = $2 AND parent_id IS NULL)
-         )`,
-        [childName, parentName]
-      );
-    }
-
-    await client.query('COMMIT');
-    console.log('[seed] Prelevement categories seeded');
-  } catch (err) {
-    await client.query('ROLLBACK');
-    // Don't crash — seeding is best-effort
-    console.error('[seed] Prelevement categories seed error:', err.message);
   } finally {
     client.release();
   }
