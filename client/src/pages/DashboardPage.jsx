@@ -270,7 +270,7 @@ function SuperAdminView({ data, navigate, user }) {
                 icon={Icons.alert}
                 label="Total Écarts"
                 value={fmtDT(data.ecarts_total)}
-                sub={`${data.ecarts_count} écart(s) · ${data.ecarts_pending_count} en attente · ${data.ecarts_confirmed_count} confirmé(s)`}
+                sub={`${data.ecarts_count} écart(s) · ${data.ecarts_pending_count} en attente · ${data.ecarts_confirmed_count} confirmé(s) · ${data.ecarts_payment_requested_count || 0} paiement · ${data.ecarts_paid_count || 0} payé(s)`}
                 color={PALETTE.red}
               />
               <div className="chart-card" style={{flex: 1, maxHeight: 300, overflowY: 'auto'}}>
@@ -288,9 +288,13 @@ function SuperAdminView({ data, navigate, user }) {
                         {ec.justification}
                       </span>
                       <span style={{flexShrink:0}}>
-                        <span className={`badge ${ec.status === 'PENDING' ? 'badge-status-pending' : 'badge-ok'}`} style={{fontSize:'10px', padding:'1px 6px'}}>
-                          {ec.status === 'PENDING' ? 'En attente' : 'Confirmé'}
-                        </span>
+                        {(() => {
+                          if (ec.status === 'PENDING') return <span className="badge badge-status-pending" style={{fontSize:'10px', padding:'1px 6px'}}>En attente</span>;
+                          if (ec.status === 'CONFIRMED') return <span className="badge badge-ok" style={{fontSize:'10px', padding:'1px 6px'}}>Confirmé</span>;
+                          if (ec.status === 'PAYMENT_REQUESTED') return <span className="badge badge-status-warning" style={{fontSize:'10px', padding:'1px 6px'}}>Paiement attente</span>;
+                          if (ec.status === 'PAID') return <span className="badge badge-ok" style={{fontSize:'10px', padding:'1px 6px'}}>Payé</span>;
+                          return <span className="badge" style={{fontSize:'10px', padding:'1px 6px'}}>{ec.status}</span>;
+                        })()}
                       </span>
                     </div>
                   ))}

@@ -219,7 +219,11 @@ CREATE TABLE IF NOT EXISTS livraison_ecarts (
   declared_at   TIMESTAMPTZ DEFAULT NOW(),
   confirmed_by  UUID REFERENCES users(id),
   confirmed_at  TIMESTAMPTZ,
-  status        VARCHAR(20) DEFAULT 'PENDING' CHECK(status IN ('PENDING','CONFIRMED')),
+  payment_requested_by UUID REFERENCES users(id),
+  payment_requested_at TIMESTAMPTZ,
+  payment_confirmed_by UUID REFERENCES users(id),
+  payment_confirmed_at TIMESTAMPTZ,
+  status        VARCHAR(20) DEFAULT 'PENDING' CHECK(status IN ('PENDING','CONFIRMED','PAYMENT_REQUESTED','PAID')),
   created_at    TIMESTAMPTZ DEFAULT NOW(),
   updated_at    TIMESTAMPTZ DEFAULT NOW()
 );

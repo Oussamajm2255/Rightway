@@ -47,12 +47,25 @@ const migrations = [
     declared_at   TIMESTAMPTZ DEFAULT NOW(),
     confirmed_by  UUID REFERENCES users(id),
     confirmed_at  TIMESTAMPTZ,
-    status        VARCHAR(20) DEFAULT 'PENDING' CHECK(status IN ('PENDING','CONFIRMED')),
+    payment_requested_by UUID REFERENCES users(id),
+    payment_requested_at TIMESTAMPTZ,
+    payment_confirmed_by UUID REFERENCES users(id),
+    payment_confirmed_at TIMESTAMPTZ,
+    status        VARCHAR(20) DEFAULT 'PENDING' CHECK(status IN ('PENDING','CONFIRMED','PAYMENT_REQUESTED','PAID')),
     created_at    TIMESTAMPTZ DEFAULT NOW(),
     updated_at    TIMESTAMPTZ DEFAULT NOW()
   )`,
   `CREATE INDEX IF NOT EXISTS idx_ecarts_livraison ON livraison_ecarts(livraison_id)`,
   `CREATE INDEX IF NOT EXISTS idx_ecarts_status ON livraison_ecarts(status)`,
+
+  // Livraison ecarts — payment workflow columns (idempotent)
+  `ALTER TABLE livraison_ecarts ADD COLUMN IF NOT EXISTS payment_requested_by UUID REFERENCES users(id)`,
+  `ALTER TABLE livraison_ecarts ADD COLUMN IF NOT EXISTS payment_requested_at TIMESTAMPTZ`,
+  `ALTER TABLE livraison_ecarts ADD COLUMN IF NOT EXISTS payment_confirmed_by UUID REFERENCES users(id)`,
+  `ALTER TABLE livraison_ecarts ADD COLUMN IF NOT EXISTS payment_confirmed_at TIMESTAMPTZ`,
+  // Drop and recreate status CHECK constraint to include new values
+  `ALTER TABLE livraison_ecarts DROP CONSTRAINT IF EXISTS livraison_ecarts_status_check`,
+  `ALTER TABLE livraison_ecarts ADD CONSTRAINT livraison_ecarts_status_check CHECK (status IN ('PENDING','CONFIRMED','PAYMENT_REQUESTED','PAID'))`,
 ];
 
 async function runMigrations() {

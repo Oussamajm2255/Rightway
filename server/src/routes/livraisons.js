@@ -28,6 +28,8 @@ const {
   declarerEcart,
   listEcarts,
   confirmerEcart,
+  requestPaymentEcart,
+  confirmPaymentEcart,
 } = require('../controllers/livraisons');
 
 router.use(authenticate);
@@ -88,6 +90,8 @@ router.put('/:id/avances/:avanceId/refuser', authorize('SUPER_ADMIN'), refuserAv
 router.post('/:id/ecarts', authorize('SUPER_ADMIN'), declarerEcart);
 router.get('/:id/ecarts', authorize('SUPER_ADMIN', 'ADMIN', 'COMMERCIAL'), requireLivraisonOwnership, listEcarts);
 router.post('/:id/ecarts/:ecartId/confirm', authorize('COMMERCIAL'), confirmerEcart);
+router.post('/:id/ecarts/:ecartId/request-payment', authorize('COMMERCIAL'), requestPaymentEcart);
+router.post('/:id/ecarts/:ecartId/confirm-payment', authorize('SUPER_ADMIN'), confirmPaymentEcart);
 
 // Real-time monitoring route
 router.get('/:id/realtime', authorize('SUPER_ADMIN', 'ADMIN', 'COMMERCIAL'), requireLivraisonOwnership, realtimeData);

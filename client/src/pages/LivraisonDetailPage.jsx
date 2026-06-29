@@ -303,6 +303,32 @@ function LivraisonDetailPage() {
     finally { setSubmitting(false); }
   }
 
+  async function handleRequestPaymentEcart(ecartId) {
+    setSubmitting(true);
+    try {
+      const data = await apiPost(`/livraisons/${id}/ecarts/${ecartId}/request-payment`, {});
+      setLivraison(prev => ({
+        ...prev,
+        ecarts: prev.ecarts.map(e => e.id === ecartId ? data.ecart : e),
+      }));
+      setSuccess(data.message);
+    } catch (err) { setActionError(err.message); }
+    finally { setSubmitting(false); }
+  }
+
+  async function handleConfirmPaymentEcart(ecartId) {
+    setSubmitting(true);
+    try {
+      const data = await apiPost(`/livraisons/${id}/ecarts/${ecartId}/confirm-payment`, {});
+      setLivraison(prev => ({
+        ...prev,
+        ecarts: prev.ecarts.map(e => e.id === ecartId ? data.ecart : e),
+      }));
+      setSuccess(data.message);
+    } catch (err) { setActionError(err.message); }
+    finally { setSubmitting(false); }
+  }
+
 
   if (error) return <div className="page-container"><div className="error-banner">{error}</div></div>;
   if (!loading && !livraison) return <div className="page-container"><div className="empty-state">Livraison introuvable.</div></div>;
@@ -616,37 +642,59 @@ function LivraisonDetailPage() {
                     <th>Justification</th>
                     <th>Déclaré par</th>
                     <th>Statut</th>
-                    {isAssignedCommercial && <th style={{textAlign:'center'}}>Action</th>}
+                    {(isAssignedCommercial || isSuperAdmin) && <th style={{textAlign:'center'}}>Action</th>}
                   </tr>
                 </thead>
                 <tbody>
-                  {livraison.ecarts.map((ec) => (
+                  {livraison.ecarts.map((ec) => {
+                    const isPending = ec.status === 'PENDING';
+                    const isConfirmed = ec.status === 'CONFIRMED';
+                    const isPaymentRequested = ec.status === 'PAYMENT_REQUESTED';
+                    const isPaid = ec.status === 'PAID';
+                    return (
                     <tr key={ec.id}>
                       <td style={{fontSize:'0.85rem'}}>{new Date(ec.declared_at).toLocaleString('fr-FR')}</td>
                       <td className="td-price" style={{color:'var(--color-danger)'}}>{formatDT(ec.amount)}</td>
                       <td style={{maxWidth:200, whiteSpace:'normal', fontSize:'0.85rem'}}>{ec.justification}</td>
                       <td style={{fontSize:'0.85rem'}}>{ec.declared_by_name}</td>
                       <td>
-                        {ec.status === 'PENDING' ? (
-                          <span className="badge badge-status-pending">En attente</span>
-                        ) : (
-                          <span className="badge badge-ok">
-                            Confirmé {ec.confirmed_at ? `le ${new Date(ec.confirmed_at).toLocaleDateString('fr-FR')}` : ''}
-                          </span>
-                        )}
+                        {isPending && <span className="badge badge-status-pending">En attente</span>}
+                        {isConfirmed && <span className="badge badge-ok">Confirmé{ec.confirmed_at ? ` le ${new Date(ec.confirmed_at).toLocaleDateString('fr-FR')}` : ''}</span>}
+                        {isPaymentRequested && <span className="badge badge-status-warning">Paiement en attente</span>}
+                        {isPaid && <span className="badge badge-ok">Payé{ec.payment_confirmed_at ? ` le ${new Date(ec.payment_confirmed_at).toLocaleDateString('fr-FR')}` : ''}</span>}
                       </td>
-                      {isAssignedCommercial && ec.status === 'PENDING' && (
-                        <td style={{textAlign:'center'}}>
+                      <td style={{textAlign:'center'}}>
+                        {isAssignedCommercial && isPending && (
                           <button className="btn btn-primary btn-sm" onClick={() => setConfirmingEcartId(ec.id)}>
                             Confirmer
                           </button>
-                        </td>
-                      )}
-                      {isAssignedCommercial && ec.status === 'CONFIRMED' && (
-                        <td style={{textAlign:'center', fontSize:'0.8rem', color:'var(--color-text-muted)'}}>—</td>
-                      )}
+                        )}
+                        {isAssignedCommercial && isConfirmed && (
+                          <button className="btn btn-warning btn-sm" onClick={() => handleRequestPaymentEcart(ec.id)}
+                            title="Marquer comme payé — l'admin devra confirmer la réception"
+                            disabled={submitting}>
+                            Payer
+                          </button>
+                        )}
+                        {isSuperAdmin && isPaymentRequested && (
+                          <button className="btn btn-success btn-sm" onClick={() => handleConfirmPaymentEcart(ec.id)}
+                            disabled={submitting}>
+                            Confirmer paiement
+                          </button>
+                        )}
+                        {isAssignedCommercial && (isPaymentRequested || isPaid) && (
+                          <span style={{fontSize:'0.8rem', color:'var(--color-text-muted)'}}>—</span>
+                        )}
+                        {isSuperAdmin && (isPending || isConfirmed) && (
+                          <span style={{fontSize:'0.8rem', color:'var(--color-text-muted)'}}>—</span>
+                        )}
+                        {isSuperAdmin && isPaid && (
+                          <span style={{fontSize:'0.8rem', color:'var(--color-text-muted)'}}>—</span>
+                        )}
+                      </td>
                     </tr>
-                  ))}
+                  );
+                  })}
                 </tbody>
               </table>
             </div>

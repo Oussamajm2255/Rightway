@@ -385,4 +385,59 @@ async function confirmerEcart(req, res) {
   }
 }
 
-module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier, archiveLivraison, demanderAnnulation, confirmerAnnulation, declarerAvance, getAvances, accepterAvance, refuserAvance, realtimeData, declarerEcart, listEcarts, confirmerEcart };
+async function requestPaymentEcart(req, res) {
+  try {
+    const ecart = await ecartModel.findById(req.params.ecartId);
+    if (!ecart) return res.status(404).json({ error: 'Ecart introuvable.' });
+    if (ecart.status !== 'CONFIRMED') return res.status(400).json({ error: 'Cet ecart doit d\'abord etre confirme.' });
+
+    const livraison = await livraisonModel.findById(ecart.livraison_id);
+    if (!livraison) return res.status(404).json({ error: 'Livraison introuvable.' });
+    if (livraison.commercial_id !== req.user.id) return res.status(403).json({ error: 'Cet ecart ne vous concerne pas.' });
+
+    const updated = await ecartModel.requestPayment(req.params.ecartId, req.user.id);
+    if (!updated) return res.status(400).json({ error: 'Impossible de demander le paiement de cet ecart.' });
+
+    // Notify the admin
+    await notificationModel.create(
+      livraison.admin_id,
+      `Le commercial ${req.user.full_name} a marque l'ecart de ${Number(ecart.amount).toFixed(3)} DT comme paye sur la livraison ${livraison.reference}. Veuillez confirmer la reception.`,
+      livraison.id
+    );
+
+    const full = await ecartModel.findById(req.params.ecartId);
+    res.json({ ecart: full, message: 'Demande de paiement envoyee a l\'admin.' });
+  } catch (err) {
+    console.error('requestPaymentEcart error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+async function confirmPaymentEcart(req, res) {
+  try {
+    const ecart = await ecartModel.findById(req.params.ecartId);
+    if (!ecart) return res.status(404).json({ error: 'Ecart introuvable.' });
+    if (ecart.status !== 'PAYMENT_REQUESTED') return res.status(400).json({ error: 'Aucune demande de paiement en attente pour cet ecart.' });
+
+    const livraison = await livraisonModel.findById(ecart.livraison_id);
+    if (!livraison) return res.status(404).json({ error: 'Livraison introuvable.' });
+
+    const updated = await ecartModel.confirmPayment(req.params.ecartId, req.user.id);
+    if (!updated) return res.status(400).json({ error: 'Impossible de confirmer le paiement de cet ecart.' });
+
+    // Notify the commercial
+    await notificationModel.create(
+      livraison.commercial_id,
+      `L'admin ${req.user.full_name} a confirme la reception du paiement de l'ecart de ${Number(ecart.amount).toFixed(3)} DT sur la livraison ${livraison.reference}.`,
+      livraison.id
+    );
+
+    const full = await ecartModel.findById(req.params.ecartId);
+    res.json({ ecart: full, message: 'Paiement de l\'ecart confirme avec succes.' });
+  } catch (err) {
+    console.error('confirmPaymentEcart error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier, archiveLivraison, demanderAnnulation, confirmerAnnulation, declarerAvance, getAvances, accepterAvance, refuserAvance, realtimeData, declarerEcart, listEcarts, confirmerEcart, requestPaymentEcart, confirmPaymentEcart };
