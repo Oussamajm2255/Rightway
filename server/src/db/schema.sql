@@ -230,3 +230,20 @@ CREATE TABLE IF NOT EXISTS livraison_ecarts (
 
 CREATE INDEX IF NOT EXISTS idx_ecarts_livraison ON livraison_ecarts(livraison_id);
 CREATE INDEX IF NOT EXISTS idx_ecarts_status ON livraison_ecarts(status);
+
+-- ============================================================
+-- PUSH NOTIFICATION SUBSCRIPTIONS
+-- ============================================================
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id SERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  endpoint TEXT NOT NULL,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  user_agent TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, endpoint)
+);
+
+CREATE INDEX IF NOT EXISTS idx_push_subs_user ON push_subscriptions(user_id);

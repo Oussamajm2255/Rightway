@@ -7,6 +7,19 @@ async function create(user_id, message, livraison_id = null) {
      RETURNING *`,
     [user_id, message, livraison_id]
   );
+
+  // Fire-and-forget push notification to the user's device(s)
+  // Lazy-required to avoid circular dependency at module init time
+  try {
+    const { sendToUser } = require('../services/pushService');
+    sendToUser(user_id, {
+      title: 'Right Way',
+      body: message,
+      url: livraison_id ? `/livraisons/${livraison_id}` : '/',
+      tag: livraison_id ? `livraison-${livraison_id}` : 'rightway',
+    }).catch(() => {});
+  } catch (_) { /* push service unavailable — not critical */ }
+
   return rows[0];
 }
 

@@ -7,6 +7,7 @@ import SessionExpiryModal from './components/SessionExpiryModal';
 import AppLayout from './components/AppLayout';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ToastProvider } from './context/ToastContext';
+import { PushProvider } from './context/PushContext';
 
 // Eager — critical path, always loaded
 import LoginPage from './pages/LoginPage';
@@ -195,8 +196,10 @@ function App() {
     <ErrorBoundary>
       <AuthProvider>
         <ToastProvider>
-          <AppRoutes />
-          <SessionExpiryModal />
+          <PushProvider>
+            <AppRoutes />
+            <SessionExpiryModal />
+          </PushProvider>
         </ToastProvider>
       </AuthProvider>
     </ErrorBoundary>
