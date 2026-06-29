@@ -105,7 +105,7 @@ function LivraisonsListPage() {
               {livraisons.map((l) => (
                 <tr
                   key={l.id}
-                  className="clickable-row"
+                  className={`clickable-row${l.has_pending_ecart ? ' row-ecart-pending' : ''}`}
                   onClick={() => navigate(`/livraisons/${l.id}`)}
                 >
                   <td className="td-code">{l.reference}</td>
@@ -116,10 +116,18 @@ function LivraisonsListPage() {
                   </td>
                   <td>{getStatusBadge(l.status)}</td>
                   <td style={{textAlign:'center'}}>
-                    {l.has_ecart ? (
-                      <span title="Cette livraison a un écart" style={{color:'var(--color-danger)', fontSize:'1rem', cursor:'help'}}>⚠</span>
+                    {l.has_pending_ecart ? (
+                      <span className="ecart-badge ecart-badge-pending" title="Écart en attente de confirmation">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                        En attente
+                      </span>
+                    ) : l.has_ecart ? (
+                      <span className="ecart-badge ecart-badge-resolved" title="Écart résolu">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                        Résolu
+                      </span>
                     ) : (
-                      <span style={{color:'var(--color-text-muted)'}}>—</span>
+                      <span style={{color:'var(--color-text-muted)', fontSize:'0.75rem'}}>—</span>
                     )}
                   </td>
                   <td>{l.admin_name}</td>

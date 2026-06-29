@@ -210,7 +210,8 @@ async function findAll({ status, commercial_id, date_from, date_to, admin_id, in
     SELECT l.reference, l.id, l.status, l.created_at, l.closed_at, l.is_archived,
            c.full_name AS commercial_name, c.vehicle_name, c.vehicle_plate,
            a.full_name AS admin_name,
-           EXISTS(SELECT 1 FROM livraison_ecarts e WHERE e.livraison_id = l.id) AS has_ecart
+           EXISTS(SELECT 1 FROM livraison_ecarts e WHERE e.livraison_id = l.id) AS has_ecart,
+           EXISTS(SELECT 1 FROM livraison_ecarts e WHERE e.livraison_id = l.id AND e.status = 'PENDING') AS has_pending_ecart
     FROM livraisons l
     JOIN users c ON l.commercial_id = c.id
     JOIN users a ON l.admin_id = a.id
