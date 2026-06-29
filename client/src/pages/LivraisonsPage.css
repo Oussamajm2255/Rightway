@@ -296,6 +296,25 @@
   border: 1px solid rgba(16, 185, 129, 0.25);
 }
 
+/* Resolved (PAID) écart row — faded, muted */
+.row-ecart-resolved {
+  opacity: 0.55;
+  transition: opacity 0.2s;
+}
+.row-ecart-resolved:hover {
+  opacity: 0.75;
+}
+
+/* Subtle success badge for resolved écarts */
+.badge-success-subtle {
+  background: rgba(16, 185, 129, 0.1);
+  color: #065f46;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
 /* ===== Status Badges ===== */
 .badge-status-pending {
   background: #fef3c7;

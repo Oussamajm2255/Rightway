@@ -270,7 +270,7 @@ function SuperAdminView({ data, navigate, user }) {
                 icon={Icons.alert}
                 label="Total Écarts"
                 value={fmtDT(data.ecarts_total)}
-                sub={`${data.ecarts_count} écart(s) · ${data.ecarts_pending_count} en attente · ${data.ecarts_confirmed_count} confirmé(s) · ${data.ecarts_payment_requested_count || 0} paiement · ${data.ecarts_paid_count || 0} payé(s)`}
+                sub={`${data.ecarts_count} actif(s) · ${data.ecarts_pending_count} en attente · ${data.ecarts_confirmed_count} confirmé(s) · ${data.ecarts_payment_requested_count || 0} paiement${data.ecarts_paid_count > 0 ? ` · ${data.ecarts_paid_count} résolu(s)` : ''}`}
                 color={PALETTE.red}
               />
               <div className="chart-card" style={{flex: 1, maxHeight: 300, overflowY: 'auto'}}>

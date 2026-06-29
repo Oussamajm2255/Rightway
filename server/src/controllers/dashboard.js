@@ -200,12 +200,14 @@ async function superAdminDashboard(req, res) {
       pool.query(`SELECT
           COALESCE(SUM(amount), 0)::NUMERIC(12,3) AS total,
           COUNT(*)::int AS count,
+          COALESCE(SUM(amount) FILTER (WHERE status != 'PAID'), 0)::NUMERIC(12,3) AS active_total,
+          COUNT(*) FILTER (WHERE status != 'PAID')::int AS active_count,
           COUNT(*) FILTER (WHERE status = 'PENDING')::int AS pending,
           COUNT(*) FILTER (WHERE status = 'CONFIRMED')::int AS confirmed,
           COUNT(*) FILTER (WHERE status = 'PAYMENT_REQUESTED')::int AS payment_requested,
           COUNT(*) FILTER (WHERE status = 'PAID')::int AS paid
         FROM livraison_ecarts`),
-      // Écarts details with justifications
+      // Écarts details with justifications (active only — excluding PAID)
       pool.query(`SELECT e.*,
           d.full_name AS declared_by_name,
           c.full_name AS confirmed_by_name,
@@ -218,6 +220,7 @@ async function superAdminDashboard(req, res) {
         LEFT JOIN users pr ON e.payment_requested_by = pr.id
         LEFT JOIN users pc ON e.payment_confirmed_by = pc.id
         JOIN livraisons l ON e.livraison_id = l.id
+        WHERE e.status != 'PAID'
         ORDER BY e.declared_at DESC`),
     ]);
 
@@ -283,8 +286,9 @@ async function superAdminDashboard(req, res) {
         count: r.count,
       })),
       ecarts_en_attente: ecartsPendantes.rows[0]?.count || 0,
-      ecarts_total: Number(ecartsTotals.rows[0]?.total || 0),
-      ecarts_count: ecartsTotals.rows[0]?.count || 0,
+      ecarts_total: Number(ecartsTotals.rows[0]?.active_total || 0),
+      ecarts_count: ecartsTotals.rows[0]?.active_count || 0,
+      ecarts_all_time_total: Number(ecartsTotals.rows[0]?.total || 0),
       ecarts_pending_count: ecartsTotals.rows[0]?.pending || 0,
       ecarts_confirmed_count: ecartsTotals.rows[0]?.confirmed || 0,
       ecarts_payment_requested_count: ecartsTotals.rows[0]?.payment_requested || 0,

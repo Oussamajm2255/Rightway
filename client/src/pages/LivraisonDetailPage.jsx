@@ -628,11 +628,15 @@ function LivraisonDetailPage() {
       )}
 
       {/* Écarts section */}
-      {(isSuperAdmin || isAssignedCommercial) && (
+      {(isSuperAdmin || isAssignedCommercial) && (() => {
+        const activeEcarts = (livraison.ecarts || []).filter(ec => ec.status !== 'PAID');
+        const resolvedEcarts = (livraison.ecarts || []).filter(ec => ec.status === 'PAID');
+        const hasAnyEcarts = (livraison.ecarts || []).length > 0;
+        return (
         <div className="detail-section">
-          <h2>Écarts</h2>
+          <h2>Écarts{activeEcarts.length > 0 ? ` (${activeEcarts.length} actif${activeEcarts.length > 1 ? 's' : ''})` : ''}</h2>
 
-          {livraison.ecarts && livraison.ecarts.length > 0 ? (
+          {hasAnyEcarts ? (
             <div className="table-container">
               <table className="data-table">
                 <thead>
@@ -646,22 +650,36 @@ function LivraisonDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {livraison.ecarts.map((ec) => {
+                  {[...activeEcarts, ...resolvedEcarts].map((ec, idx) => {
                     const isPending = ec.status === 'PENDING';
                     const isConfirmed = ec.status === 'CONFIRMED';
                     const isPaymentRequested = ec.status === 'PAYMENT_REQUESTED';
                     const isPaid = ec.status === 'PAID';
+                    const isResolvedRow = isPaid;
+                    // Show separator before first resolved écart
+                    const showSeparator = isPaid && idx === activeEcarts.length;
                     return (
-                    <tr key={ec.id}>
+                    <React.Fragment key={ec.id}>
+                      {showSeparator && (
+                        <tr className="ecart-separator-row">
+                          <td colSpan={isAssignedCommercial || isSuperAdmin ? 6 : 5} style={{padding:'4px 0', border:'none'}}>
+                            <div style={{display:'flex', alignItems:'center', gap:'8px', padding:'6px 12px', background:'var(--color-success-bg)', borderRadius:4, fontSize:'0.8rem', color:'var(--color-success)', fontWeight:500}}>
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                              Résolu{resolvedEcarts.length > 1 ? `s (${resolvedEcarts.length})` : ''}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    <tr key={ec.id} className={isResolvedRow ? 'row-ecart-resolved' : ''}>
                       <td style={{fontSize:'0.85rem'}}>{new Date(ec.declared_at).toLocaleString('fr-FR')}</td>
-                      <td className="td-price" style={{color:'var(--color-danger)'}}>{formatDT(ec.amount)}</td>
-                      <td style={{maxWidth:200, whiteSpace:'normal', fontSize:'0.85rem'}}>{ec.justification}</td>
-                      <td style={{fontSize:'0.85rem'}}>{ec.declared_by_name}</td>
+                      <td className="td-price" style={{color: isResolvedRow ? 'var(--color-text-muted)' : 'var(--color-danger)'}}>{formatDT(ec.amount)}</td>
+                      <td style={{maxWidth:200, whiteSpace:'normal', fontSize:'0.85rem', color: isResolvedRow ? 'var(--color-text-muted)' : undefined}}>{ec.justification}</td>
+                      <td style={{fontSize:'0.85rem', color: isResolvedRow ? 'var(--color-text-muted)' : undefined}}>{ec.declared_by_name}</td>
                       <td>
                         {isPending && <span className="badge badge-status-pending">En attente</span>}
                         {isConfirmed && <span className="badge badge-ok">Confirmé{ec.confirmed_at ? ` le ${new Date(ec.confirmed_at).toLocaleDateString('fr-FR')}` : ''}</span>}
                         {isPaymentRequested && <span className="badge badge-status-warning">Paiement en attente</span>}
-                        {isPaid && <span className="badge badge-ok">Payé{ec.payment_confirmed_at ? ` le ${new Date(ec.payment_confirmed_at).toLocaleDateString('fr-FR')}` : ''}</span>}
+                        {isPaid && <span className="badge badge-success-subtle">Payé{ec.payment_confirmed_at ? ` le ${new Date(ec.payment_confirmed_at).toLocaleDateString('fr-FR')}` : ''}</span>}
                       </td>
                       <td style={{textAlign:'center'}}>
                         {isAssignedCommercial && isPending && (
@@ -693,6 +711,7 @@ function LivraisonDetailPage() {
                         )}
                       </td>
                     </tr>
+                    </React.Fragment>
                   );
                   })}
                 </tbody>
@@ -713,7 +732,7 @@ function LivraisonDetailPage() {
             </button>
           )}
         </div>
-      )}
+      );})()}
 
       {/* Bon de Retour view for EN_RETOUR */}
       {isEnRetour && (
