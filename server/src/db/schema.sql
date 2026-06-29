@@ -206,3 +206,23 @@ CREATE TABLE IF NOT EXISTS prelevements (
 CREATE INDEX IF NOT EXISTS idx_prelevements_category ON prelevements(category_id);
 CREATE INDEX IF NOT EXISTS idx_prelevements_date ON prelevements(expense_date DESC);
 CREATE INDEX IF NOT EXISTS idx_prelevements_declared_by ON prelevements(declared_by);
+
+-- ============================================================
+-- LIVRAISON ECARTS (discrepancy declarations)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS livraison_ecarts (
+  id            SERIAL PRIMARY KEY,
+  livraison_id  INTEGER NOT NULL REFERENCES livraisons(id) ON DELETE CASCADE,
+  amount        NUMERIC(12,3) NOT NULL CHECK(amount > 0),
+  justification TEXT NOT NULL,
+  declared_by   UUID NOT NULL REFERENCES users(id),
+  declared_at   TIMESTAMPTZ DEFAULT NOW(),
+  confirmed_by  UUID REFERENCES users(id),
+  confirmed_at  TIMESTAMPTZ,
+  status        VARCHAR(20) DEFAULT 'PENDING' CHECK(status IN ('PENDING','CONFIRMED')),
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_ecarts_livraison ON livraison_ecarts(livraison_id);
+CREATE INDEX IF NOT EXISTS idx_ecarts_status ON livraison_ecarts(status);

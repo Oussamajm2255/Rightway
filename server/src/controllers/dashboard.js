@@ -49,6 +49,7 @@ async function superAdminDashboard(req, res) {
       feedEvents,
       prelevementTotals,
       prelevementTopCats,
+      ecartsPendantes,
     ] = await Promise.all([
       // KPI: active users
       pool.query('SELECT COUNT(*)::INT AS count FROM users WHERE is_active = true'),
@@ -191,6 +192,8 @@ async function superAdminDashboard(req, res) {
         WHERE c.parent_id IS NULL
         GROUP BY c.id, c.name
         ORDER BY total DESC LIMIT 3`),
+      // Pending écarts count
+      pool.query(`SELECT COUNT(*)::int AS count FROM livraison_ecarts WHERE status = 'PENDING'`),
     ]);
 
     // Build monthly CA array
@@ -254,6 +257,7 @@ async function superAdminDashboard(req, res) {
         total: Number(r.total),
         count: r.count,
       })),
+      ecarts_en_attente: ecartsPendantes.rows[0]?.count || 0,
     });
   } catch (err) {
     console.error('superAdminDashboard error:', err);

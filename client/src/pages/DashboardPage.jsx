@@ -261,6 +261,19 @@ function SuperAdminView({ data, navigate, user }) {
           <KpiCard icon={Icons.alert} label="Alertes stock" value={<span style={{color:PALETTE.red}}>{fmtInt(data.stock_alerts_count)}</span>} sub="produits &lt; 20 unités" color={PALETTE.red} onClick={() => navigate('/stock')} />
         </div>
 
+        {/* Écarts en attente alert */}
+        {data.ecarts_en_attente > 0 && (
+          <div className="alert-card" style={{background:'var(--color-danger-bg)', borderColor:'var(--color-danger-border)', marginBottom:'var(--space-5)'}}>
+            <div className="alert-body">
+              <strong>{data.ecarts_en_attente} écart(s) en attente de confirmation</strong>
+              <p>Des commerciaux doivent confirmer des écarts déclarés.</p>
+            </div>
+            <button className="btn btn-outline-danger btn-sm" onClick={() => navigate('/livraisons')}>
+              Voir les livraisons
+            </button>
+          </div>
+        )}
+
         {/* Prelevements KPI */}
         {data.prelevement_total !== undefined && (
           <div>

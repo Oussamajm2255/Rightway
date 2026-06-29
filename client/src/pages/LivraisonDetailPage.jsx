@@ -37,6 +37,12 @@ function LivraisonDetailPage() {
   const [avanceError, setAvanceError] = useState('');
   const [refuseAvanceNote, setRefuseAvanceNote] = useState('');
   const [refusingAvanceId, setRefusingAvanceId] = useState(null);
+  // Écarts
+  const [showEcartModal, setShowEcartModal] = useState(false);
+  const [ecartAmount, setEcartAmount] = useState('');
+  const [ecartJustification, setEcartJustification] = useState('');
+  const [ecartError, setEcartError] = useState('');
+  const [confirmingEcartId, setConfirmingEcartId] = useState(null);
 
   const fetchLivraison = useCallback(async () => {
     setLoading(true);
@@ -258,6 +264,43 @@ function LivraisonDetailPage() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  // Écarts handlers
+  async function handleDeclarerEcart(e) {
+    e.preventDefault();
+    setEcartError('');
+    const amount = parseFloat(ecartAmount);
+    if (!amount || amount <= 0) { setEcartError('Montant invalide.'); return; }
+    if (!ecartJustification.trim()) { setEcartError('La justification est obligatoire.'); return; }
+    setSubmitting(true);
+    try {
+      const data = await apiPost(`/livraisons/${id}/ecarts`, {
+        amount,
+        justification: ecartJustification.trim(),
+      });
+      setLivraison(prev => ({ ...prev, ecarts: [data.ecart, ...(prev.ecarts || [])] }));
+      setSuccess(data.message);
+      setShowEcartModal(false);
+      setEcartAmount('');
+      setEcartJustification('');
+    } catch (err) { setEcartError(err.message); }
+    finally { setSubmitting(false); }
+  }
+
+  async function handleConfirmerEcart(ecartId, password) {
+    setSubmitting(true);
+    try {
+      const data = await apiPost(`/livraisons/${id}/ecarts/${ecartId}/confirm`, { password });
+      setLivraison(prev => ({
+        ...prev,
+        ecarts: prev.ecarts.map(e => e.id === ecartId ? data.ecart : e),
+      }));
+      setConfirmingEcartId(null);
+      setPassword('');
+      setSuccess(data.message);
+    } catch (err) { setActionError(err.message); }
+    finally { setSubmitting(false); }
   }
 
 
@@ -555,6 +598,72 @@ function LivraisonDetailPage() {
             </svg>
             Déclarer une avance
           </button>
+        </div>
+      )}
+
+      {/* Écarts section */}
+      {(isSuperAdmin || isAssignedCommercial) && (
+        <div className="detail-section">
+          <h2>Écarts</h2>
+
+          {livraison.ecarts && livraison.ecarts.length > 0 ? (
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Montant</th>
+                    <th>Justification</th>
+                    <th>Déclaré par</th>
+                    <th>Statut</th>
+                    {isAssignedCommercial && <th style={{textAlign:'center'}}>Action</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {livraison.ecarts.map((ec) => (
+                    <tr key={ec.id}>
+                      <td style={{fontSize:'0.85rem'}}>{new Date(ec.declared_at).toLocaleString('fr-FR')}</td>
+                      <td className="td-price" style={{color:'var(--color-danger)'}}>{formatDT(ec.amount)}</td>
+                      <td style={{maxWidth:200, whiteSpace:'normal', fontSize:'0.85rem'}}>{ec.justification}</td>
+                      <td style={{fontSize:'0.85rem'}}>{ec.declared_by_name}</td>
+                      <td>
+                        {ec.status === 'PENDING' ? (
+                          <span className="badge badge-status-pending">En attente</span>
+                        ) : (
+                          <span className="badge badge-ok">
+                            Confirmé {ec.confirmed_at ? `le ${new Date(ec.confirmed_at).toLocaleDateString('fr-FR')}` : ''}
+                          </span>
+                        )}
+                      </td>
+                      {isAssignedCommercial && ec.status === 'PENDING' && (
+                        <td style={{textAlign:'center'}}>
+                          <button className="btn btn-primary btn-sm" onClick={() => setConfirmingEcartId(ec.id)}>
+                            Confirmer
+                          </button>
+                        </td>
+                      )}
+                      {isAssignedCommercial && ec.status === 'CONFIRMED' && (
+                        <td style={{textAlign:'center', fontSize:'0.8rem', color:'var(--color-text-muted)'}}>—</td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p style={{color:'var(--color-text-muted)', fontSize:'0.9rem'}}>Aucun écart déclaré.</p>
+          )}
+
+          {/* SUPER_ADMIN: Declare button */}
+          {isSuperAdmin && (
+            <button
+              className="btn btn-outline-danger btn-sm"
+              onClick={() => { setShowEcartModal(true); setEcartError(''); setEcartAmount(''); setEcartJustification(''); }}
+              style={{marginTop:'var(--space-3)'}}
+            >
+              Déclarer un écart
+            </button>
+          )}
         </div>
       )}
 
@@ -1030,6 +1139,68 @@ function LivraisonDetailPage() {
                 <button type="button" className="btn btn-secondary" onClick={() => setShowAvanceModal(false)}>Annuler</button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>
                   {submitting ? '...' : 'Déclarer l\'avance'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Déclarer écart modal */}
+      {showEcartModal && (
+        <div className="modal-overlay" onClick={() => setShowEcartModal(false)}>
+          <div className="modal-card" onClick={e => e.stopPropagation()} style={{maxWidth:480}}>
+            <h3 className="modal-title">Déclarer un écart</h3>
+            <div className="modal-summary">
+              <p><strong>{livraison?.reference}</strong></p>
+              <p>Commercial : {livraison?.commercial_name}</p>
+            </div>
+            {ecartError && <div className="login-error">{ecartError}</div>}
+            <form onSubmit={handleDeclarerEcart}>
+              <div className="form-group">
+                <label className="form-label">Montant de l'écart (DT)</label>
+                <input type="number" step="0.001" min="0.001" className="form-input"
+                  value={ecartAmount} onChange={e => setEcartAmount(e.target.value)} required />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Justification *</label>
+                <textarea className="form-input" rows={3} placeholder="Raison de l'écart..."
+                  value={ecartJustification} onChange={e => setEcartJustification(e.target.value)} required />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowEcartModal(false)}>Annuler</button>
+                <button type="submit" className="btn btn-danger" disabled={submitting}>
+                  {submitting ? '...' : "Déclarer l'écart"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmer écart modal (COMMERCIAL) */}
+      {confirmingEcartId && (
+        <div className="modal-overlay" onClick={() => { setConfirmingEcartId(null); setPassword(''); }}>
+          <div className="modal-card" onClick={e => e.stopPropagation()}>
+            <h3 className="modal-title">Confirmer l'écart</h3>
+            <div className="modal-summary">
+              <p>En confirmant, vous reconnaissez cet écart comme étant dû.</p>
+              {(() => {
+                const ec = livraison?.ecarts?.find(e => e.id === confirmingEcartId);
+                return ec ? <p style={{color:'var(--color-danger)'}}>Montant : <strong>{formatDT(ec.amount)}</strong></p> : null;
+              })()}
+            </div>
+            {actionError && <div className="login-error">{actionError}</div>}
+            <form onSubmit={e => { e.preventDefault(); handleConfirmerEcart(confirmingEcartId, password); }}>
+              <div className="form-group">
+                <label className="form-label">Votre mot de passe</label>
+                <input type="password" className="form-input" value={password}
+                  onChange={e => setPassword(e.target.value)} required autoFocus />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => { setConfirmingEcartId(null); setPassword(''); }}>Annuler</button>
+                <button type="submit" className="btn btn-danger" disabled={submitting}>
+                  {submitting ? '...' : "Confirmer l'écart"}
                 </button>
               </div>
             </form>

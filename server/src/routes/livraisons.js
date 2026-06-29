@@ -25,6 +25,9 @@ const {
   accepterAvance,
   refuserAvance,
   realtimeData,
+  declarerEcart,
+  listEcarts,
+  confirmerEcart,
 } = require('../controllers/livraisons');
 
 router.use(authenticate);
@@ -80,6 +83,11 @@ router.post('/:id/avances', authorize('COMMERCIAL'), declarerAvance);
 router.get('/:id/avances', authorize('SUPER_ADMIN', 'ADMIN', 'COMMERCIAL'), requireLivraisonOwnership, getAvances);
 router.put('/:id/avances/:avanceId/accepter', authorize('SUPER_ADMIN'), accepterAvance);
 router.put('/:id/avances/:avanceId/refuser', authorize('SUPER_ADMIN'), refuserAvance);
+
+// Ecarts (discrepancy declarations)
+router.post('/:id/ecarts', authorize('SUPER_ADMIN'), declarerEcart);
+router.get('/:id/ecarts', authorize('SUPER_ADMIN', 'ADMIN', 'COMMERCIAL'), requireLivraisonOwnership, listEcarts);
+router.post('/:id/ecarts/:ecartId/confirm', authorize('COMMERCIAL'), confirmerEcart);
 
 // Real-time monitoring route
 router.get('/:id/realtime', authorize('SUPER_ADMIN', 'ADMIN', 'COMMERCIAL'), requireLivraisonOwnership, realtimeData);

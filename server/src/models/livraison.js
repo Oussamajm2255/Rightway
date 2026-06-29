@@ -185,6 +185,20 @@ async function findById(id) {
   );
   livraison.avances = avances;
 
+  // Load ecarts
+  const { rows: ecarts } = await pool.query(
+    `SELECT e.*, 
+            d.full_name AS declared_by_name,
+            c.full_name AS confirmed_by_name
+     FROM livraison_ecarts e
+     JOIN users d ON e.declared_by = d.id
+     LEFT JOIN users c ON e.confirmed_by = c.id
+     WHERE e.livraison_id = $1
+     ORDER BY e.declared_at DESC`,
+    [id]
+  );
+  livraison.ecarts = ecarts;
+
   return livraison;
 }
 

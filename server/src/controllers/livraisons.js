@@ -1,5 +1,6 @@
 const livraisonModel = require('../models/livraison');
 const avanceModel = require('../models/livraisonAvance');
+const ecartModel = require('../models/livraisonEcart');
 const notificationModel = require('../models/notification');
 const { COMMISSION_RATE } = require('../models/livraison');
 const { verifyPassword } = require('../utils/password');
@@ -307,4 +308,81 @@ async function realtimeData(req, res) {
   }
 }
 
-module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier, archiveLivraison, demanderAnnulation, confirmerAnnulation, declarerAvance, getAvances, accepterAvance, refuserAvance, realtimeData };
+// ═══════════════════════════════════════════════
+// ECARTS (discrepancy declarations)
+// ═══════════════════════════════════════════════
+
+async function declarerEcart(req, res) {
+  try {
+    const { amount, justification } = req.body;
+    if (!amount || parseFloat(amount) <= 0) return res.status(400).json({ error: 'Montant invalide.' });
+    if (!justification || !justification.trim()) return res.status(400).json({ error: 'La justification est obligatoire.' });
+
+    const livraison = await livraisonModel.findById(req.params.id);
+    if (!livraison) return res.status(404).json({ error: 'Livraison introuvable.' });
+
+    const ecart = await ecartModel.create({
+      livraison_id: req.params.id,
+      amount: parseFloat(amount),
+      justification: justification.trim(),
+      declared_by: req.user.id,
+    });
+
+    // Notify the commercial
+    await notificationModel.create(
+      livraison.commercial_id,
+      `Un ecart de ${Number(ecart.amount).toFixed(3)} DT a ete declare sur la livraison ${livraison.reference}. Veuillez le confirmer.`,
+      livraison.id
+    );
+
+    const full = await ecartModel.findById(ecart.id);
+    res.status(201).json({ ecart: full, message: 'Ecart declare avec succes.' });
+  } catch (err) {
+    console.error('declarerEcart error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+async function listEcarts(req, res) {
+  try {
+    const ecarts = await ecartModel.findByLivraison(req.params.id);
+    res.json({ ecarts });
+  } catch (err) {
+    console.error('listEcarts error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+async function confirmerEcart(req, res) {
+  try {
+    const { password } = req.body;
+    if (!password) return res.status(400).json({ error: 'Mot de passe requis.' });
+
+    const ecart = await ecartModel.findById(req.params.ecartId);
+    if (!ecart) return res.status(404).json({ error: 'Ecart introuvable.' });
+    if (ecart.status !== 'PENDING') return res.status(400).json({ error: 'Cet ecart a deja ete traite.' });
+
+    // Verify the commercial is assigned to this livraison
+    const livraison = await livraisonModel.findById(ecart.livraison_id);
+    if (!livraison) return res.status(404).json({ error: 'Livraison introuvable.' });
+    if (livraison.commercial_id !== req.user.id) return res.status(403).json({ error: 'Cet ecart ne vous concerne pas.' });
+
+    // Verify password
+    const { rows: [userRow] } = await pool.query(
+      'SELECT password_hash FROM users WHERE id = $1', [req.user.id]
+    );
+    if (!userRow) return res.status(401).json({ error: 'Utilisateur introuvable.' });
+    const valid = await verifyPassword(password, userRow.password_hash);
+    if (!valid) return res.status(403).json({ error: 'Mot de passe incorrect.' });
+
+    const confirmed = await ecartModel.confirm(req.params.ecartId, req.user.id);
+    if (!confirmed) return res.status(400).json({ error: 'Impossible de confirmer cet ecart.' });
+
+    res.json({ ecart: confirmed, message: 'Ecart confirme avec succes.' });
+  } catch (err) {
+    console.error('confirmerEcart error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier, archiveLivraison, demanderAnnulation, confirmerAnnulation, declarerAvance, getAvances, accepterAvance, refuserAvance, realtimeData, declarerEcart, listEcarts, confirmerEcart };
