@@ -250,11 +250,11 @@ export default function BenefitsPage() {
           </div>
 
           {loading && !globalData ? (
-            <div className="kpi-grid-4">
-              {[1, 2, 3, 4].map((i) => <div key={i} className="kpi-card skeleton-card" />)}
+            <div className="kpi-grid-5">
+              {[1, 2, 3, 4, 5].map((i) => <div key={i} className="kpi-card skeleton-card" />)}
             </div>
           ) : globalData ? (
-            <div className="kpi-grid-4">
+            <div className="kpi-grid-5">
               {/* CA Global */}
               <div className="kpi-card">
                 <div className="kpi-accent" style={{ background: 'var(--color-primary)' }} />
@@ -263,15 +263,25 @@ export default function BenefitsPage() {
                 <div className="kpi-value" style={{ fontSize: 16 }}>{fmtDT(globalData.ca_total)}</div>
                 <div className="kpi-sub">livraisons clôturées</div>
               </div>
-              {/* Bénéfice Net */}
+              {/* Bénéfice Brut */}
               <div className="kpi-card">
-                <div className="kpi-accent" style={{ background: globalData.benefit_total >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }} />
-                <div className="kpi-icon-wrap" style={{ background: globalData.benefit_total >= 0 ? 'rgba(15,158,106,.1)' : 'rgba(220,38,38,.1)', color: globalData.benefit_total >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                <div className="kpi-accent" style={{ background: globalData.benefit_gross >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }} />
+                <div className="kpi-icon-wrap" style={{ background: globalData.benefit_gross >= 0 ? 'rgba(15,158,106,.1)' : 'rgba(220,38,38,.1)', color: globalData.benefit_gross >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
                   {Icon.trending}
                 </div>
-                <div className="kpi-label">Bénéfice Net Total</div>
-                <div className={`kpi-value${globalData.benefit_total >= 0 ? ' positive' : ' negative'}`} style={{ fontSize: 16 }}>{fmtDT(globalData.benefit_total)}</div>
-                <div className="kpi-sub">après déduction des coûts</div>
+                <div className="kpi-label">Bénéfice Brut</div>
+                <div className={`kpi-value${globalData.benefit_gross >= 0 ? ' positive' : ' negative'}`} style={{ fontSize: 16 }}>{fmtDT(globalData.benefit_gross)}</div>
+                <div className="kpi-sub">CA − Coût produits</div>
+              </div>
+              {/* Bénéfice Net */}
+              <div className="kpi-card">
+                <div className="kpi-accent" style={{ background: globalData.benefit_net >= 0 ? '#0891b2' : 'var(--color-danger)' }} />
+                <div className="kpi-icon-wrap" style={{ background: globalData.benefit_net >= 0 ? 'rgba(8,145,178,.1)' : 'rgba(220,38,38,.1)', color: globalData.benefit_net >= 0 ? '#0891b2' : 'var(--color-danger)' }}>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div className="kpi-label">Bénéfice Net</div>
+                <div className={`kpi-value${globalData.benefit_net >= 0 ? ' positive' : ' negative'}`} style={{ fontSize: 16 }}>{fmtDT(globalData.benefit_net)}</div>
+                <div className="kpi-sub">{globalData.prelevement_total > 0 || globalData.ecart_total > 0 ? `après déductions (${fmtDT(-(globalData.prelevement_total + globalData.ecart_total))})` : 'après déductions'}</div>
               </div>
               {/* Marge Moyenne */}
               <div className="kpi-card">
@@ -279,15 +289,15 @@ export default function BenefitsPage() {
                 <div className="kpi-icon-wrap" style={{ background: 'rgba(124,58,237,.1)', color: '#7c3aed' }}>{Icon.pie}</div>
                 <div className="kpi-label">Marge Bénéficiaire Moyenne</div>
                 <div className="kpi-value" style={{ color: globalData.margin_avg >= 30 ? 'var(--color-success)' : globalData.margin_avg >= 15 ? 'var(--color-warning)' : 'var(--color-danger)', fontSize: 20 }}>{fmtPct(globalData.margin_avg)}</div>
-                <div className="kpi-sub">(bénéfice / CA) × 100</div>
+                <div className="kpi-sub">(bénéfice brut / CA) × 100</div>
               </div>
               {/* Produits Rentables */}
               <div className="kpi-card">
-                <div className="kpi-accent" style={{ background: '#0891b2' }} />
-                <div className="kpi-icon-wrap" style={{ background: 'rgba(8,145,178,.1)', color: '#0891b2' }}>{Icon.check}</div>
+                <div className="kpi-accent" style={{ background: 'var(--color-warning)' }} />
+                <div className="kpi-icon-wrap" style={{ background: 'rgba(245,158,11,.1)', color: 'var(--color-warning)' }}>{Icon.check}</div>
                 <div className="kpi-label">Produits Rentables</div>
                 <div className="kpi-value">{globalData.profitable_count}</div>
-                <div className="kpi-sub">benefit_product &gt; 0</div>
+                <div className="kpi-sub">bénéfice brut &gt; 0</div>
               </div>
             </div>
           ) : null}

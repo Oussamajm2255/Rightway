@@ -9,8 +9,21 @@ async function getGlobalBenefits({ date_from, date_to } = {}) {
   let idx = 1;
 
   let dateWhere = '';
-  if (date_from) { dateWhere += ` AND l.closed_at::date >= $${idx++}`; params.push(date_from); }
-  if (date_to)   { dateWhere += ` AND l.closed_at::date <= $${idx++}`; params.push(date_to);   }
+  let prelevDateWhere = '';
+  let ecartDateWhere = '';
+
+  if (date_from) {
+    dateWhere += ` AND l.closed_at::date >= $${idx}`;
+    prelevDateWhere += ` AND expense_date >= $${idx}`;
+    ecartDateWhere += ` AND declared_at::date >= $${idx}`;
+    params.push(date_from); idx++;
+  }
+  if (date_to) {
+    dateWhere += ` AND l.closed_at::date <= $${idx}`;
+    prelevDateWhere += ` AND expense_date <= $${idx}`;
+    ecartDateWhere += ` AND declared_at::date <= $${idx}`;
+    params.push(date_to); idx++;
+  }
 
   const query = `
     WITH product_sales AS (
@@ -25,10 +38,25 @@ async function getGlobalBenefits({ date_from, date_to } = {}) {
       WHERE l.status = 'CLOTURE' AND l.is_archived = false
         ${dateWhere}
       GROUP BY li.product_id
+    ),
+    prelevement_total AS (
+      SELECT COALESCE(SUM(amount), 0)::NUMERIC(12,3) AS total
+      FROM prelevements
+      WHERE 1=1 ${prelevDateWhere}
+    ),
+    ecart_total AS (
+      SELECT COALESCE(SUM(amount), 0)::NUMERIC(12,3) AS total
+      FROM livraison_ecarts
+      WHERE 1=1 ${ecartDateWhere}
     )
     SELECT
       COALESCE(SUM(ps.ca), 0)::NUMERIC(12,3)            AS ca_total,
-      COALESCE(SUM(ps.benefit), 0)::NUMERIC(12,3)       AS benefit_total,
+      COALESCE(SUM(ps.benefit), 0)::NUMERIC(12,3)       AS benefit_gross,
+      (SELECT total FROM prelevement_total)              AS prelevement_total,
+      (SELECT total FROM ecart_total)                    AS ecart_total,
+      COALESCE(SUM(ps.benefit), 0)::NUMERIC(12,3)
+        - (SELECT total FROM prelevement_total)
+        - (SELECT total FROM ecart_total)                 AS benefit_net,
       CASE WHEN SUM(ps.ca) > 0
         THEN ROUND((SUM(ps.benefit) / SUM(ps.ca)) * 100, 1)
         ELSE 0 END                                       AS margin_avg,
@@ -37,7 +65,7 @@ async function getGlobalBenefits({ date_from, date_to } = {}) {
   `;
 
   const { rows } = await pool.query(query, params);
-  return rows[0] || { ca_total: 0, benefit_total: 0, margin_avg: 0, profitable_count: 0 };
+  return rows[0] || { ca_total: 0, benefit_gross: 0, prelevement_total: 0, ecart_total: 0, benefit_net: 0, margin_avg: 0, profitable_count: 0 };
 }
 
 /**
