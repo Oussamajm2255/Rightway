@@ -50,6 +50,8 @@ async function superAdminDashboard(req, res) {
       prelevementTotals,
       prelevementTopCats,
       ecartsPendantes,
+      ecartsTotals,
+      ecartsDetails,
     ] = await Promise.all([
       // KPI: active users
       pool.query('SELECT COUNT(*)::INT AS count FROM users WHERE is_active = true'),
@@ -194,6 +196,23 @@ async function superAdminDashboard(req, res) {
         ORDER BY total DESC LIMIT 3`),
       // Pending écarts count
       pool.query(`SELECT COUNT(*)::int AS count FROM livraison_ecarts WHERE status = 'PENDING'`),
+      // Écarts totals (all statuses)
+      pool.query(`SELECT
+          COALESCE(SUM(amount), 0)::NUMERIC(12,3) AS total,
+          COUNT(*)::int AS count,
+          COUNT(*) FILTER (WHERE status = 'PENDING')::int AS pending,
+          COUNT(*) FILTER (WHERE status = 'CONFIRMED')::int AS confirmed
+        FROM livraison_ecarts`),
+      // Écarts details with justifications
+      pool.query(`SELECT e.*,
+          d.full_name AS declared_by_name,
+          c.full_name AS confirmed_by_name,
+          l.reference AS livraison_reference
+        FROM livraison_ecarts e
+        JOIN users d ON e.declared_by = d.id
+        LEFT JOIN users c ON e.confirmed_by = c.id
+        JOIN livraisons l ON e.livraison_id = l.id
+        ORDER BY e.declared_at DESC`),
     ]);
 
     // Build monthly CA array
@@ -258,6 +277,22 @@ async function superAdminDashboard(req, res) {
         count: r.count,
       })),
       ecarts_en_attente: ecartsPendantes.rows[0]?.count || 0,
+      ecarts_total: Number(ecartsTotals.rows[0]?.total || 0),
+      ecarts_count: ecartsTotals.rows[0]?.count || 0,
+      ecarts_pending_count: ecartsTotals.rows[0]?.pending || 0,
+      ecarts_confirmed_count: ecartsTotals.rows[0]?.confirmed || 0,
+      ecarts: ecartsDetails.rows.map(r => ({
+        id: r.id,
+        livraison_id: r.livraison_id,
+        livraison_reference: r.livraison_reference,
+        amount: Number(r.amount),
+        justification: r.justification,
+        declared_by_name: r.declared_by_name,
+        confirmed_by_name: r.confirmed_by_name,
+        status: r.status,
+        declared_at: r.declared_at,
+        confirmed_at: r.confirmed_at,
+      })),
     });
   } catch (err) {
     console.error('superAdminDashboard error:', err);

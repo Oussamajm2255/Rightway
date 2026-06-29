@@ -261,16 +261,42 @@ function SuperAdminView({ data, navigate, user }) {
           <KpiCard icon={Icons.alert} label="Alertes stock" value={<span style={{color:PALETTE.red}}>{fmtInt(data.stock_alerts_count)}</span>} sub="produits &lt; 20 unités" color={PALETTE.red} onClick={() => navigate('/stock')} />
         </div>
 
-        {/* Écarts en attente alert */}
-        {data.ecarts_en_attente > 0 && (
-          <div className="alert-card" style={{background:'var(--color-danger-bg)', borderColor:'var(--color-danger-border)', marginBottom:'var(--space-5)'}}>
-            <div className="alert-body">
-              <strong>{data.ecarts_en_attente} écart(s) en attente de confirmation</strong>
-              <p>Des commerciaux doivent confirmer des écarts déclarés.</p>
+        {/* Écarts section */}
+        {data.ecarts_count > 0 && (
+          <div>
+            <SectionHeader title="Écarts" />
+            <div className="prelevement-dash-row">
+              <KpiCard
+                icon={Icons.alert}
+                label="Total Écarts"
+                value={fmtDT(data.ecarts_total)}
+                sub={`${data.ecarts_count} écart(s) · ${data.ecarts_pending_count} en attente · ${data.ecarts_confirmed_count} confirmé(s)`}
+                color={PALETTE.red}
+              />
+              <div className="chart-card" style={{flex: 1, maxHeight: 300, overflowY: 'auto'}}>
+                <h3>Justifications</h3>
+                <div style={{display:'flex', flexDirection:'column', gap:'6px'}}>
+                  {data.ecarts.map((ec) => (
+                    <div key={ec.id} style={{display:'flex', alignItems:'flex-start', gap:'10px', padding:'8px 0', borderBottom:'1px solid var(--color-border)', fontSize:'12.5px'}}>
+                      <span style={{flexShrink:0, fontWeight:600, color:'var(--color-text-secondary)', minWidth:90, fontSize:'11.5px'}}>
+                        {ec.livraison_reference}
+                      </span>
+                      <span style={{flexShrink:0, fontFamily:'var(--font-mono)', color:'var(--color-danger)', fontWeight:500, minWidth:70, textAlign:'right'}}>
+                        {fmtDTShort(ec.amount)}
+                      </span>
+                      <span style={{flex:1, minWidth:0, color:'var(--color-text-secondary)', lineHeight:'1.4'}}>
+                        {ec.justification}
+                      </span>
+                      <span style={{flexShrink:0}}>
+                        <span className={`badge ${ec.status === 'PENDING' ? 'badge-status-pending' : 'badge-ok'}`} style={{fontSize:'10px', padding:'1px 6px'}}>
+                          {ec.status === 'PENDING' ? 'En attente' : 'Confirmé'}
+                        </span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-            <button className="btn btn-outline-danger btn-sm" onClick={() => navigate('/livraisons')}>
-              Voir les livraisons
-            </button>
           </div>
         )}
 

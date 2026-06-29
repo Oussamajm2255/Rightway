@@ -95,6 +95,7 @@ function LivraisonsListPage() {
                 <th>Commercial</th>
                 <th>Véhicule</th>
                 <th>Statut</th>
+                <th style={{textAlign:'center'}}>Écart</th>
                 <th>Créé par</th>
                 <th>Date</th>
                 <th>Clôturé</th>
@@ -114,6 +115,13 @@ function LivraisonsListPage() {
                     {l.vehicle_plate && <span className="vehicle-plate">{l.vehicle_plate}</span>}
                   </td>
                   <td>{getStatusBadge(l.status)}</td>
+                  <td style={{textAlign:'center'}}>
+                    {l.has_ecart ? (
+                      <span title="Cette livraison a un écart" style={{color:'var(--color-danger)', fontSize:'1rem', cursor:'help'}}>⚠</span>
+                    ) : (
+                      <span style={{color:'var(--color-text-muted)'}}>—</span>
+                    )}
+                  </td>
                   <td>{l.admin_name}</td>
                   <td className="td-date">
                     {new Date(l.created_at).toLocaleString('fr-FR')}
