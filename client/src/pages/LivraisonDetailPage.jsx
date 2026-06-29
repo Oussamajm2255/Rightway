@@ -659,7 +659,7 @@ function LivraisonDetailPage() {
                     // Show separator before first resolved écart
                     const showSeparator = isPaid && idx === activeEcarts.length;
                     return (
-                    <React.Fragment key={ec.id}>
+                    <>
                       {showSeparator && (
                         <tr className="ecart-separator-row">
                           <td colSpan={isAssignedCommercial || isSuperAdmin ? 6 : 5} style={{padding:'4px 0', border:'none'}}>
@@ -711,7 +711,7 @@ function LivraisonDetailPage() {
                         )}
                       </td>
                     </tr>
-                    </React.Fragment>
+                    </>
                   );
                   })}
                 </tbody>
