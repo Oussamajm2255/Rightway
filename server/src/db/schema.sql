@@ -212,7 +212,7 @@ CREATE INDEX IF NOT EXISTS idx_prelevements_declared_by ON prelevements(declared
 -- ============================================================
 CREATE TABLE IF NOT EXISTS livraison_ecarts (
   id            SERIAL PRIMARY KEY,
-  livraison_id  INTEGER NOT NULL REFERENCES livraisons(id) ON DELETE CASCADE,
+  livraison_id  UUID NOT NULL REFERENCES livraisons(id) ON DELETE CASCADE,
   amount        NUMERIC(12,3) NOT NULL CHECK(amount > 0),
   justification TEXT NOT NULL,
   declared_by   UUID NOT NULL REFERENCES users(id),
