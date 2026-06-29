@@ -128,6 +128,8 @@ if (isProduction) {
   app.use((req, _res, next) => {
     if (req.path === '/' || req.path.endsWith('.html')) {
       _res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      _res.setHeader('ETag', '');  // suppress ETag to prevent 304 reuse
+      _res.removeHeader('Last-Modified');
     }
     next();
   });
@@ -144,6 +146,8 @@ if (isProduction) {
     setHeaders: (res, filepath) => {
       if (filepath.endsWith('.html')) {
         res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('ETag', '');
+        res.removeHeader('Last-Modified');
       }
     },
   }));
@@ -202,8 +206,22 @@ app.use('/api/prelevements', prelevementsRoutes);
 
 // ============================================================
 // SPA FALLBACK (production) / 404 (dev)
+// IMPORTANT: /assets/* paths must NEVER fallback to index.html —
+// missing chunk requests must get a clean 404 so the browser can
+// retry with a fresh index.html instead of interpreting HTML as JS.
 // ============================================================
 if (isProduction) {
+  // API routes that don't match any route — return 404 JSON
+  app.use('/api', (_req, res) => {
+    res.status(404).json({ error: 'Route API non trouvée' });
+  });
+
+  // Missing static assets — return clean 404 (NOT index.html)
+  app.use('/assets', (_req, res) => {
+    res.status(404).type('text').send('Not found');
+  });
+
+  // Everything else → SPA fallback
   app.get('*', (_req, res) => {
     res.sendFile(path.join(__dirname, '..', '..', 'client', 'dist', 'index.html'));
   });
