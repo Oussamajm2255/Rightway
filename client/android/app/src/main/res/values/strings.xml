@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Right Way</string>
+    <string name="title_activity_main">Right Way</string>
+    <string name="package_name">com.rightway.app</string>
+    <string name="custom_url_scheme">com.rightway.app</string>
+</resources>

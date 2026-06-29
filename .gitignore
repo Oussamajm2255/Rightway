@@ -2,3 +2,9 @@ node_modules/
 dist/
 .env
 *.log
+
+# Capacitor — android/ is committed (native project),
+# but dist/ is regenerated via 'npm run cap:sync'
+android/app/src/main/assets/public/
+android/capacitor-cordova-android-plugins/
+android/capacitor.settings.gradle
