@@ -13,10 +13,6 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Run idempotent DB migrations on every startup (safe — uses IF NOT EXISTS)
-// Creates tables, indexes, and seeds 6 categories in one shot
-runMigrations().catch(err => console.error('Startup migration error:', err.message));
-
 // Trust Railway's reverse proxy in production for correct client IP
 if (isProduction) {
   app.set('trust proxy', 1);
@@ -237,21 +233,31 @@ app.use((err, req, res, _next) => {
 });
 
 // ============================================================
-// GRACEFUL SHUTDOWN
+// STARTUP — await migrations then listen
 // ============================================================
 let server;
 const connections = new Set();
 
-server = app.listen(PORT, () => {
-  console.log(`Right Way server running on http://localhost:${PORT}`);
-  console.log(`Environment: ${isProduction ? 'production' : 'development'}`);
-});
+(async () => {
+  // Run idempotent DB migrations BEFORE accepting requests
+  // Creates tables, indexes, and seeds 6 categories in one shot
+  try {
+    await runMigrations();
+  } catch (err) {
+    console.error('Startup migration error:', err.message);
+  }
 
-// Track open connections for draining
-server.on('connection', (conn) => {
-  connections.add(conn);
-  conn.on('close', () => connections.delete(conn));
-});
+  server = app.listen(PORT, () => {
+    console.log(`Right Way server running on http://localhost:${PORT}`);
+    console.log(`Environment: ${isProduction ? 'production' : 'development'}`);
+  });
+
+  // Track open connections for draining
+  server.on('connection', (conn) => {
+    connections.add(conn);
+    conn.on('close', () => connections.delete(conn));
+  });
+})();
 
 async function shutdown(signal) {
   console.log(`\n[shutdown] ${signal} received. Draining connections...`);
