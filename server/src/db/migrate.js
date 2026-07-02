@@ -66,6 +66,36 @@ const migrations = [
   // Drop and recreate status CHECK constraint to include new values
   `ALTER TABLE livraison_ecarts DROP CONSTRAINT IF EXISTS livraison_ecarts_status_check`,
   `ALTER TABLE livraison_ecarts ADD CONSTRAINT livraison_ecarts_status_check CHECK (status IN ('PENDING','CONFIRMED','PAYMENT_REQUESTED','PAID'))`,
+
+  // Livraison reopen (Cloture → EN_COURS with admin confirmation)
+  `ALTER TABLE livraisons ADD COLUMN IF NOT EXISTS reopened_at TIMESTAMPTZ`,
+  `CREATE TABLE IF NOT EXISTS livraison_reopen_log (
+    id SERIAL PRIMARY KEY,
+    livraison_id UUID NOT NULL REFERENCES livraisons(id) ON DELETE CASCADE,
+    requested_by UUID NOT NULL REFERENCES users(id),
+    confirmed_by UUID REFERENCES users(id),
+    reason TEXT,
+    requested_at TIMESTAMPTZ DEFAULT NOW(),
+    confirmed_at TIMESTAMPTZ
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_reopen_log_livraison ON livraison_reopen_log(livraison_id)`,
+
+  // Avance payment method (Task 4)
+  `ALTER TABLE livraison_avances ADD COLUMN IF NOT EXISTS payment_method VARCHAR(20) DEFAULT 'ESPECES'`,
+
+  // Return to creation (Task 5)
+  `ALTER TABLE livraisons ADD COLUMN IF NOT EXISTS returned_to_creation_at TIMESTAMPTZ`,
+  `ALTER TABLE livraisons ADD COLUMN IF NOT EXISTS return_reason TEXT`,
+  `CREATE TABLE IF NOT EXISTS livraison_retour_creation_log (
+    id SERIAL PRIMARY KEY,
+    livraison_id UUID NOT NULL REFERENCES livraisons(id) ON DELETE CASCADE,
+    requested_by UUID NOT NULL REFERENCES users(id),
+    confirmed_by UUID REFERENCES users(id),
+    reason TEXT,
+    requested_at TIMESTAMPTZ DEFAULT NOW(),
+    confirmed_at TIMESTAMPTZ
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_retour_creation_log_livraison ON livraison_retour_creation_log(livraison_id)`,
 ];
 
 async function runMigrations() {

@@ -21,15 +21,33 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
   const [loading, setLoading] = useState(true);
   const [showExpiryModal, setShowExpiryModal] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [logoutSubmitting, setLogoutSubmitting] = useState(false);
 
-  const logout = useCallback(() => {
+  const executeLogout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(EXPIRES_AT_KEY);
     setToken(null);
     setUser(null);
     setShowExpiryModal(false);
+    setShowLogoutConfirm(false);
+    setLogoutSubmitting(false);
   }, []);
+
+  const requestLogout = useCallback(() => {
+    setShowLogoutConfirm(true);
+  }, []);
+
+  const cancelLogout = useCallback(() => {
+    setShowLogoutConfirm(false);
+  }, []);
+
+  const confirmLogout = useCallback(() => {
+    setLogoutSubmitting(true);
+    // Brief delay to show loading state, then execute
+    setTimeout(() => executeLogout(), 150);
+  }, [executeLogout]);
 
   const refreshSession = useCallback(async () => {
     try {
@@ -75,7 +93,7 @@ export function AuthProvider({ children }) {
       }
     }
     verifyToken();
-  }, [token, logout]);
+  }, [token, executeLogout]);
 
   // Session expiry timer
   useEffect(() => {
@@ -87,7 +105,7 @@ export function AuthProvider({ children }) {
 
       const remaining = Number(expiresAt) - Date.now();
       if (remaining <= 0) {
-        logout();
+        executeLogout();
       } else if (remaining <= WARNING_BEFORE) {
         setShowExpiryModal(true);
       }
@@ -109,6 +127,12 @@ export function AuthProvider({ children }) {
       refreshSession,
       showExpiryModal,
       setShowExpiryModal,
+      logout: executeLogout, // direct logout (session expiry, etc.)
+      requestLogout,        // shows confirmation first (UI buttons)
+      confirmLogout,
+      cancelLogout,
+      showLogoutConfirm,
+      logoutSubmitting,
     }}>
       {children}
     </AuthContext.Provider>

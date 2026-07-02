@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { apiGet } from '../lib/api';
+import { formatDate } from '../lib/utils';
 import { catColors, CAT_PALETTE } from '../lib/categoryPalette';
 import { Chart } from 'chart.js/auto';
 import './BenefitsPage.css';
@@ -216,8 +217,8 @@ export default function BenefitsPage() {
   const periodLabel = (() => {
     if (!dateFrom && !dateTo) return 'Toute période';
     const p = [];
-    if (dateFrom) p.push('Du ' + new Date(dateFrom).toLocaleDateString('fr-FR'));
-    if (dateTo) p.push('Au ' + new Date(dateTo).toLocaleDateString('fr-FR'));
+    if (dateFrom) p.push('Du ' + formatDate(dateFrom));
+    if (dateTo) p.push('Au ' + formatDate(dateTo));
     return p.join(' \u00b7 ');
   })();
 

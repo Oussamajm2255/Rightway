@@ -559,8 +559,10 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 60px;
+  max-width: 80px;
   text-align: center;
+  font-size: 0.6rem;
+  line-height: 1.2;
 }
 
 /* ================================================================

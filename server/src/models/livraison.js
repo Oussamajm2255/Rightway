@@ -211,10 +211,18 @@ async function findAll({ status, commercial_id, date_from, date_to, admin_id, in
            c.full_name AS commercial_name, c.vehicle_name, c.vehicle_plate,
            a.full_name AS admin_name,
            EXISTS(SELECT 1 FROM livraison_ecarts e WHERE e.livraison_id = l.id) AS has_ecart,
-           EXISTS(SELECT 1 FROM livraison_ecarts e WHERE e.livraison_id = l.id AND e.status IN ('PENDING','PAYMENT_REQUESTED')) AS has_pending_ecart
+           EXISTS(SELECT 1 FROM livraison_ecarts e WHERE e.livraison_id = l.id AND e.status IN ('PENDING','PAYMENT_REQUESTED')) AS has_pending_ecart,
+           COALESCE(av.total_avances, 0) AS total_avances,
+           CASE WHEN av.total_avances > 0 THEN true ELSE false END AS has_avance
     FROM livraisons l
     JOIN users c ON l.commercial_id = c.id
     JOIN users a ON l.admin_id = a.id
+    LEFT JOIN (
+      SELECT livraison_id, COALESCE(SUM(amount), 0) AS total_avances
+      FROM livraison_avances
+      WHERE status = 'ACCEPTE'
+      GROUP BY livraison_id
+    ) av ON av.livraison_id = l.id
     WHERE 1=1
   `;
   const params = [];
@@ -250,7 +258,7 @@ async function findAll({ status, commercial_id, date_from, date_to, admin_id, in
     params.push(date_to);
   }
 
-  query += ` ORDER BY l.created_at DESC LIMIT $${idx++} OFFSET $${idx++}`;
+  query += ` ORDER BY CASE l.status WHEN 'EN_COURS' THEN 0 WHEN 'EN_RETOUR' THEN 1 WHEN 'CLOTURE' THEN 2 ELSE 3 END, has_pending_ecart DESC, l.created_at DESC LIMIT $${idx++} OFFSET $${idx++}`;
   params.push(limit, offset);
 
   const { rows } = await pool.query(query, params);

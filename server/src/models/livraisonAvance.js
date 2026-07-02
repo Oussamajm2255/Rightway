@@ -3,12 +3,12 @@ const pool = require('../db/pool');
 /**
  * Commercial declares an advance payment
  */
-async function create(livraison_id, commercial_id, amount, image_base64) {
+async function create(livraison_id, commercial_id, amount, payment_method, image_base64) {
   const { rows } = await pool.query(
-    `INSERT INTO livraison_avances (livraison_id, commercial_id, amount, image_base64)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO livraison_avances (livraison_id, commercial_id, amount, payment_method, image_base64)
+     VALUES ($1, $2, $3, $4, $5)
      RETURNING *`,
-    [livraison_id, commercial_id, amount, image_base64 || null]
+    [livraison_id, commercial_id, amount, payment_method || 'ESPECES', image_base64 || null]
   );
   return rows[0];
 }

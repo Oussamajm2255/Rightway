@@ -146,7 +146,7 @@ const ICON_MAP = {
 };
 
 function AppLayout({ children }) {
-  const { user, logout } = useAuth();
+  const { user, logout, requestLogout, showLogoutConfirm, confirmLogout, cancelLogout, logoutSubmitting } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -276,7 +276,7 @@ function AppLayout({ children }) {
             <IconBell />
             <span className={`notif-dot ${unreadCount > 0 ? '' : 'notif-dot-hidden'}`} aria-hidden="true" />
           </button>
-          <button className="topbar-logout-btn" onClick={logout} aria-label="Déconnexion" title="Déconnexion">
+          <button className="topbar-logout-btn" onClick={requestLogout} aria-label="Déconnexion" title="Déconnexion">
             <IconLogout />
           </button>
           <div className="topbar-avatar">
@@ -361,7 +361,7 @@ function AppLayout({ children }) {
                 <div className="sidebar-user-role">{getRoleLabel(role)}</div>
               </div>
             </div>
-            <button className="nav-item logout-btn" onClick={logout}>
+            <button className="nav-item logout-btn" onClick={requestLogout}>
               <span className="nav-icon"><IconLogout /></span>
               <span className="nav-label">Déconnexion</span>
             </button>
@@ -389,11 +389,42 @@ function AppLayout({ children }) {
               className={({ isActive }) => `bottom-nav-item ${isActive ? 'active' : ''}`}
             >
               <span className="bn-icon">{Icon && <Icon />}</span>
-              <span className="bn-label">{item.label.split(' ')[0]}</span>
+              <span className="bn-label">{item.label}</span>
             </NavLink>
           );
         })}
       </nav>
+
+      {/* Logout confirmation modal */}
+      {showLogoutConfirm && (
+        <div className="modal-overlay" onClick={cancelLogout}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
+            <h3 className="modal-title">Confirmer la déconnexion</h3>
+            <div className="modal-summary">
+              <p>Êtes-vous sûr de vouloir vous déconnecter ?</p>
+            </div>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={cancelLogout}
+                disabled={logoutSubmitting}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={confirmLogout}
+                disabled={logoutSubmitting}
+              >
+                {logoutSubmitting ? 'Déconnexion...' : 'Se déconnecter'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

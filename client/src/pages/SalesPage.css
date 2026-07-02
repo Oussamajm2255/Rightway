@@ -172,6 +172,7 @@
 /* ===== Category Section ===== */
 .sales-cat-section {
   margin-bottom: var(--space-6);
+  scroll-margin-top: 85px; /* accounts for sticky topbar */
 }
 .sales-cat-header {
   display: flex;

@@ -77,6 +77,9 @@ CREATE TABLE IF NOT EXISTS livraisons (
   annulation_requested_at TIMESTAMPTZ,
   annulation_confirmed_by_admin_at TIMESTAMPTZ,
   closed_at TIMESTAMPTZ,
+  reopened_at TIMESTAMPTZ,
+  returned_to_creation_at TIMESTAMPTZ,
+  return_reason TEXT,
   is_archived BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -128,6 +131,8 @@ CREATE TABLE IF NOT EXISTS livraison_avances (
   id SERIAL PRIMARY KEY,
   livraison_id UUID REFERENCES livraisons(id) ON DELETE CASCADE,
   amount NUMERIC(10,3) NOT NULL CHECK (amount > 0),
+  payment_method VARCHAR(20) NOT NULL DEFAULT 'ESPECES'
+    CHECK (payment_method IN ('WAFA_CASH', 'IZI_CASH', 'VERSEMENT', 'ESPECES')),
   image_base64 TEXT,
   status VARCHAR(20) NOT NULL DEFAULT 'EN_ATTENTE'
     CHECK (status IN ('EN_ATTENTE', 'ACCEPTE', 'REFUSE')),
@@ -230,6 +235,36 @@ CREATE TABLE IF NOT EXISTS livraison_ecarts (
 
 CREATE INDEX IF NOT EXISTS idx_ecarts_livraison ON livraison_ecarts(livraison_id);
 CREATE INDEX IF NOT EXISTS idx_ecarts_status ON livraison_ecarts(status);
+
+-- ============================================================
+-- LIVRAISON REOPEN LOG (audit trail for reopening closed livraisons)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS livraison_reopen_log (
+  id SERIAL PRIMARY KEY,
+  livraison_id UUID NOT NULL REFERENCES livraisons(id) ON DELETE CASCADE,
+  requested_by UUID NOT NULL REFERENCES users(id),
+  confirmed_by UUID REFERENCES users(id),
+  reason TEXT,
+  requested_at TIMESTAMPTZ DEFAULT NOW(),
+  confirmed_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_reopen_log_livraison ON livraison_reopen_log(livraison_id);
+
+-- ============================================================
+-- LIVRAISON RETOUR CREATION LOG (audit trail for return-to-creation)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS livraison_retour_creation_log (
+  id SERIAL PRIMARY KEY,
+  livraison_id UUID NOT NULL REFERENCES livraisons(id) ON DELETE CASCADE,
+  requested_by UUID NOT NULL REFERENCES users(id),
+  confirmed_by UUID REFERENCES users(id),
+  reason TEXT,
+  requested_at TIMESTAMPTZ DEFAULT NOW(),
+  confirmed_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_retour_creation_log_livraison ON livraison_retour_creation_log(livraison_id);
 
 -- ============================================================
 -- PUSH NOTIFICATION SUBSCRIPTIONS

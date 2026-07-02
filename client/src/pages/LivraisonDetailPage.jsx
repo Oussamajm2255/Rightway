@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { apiGet, apiPost, apiPut, openPdf } from '../lib/api';
+import { formatDate, formatDateTime } from '../lib/utils';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
@@ -20,18 +21,37 @@ function LivraisonDetailPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showTerminer, setShowTerminer] = useState(searchParams.get('action') === 'terminer');
+  const [showTerminerPassword, setShowTerminerPassword] = useState(false);
+  const actionConsumed = useRef(false);
+
+  // Clean URL params that trigger business actions so browser back/forward
+  // never re-triggers Terminer, Confirmer, or other sensitive flows.
+  useEffect(() => {
+    if (!actionConsumed.current && searchParams.get('action')) {
+      actionConsumed.current = true;
+      navigate.replace(`/livraisons/${id}`, { replace: true });
+    }
+  }, [searchParams, navigate, id]);
   const [terminerSummary, setTerminerSummary] = useState(null);
   const [showConfirmerRetour, setShowConfirmerRetour] = useState(false);
   const [showConfirmSortie, setShowConfirmSortie] = useState(false);
   const [showArchive, setShowArchive] = useState(false);
   const [showAnnulerDemande, setShowAnnulerDemande] = useState(false);
   const [showConfirmerAnnulation, setShowConfirmerAnnulation] = useState(false);
+  const [showReouverture, setShowReouverture] = useState(false);
+  const [showConfirmerReouverture, setShowConfirmerReouverture] = useState(false);
+  const [reopenReason, setReopenReason] = useState('');
+  // Retour création
+  const [showRetourCreation, setShowRetourCreation] = useState(false);
+  const [showConfirmerRetourCreation, setShowConfirmerRetourCreation] = useState(false);
+  const [retourCreationReason, setRetourCreationReason] = useState('');
   const [password, setPassword] = useState('');
   const [actionError, setActionError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   // Avances
   const [showAvanceModal, setShowAvanceModal] = useState(false);
   const [avanceAmount, setAvanceAmount] = useState('');
+  const [avancePaymentMethod, setAvancePaymentMethod] = useState('ESPECES');
   const [avanceImage, setAvanceImage] = useState(null);
   const [avancePreview, setAvancePreview] = useState('');
   const [avanceError, setAvanceError] = useState('');
@@ -108,7 +128,7 @@ function LivraisonDetailPage() {
       const data = await apiPut(`/livraisons/${id}/terminer`, { password });
       setLivraison(data.livraison);
       setTerminerSummary(data);
-      setShowTerminer(false);
+      setShowTerminerPassword(false);
       setSuccess(data.message);
     } catch (err) {
       setActionError(err.message);
@@ -194,6 +214,77 @@ function LivraisonDetailPage() {
     }
   }
 
+  // Reopen handlers
+  async function handleDemanderReouverture(e) {
+    e.preventDefault();
+    setActionError('');
+    setSubmitting(true);
+    try {
+      const data = await apiPost(`/livraisons/${id}/demander-reouverture`, { reason: reopenReason });
+      setSuccess(data.message);
+      setShowReouverture(false);
+      setReopenReason('');
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleConfirmerReouverture(e) {
+    e.preventDefault();
+    setActionError('');
+    if (!password) { setActionError('Mot de passe requis.'); return; }
+    setSubmitting(true);
+    try {
+      const data = await apiPut(`/livraisons/${id}/confirmer-reouverture`, { password });
+      setLivraison(data.livraison);
+      setSuccess(data.message);
+      setShowConfirmerReouverture(false);
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setSubmitting(false);
+      setPassword('');
+    }
+  }
+
+  // Retour creation handlers
+
+  async function handleDemanderRetourCreation(e) {
+    e.preventDefault();
+    setActionError('');
+    setSubmitting(true);
+    try {
+      const data = await apiPut(`/livraisons/${id}/demander-retour-creation`, { reason: retourCreationReason });
+      setSuccess(data.message);
+      setShowRetourCreation(false);
+      setRetourCreationReason('');
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleConfirmerRetourCreation(e) {
+    e.preventDefault();
+    setActionError('');
+    if (!password) { setActionError('Mot de passe requis.'); return; }
+    setSubmitting(true);
+    try {
+      const data = await apiPut(`/livraisons/${id}/confirmer-retour-creation`, { password });
+      setLivraison(data.livraison);
+      setSuccess(data.message);
+      setShowConfirmerRetourCreation(false);
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setSubmitting(false);
+      setPassword('');
+    }
+  }
+
   // Avances handlers
   function handleAvanceFileChange(e) {
     const file = e.target.files[0];
@@ -214,6 +305,7 @@ function LivraisonDetailPage() {
     try {
       const data = await apiPost(`/livraisons/${id}/avances`, {
         amount,
+        payment_method: avancePaymentMethod,
         image_base64: avancePreview || null,
       });
       setLivraison(prev => ({
@@ -223,6 +315,7 @@ function LivraisonDetailPage() {
       setSuccess(data.message);
       setShowAvanceModal(false);
       setAvanceAmount('');
+      setAvancePaymentMethod('ESPECES');
       setAvanceImage(null);
       setAvancePreview('');
     } catch (err) {
@@ -333,6 +426,7 @@ function LivraisonDetailPage() {
   if (error) return <div className="page-container"><div className="error-banner">{error}</div></div>;
   if (!loading && !livraison) return <div className="page-container"><div className="empty-state">Livraison introuvable.</div></div>;
 
+  const isConfirme = livraison?.status === 'CONFIRME';
   const isEnCours = livraison?.status === 'EN_COURS';
   const isEnAttente = livraison?.status === 'EN_ATTENTE_COMMERCIAL';
   const isEnRetour = livraison?.status === 'EN_RETOUR';
@@ -415,7 +509,7 @@ function LivraisonDetailPage() {
           <div className="page-header">
             <div>
               <h1 className="page-title">{livraison.reference}</h1>
-              <p className="page-subtitle">Créée le {new Date(livraison.created_at).toLocaleString('fr-FR')}</p>
+              <p className="page-subtitle">Créée le {formatDateTime(livraison.created_at)}</p>
             </div>
             <StatusBadge status={livraison.status} />
           </div>
@@ -453,7 +547,7 @@ function LivraisonDetailPage() {
             <strong>Livraison en cours</strong>
             <p>Déclarez la fin de la livraison lorsque vous avez terminé votre tournée.</p>
           </div>
-          <button className="btn btn-primary" onClick={() => setShowTerminer(true)}>
+          <button className="btn btn-primary" onClick={() => { setShowTerminer(true); setShowTerminerPassword(false); }}>
             Terminer la livraison
           </button>
         </div>
@@ -497,6 +591,24 @@ function LivraisonDetailPage() {
         </div>
       )}
 
+      {/* Commercial: En cours → Demander retour à la création */}
+      {isEnCours && isAssignedCommercial && (
+        <div className="alert-card" style={{ background: 'var(--color-warning-bg)', borderColor: 'var(--color-warning-border)' }}>
+          <div className="alert-icon" style={{ background: 'var(--color-warning)' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
+              <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <div className="alert-body">
+            <strong>Retour à la création</strong>
+            <p>Demandez le retour de la livraison à l'état "Création" (confirmé). Un admin devra confirmer. Les ventes déclarées seront conservées.</p>
+          </div>
+          <button className="btn btn-warning" onClick={() => { setShowRetourCreation(true); setRetourCreationReason(''); setActionError(''); }}>
+            Retour à la création
+          </button>
+        </div>
+      )}
+
       {/* EN_ATTENTE_ANNULATION — Admin must confirm */}
       {isEnAttenteAnnulation && (
         <div className="detail-section">
@@ -516,6 +628,26 @@ function LivraisonDetailPage() {
         </div>
       )}
 
+      {/* Admin: En cours → Confirmer retour à la création */}
+      {isEnCours && isAdmin && (
+        <div className="detail-section">
+          <button
+            className="btn btn-warning btn-sm"
+            onClick={() => { setShowConfirmerRetourCreation(true); setPassword(''); setActionError(''); }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{flexShrink:0, marginRight:'var(--space-1)'}}>
+              <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Confirmer le retour à la création (Admin)
+          </button>
+          {livraison?.return_reason && (
+            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginTop: 'var(--space-2)' }}>
+              Motif du commercial : {livraison.return_reason}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* ANNULE */}
       {isAnnule && (
         <div className="detail-section">
@@ -524,7 +656,7 @@ function LivraisonDetailPage() {
               <circle cx="12" cy="12" r="10" />
               <path d="M15 9l-6 6M9 9l6 6" strokeLinecap="round" />
             </svg>
-            Livraison annulée le {new Date(livraison.closed_at).toLocaleString('fr-FR')}. Le stock a été restauré.
+            Livraison annulée le {formatDateTime(livraison.closed_at)}. Le stock a été restauré.
           </div>
         </div>
       )}
@@ -539,23 +671,29 @@ function LivraisonDetailPage() {
                 <tr>
                   <th>Date</th>
                   <th>Montant</th>
+                  <th>Mode</th>
                   <th>Statut</th>
                   <th>Preuve</th>
                   {(isSuperAdmin) && <th style={{ textAlign: 'center' }}>Action</th>}
                 </tr>
               </thead>
               <tbody>
-                {livraison.avances.map((av) => {
+                {livraison.avances.filter(a => a.status !== 'REFUSE').map((av) => {
                   const isPending = av.status === 'EN_ATTENTE';
                   const isAccepted = av.status === 'ACCEPTE';
-                  const isRefused = av.status === 'REFUSE';
                   return (
                     <tr key={av.id}>
-                      <td style={{ fontSize: '0.85rem' }}>{new Date(av.created_at).toLocaleString('fr-FR')}</td>
+                      <td style={{ fontSize: '0.85rem' }}>{formatDateTime(av.created_at)}</td>
                       <td className="td-price">{formatDT(av.amount)}</td>
+                      <td style={{ fontSize: '0.8rem' }}>
+                        {av.payment_method === 'WAFA_CASH' ? 'Wafa Cash' :
+                         av.payment_method === 'IZI_CASH' ? 'Izi Cash' :
+                         av.payment_method === 'VERSEMENT' ? 'Versement' :
+                         av.payment_method === 'ESPECES' ? 'Espèces' : '—'}
+                      </td>
                       <td>
-                        <span className={`badge ${isAccepted ? 'badge-ok' : isRefused ? 'badge-danger' : 'badge-status-pending'}`}>
-                          {isAccepted ? 'Acceptée' : isRefused ? 'Refusée' : 'En attente'}
+                        <span className={`badge ${isAccepted ? 'badge-ok' : 'badge-status-pending'}`}>
+                          {isAccepted ? 'Acceptée' : 'En attente'}
                         </span>
                       </td>
                       <td>
@@ -598,9 +736,6 @@ function LivraisonDetailPage() {
                               <button className="btn btn-ghost btn-sm" onClick={() => setRefusingAvanceId(null)}>Annuler</button>
                             </div>
                           )}
-                          {isRefused && av.admin_note && (
-                            <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{av.admin_note}</span>
-                          )}
                           {isAccepted && (
                             <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>—</span>
                           )}
@@ -615,10 +750,10 @@ function LivraisonDetailPage() {
         </div>
       )}
 
-      {/* Commercial: En cours → Déclarer une avance */}
-      {isEnCours && isAssignedCommercial && (
+      {/* Commercial: Déclarer une avance (CONFIRME → CLOTURE) */}
+      {(isConfirme || isEnCours || isEnRetour || isCloture) && isAssignedCommercial && (
         <div className="detail-section">
-          <button className="btn btn-outline-primary btn-sm" onClick={() => { setShowAvanceModal(true); setAvanceError(''); setAvanceAmount(''); setAvanceImage(null); setAvancePreview(''); }}>
+          <button className="btn btn-outline-primary btn-sm" onClick={() => { setShowAvanceModal(true); setAvanceError(''); setAvanceAmount(''); setAvancePaymentMethod('ESPECES'); setAvanceImage(null); setAvancePreview(''); }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{flexShrink:0, marginRight:'var(--space-1)'}}>
               <path d="M12 5v14M5 12h14" strokeLinecap="round" />
             </svg>
@@ -671,15 +806,15 @@ function LivraisonDetailPage() {
                         </tr>
                       )}
                     <tr key={ec.id} className={isResolvedRow ? 'row-ecart-resolved' : ''}>
-                      <td style={{fontSize:'0.85rem'}}>{new Date(ec.declared_at).toLocaleString('fr-FR')}</td>
+                      <td style={{fontSize:'0.85rem'}}>{formatDateTime(ec.declared_at)}</td>
                       <td className="td-price" style={{color: isResolvedRow ? 'var(--color-text-muted)' : 'var(--color-danger)'}}>{formatDT(ec.amount)}</td>
                       <td style={{maxWidth:200, whiteSpace:'normal', fontSize:'0.85rem', color: isResolvedRow ? 'var(--color-text-muted)' : undefined}}>{ec.justification}</td>
                       <td style={{fontSize:'0.85rem', color: isResolvedRow ? 'var(--color-text-muted)' : undefined}}>{ec.declared_by_name}</td>
                       <td>
                         {isPending && <span className="badge badge-status-pending">En attente</span>}
-                        {isConfirmed && <span className="badge badge-ok">Confirmé{ec.confirmed_at ? ` le ${new Date(ec.confirmed_at).toLocaleDateString('fr-FR')}` : ''}</span>}
+                        {isConfirmed && <span className="badge badge-ok">Confirmé{ec.confirmed_at ? ` le ${formatDate(ec.confirmed_at)}` : ''}</span>}
                         {isPaymentRequested && <span className="badge badge-status-warning">Paiement en attente</span>}
-                        {isPaid && <span className="badge badge-success-subtle">Payé{ec.payment_confirmed_at ? ` le ${new Date(ec.payment_confirmed_at).toLocaleDateString('fr-FR')}` : ''}</span>}
+                        {isPaid && <span className="badge badge-success-subtle">Payé{ec.payment_confirmed_at ? ` le ${formatDate(ec.payment_confirmed_at)}` : ''}</span>}
                       </td>
                       <td style={{textAlign:'center'}}>
                         {isAssignedCommercial && isPending && (
@@ -791,10 +926,12 @@ function LivraisonDetailPage() {
                   <td colSpan="7" style={{ textAlign: 'right' }}><strong>Total CA</strong></td>
                   <td className="td-price"><strong>{formatDT(ca)}</strong></td>
                 </tr>
+                {!isCommercial && (
                 <tr>
                   <td colSpan="7" style={{ textAlign: 'right' }}>Commission Commerciale (10%)</td>
                   <td className="td-price">{formatDT(commission)}</td>
                 </tr>
+                )}
                 <tr>
                   <td colSpan="7" style={{ textAlign: 'right' }}><strong>Net à reverser au dépôt</strong></td>
                   <td className="td-price"><strong>{formatDT(net_a_reverser)}</strong></td>
@@ -819,7 +956,7 @@ function LivraisonDetailPage() {
             <div className="detail-card">
               <h3>Confirmation Admin</h3>
               {adminConfirmed ? (
-                <span className="badge badge-ok">Confirmé le {new Date(adminConfirmed).toLocaleString('fr-FR')}</span>
+                <span className="badge badge-ok">Confirmé le {formatDateTime(adminConfirmed)}</span>
               ) : (
                 <span className="badge badge-status-pending">En attente</span>
               )}
@@ -827,7 +964,7 @@ function LivraisonDetailPage() {
             <div className="detail-card">
               <h3>Confirmation Commercial</h3>
               {commercialConfirmed ? (
-                <span className="badge badge-ok">Confirmé le {new Date(commercialConfirmed).toLocaleString('fr-FR')}</span>
+                <span className="badge badge-ok">Confirmé le {formatDateTime(commercialConfirmed)}</span>
               ) : (
                 <span className="badge badge-status-pending">En attente</span>
               )}
@@ -853,11 +990,37 @@ function LivraisonDetailPage() {
       {isCloture && (
         <div className="detail-section">
           <div className="success-banner" style={{ marginBottom: 'var(--space-4)' }}>
-            Livraison clôturée le {new Date(livraison.closed_at).toLocaleString('fr-FR')}
+            Livraison clôturée le {formatDateTime(livraison.closed_at)}
+            {livraison.reopened_at && <> — Réouverte le {formatDateTime(livraison.reopened_at)}</>}
           </div>
+          {isAssignedCommercial && (
+            <button
+              className="btn btn-outline-primary btn-sm"
+              onClick={() => { setShowReouverture(true); setReopenReason(''); setActionError(''); }}
+              style={{ marginBottom: 'var(--space-4)' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{flexShrink:0, marginRight:'var(--space-1)'}}>
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              Demander la réouverture
+            </button>
+          )}
+          {isAdmin && (
+            <button
+              className="btn btn-warning btn-sm"
+              onClick={() => { setShowConfirmerReouverture(true); setPassword(''); setActionError(''); }}
+              style={{ marginBottom: 'var(--space-4)', marginLeft: isAssignedCommercial ? 'var(--space-2)' : 0 }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{flexShrink:0, marginRight:'var(--space-1)'}}>
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Confirmer la réouverture (Admin)
+            </button>
+          )}
           <div className="detail-grid">
             <div className="detail-card"><h3>CA Total</h3><p className="detail-value">{formatDT(ca)}</p></div>
-            <div className="detail-card"><h3>Commission (10%)</h3><p className="detail-value">{formatDT(commission)}</p></div>
+            {!isCommercial && <div className="detail-card"><h3>Commission (10%)</h3><p className="detail-value">{formatDT(commission)}</p></div>}
             <div className="detail-card"><h3>Net à reverser</h3><p className="detail-value">{formatDT(net_a_reverser)}</p></div>
             {totalAvances > 0 && (
               <>
@@ -883,13 +1046,13 @@ function LivraisonDetailPage() {
         {livraison.confirmed_by_commercial_at && (
           <div className="detail-card">
             <h3>Confirmé le</h3>
-            <p className="detail-sub">{new Date(livraison.confirmed_by_commercial_at).toLocaleString('fr-FR')}</p>
+            <p className="detail-sub">{formatDateTime(livraison.confirmed_by_commercial_at)}</p>
           </div>
         )}
         {livraison.end_declared_at && (
           <div className="detail-card">
             <h3>Terminé le</h3>
-            <p className="detail-sub">{new Date(livraison.end_declared_at).toLocaleString('fr-FR')}</p>
+            <p className="detail-sub">{formatDateTime(livraison.end_declared_at)}</p>
           </div>
         )}
       </div>
@@ -973,24 +1136,97 @@ function LivraisonDetailPage() {
         </div>
       )}
 
-      {/* Terminer confirmation modal */}
+      {/* Pre-terminer summary (step 1) */}
       {showTerminer && (
         <div className="modal-overlay" onClick={() => setShowTerminer(false)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '540px' }}>
-            <h3 className="modal-title">Terminer la livraison</h3>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '680px' }}>
+            <h3 className="modal-title">Résumé avant clôture</h3>
+            <p style={{ marginBottom: 'var(--space-3)' }}><strong>{livraison.reference}</strong></p>
+
+            {/* Items table */}
+            <div className="table-container" style={{ marginBottom: 'var(--space-4)', maxHeight: '280px', overflowY: 'auto' }}>
+              <table className="data-table" style={{ fontSize: 'var(--text-sm)' }}>
+                <thead>
+                  <tr>
+                    <th>Produit</th>
+                    <th style={{ textAlign: 'center' }}>Qté vendue</th>
+                    <th style={{ textAlign: 'right' }}>PU TTC</th>
+                    <th style={{ textAlign: 'right' }}>Montant</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {livraison.items.filter(i => i.qte_vendue > 0).map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.product_name}</td>
+                      <td className="td-qty">{item.qte_vendue}</td>
+                      <td className="td-price">{formatDT(item.prix_ttc)}</td>
+                      <td className="td-price">{formatDT(item.qte_vendue * Number(item.prix_ttc))}</td>
+                    </tr>
+                  ))}
+                  {livraison.items.filter(i => i.qte_vendue > 0).length === 0 && (
+                    <tr><td colSpan="4" style={{ textAlign: 'center', color: 'var(--color-text-muted)' }}>Aucune vente enregistrée</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Financial summary */}
+            <div className="detail-grid" style={{ marginBottom: 'var(--space-4)' }}>
+              <div className="detail-card"><h3>CA Total</h3><p className="detail-value">{formatDT(ca)}</p></div>
+              {!isCommercial && <div className="detail-card"><h3>Commission (10%)</h3><p className="detail-value">{formatDT(commission)}</p></div>}
+              <div className="detail-card"><h3>Net à reverser</h3><p className="detail-value">{formatDT(net_a_reverser)}</p></div>
+              {totalAvances > 0 && (
+                <>
+                  <div className="detail-card"><h3>Avances acceptées</h3><p className="detail-value" style={{ color: 'var(--color-primary)' }}>{formatDT(totalAvances)}</p></div>
+                  <div className="detail-card"><h3>Reste à payer</h3><p className="detail-value">{formatDT(resteAPayer)}</p></div>
+                </>
+              )}
+            </div>
+
+            {/* Ecarts summary */}
+            {livraison.ecarts && livraison.ecarts.length > 0 && (() => {
+              const pendingEcarts = livraison.ecarts.filter(e => e.status !== 'PAID' && e.status !== 'RESOLVED');
+              const totalEcart = pendingEcarts.reduce((sum, e) => sum + Number(e.amount), 0);
+              if (pendingEcarts.length === 0) return null;
+              return (
+                <div style={{ marginBottom: 'var(--space-4)', padding: 'var(--space-3)', background: 'var(--color-danger-bg)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-danger-border)' }}>
+                  <p style={{ margin: 0, fontWeight: 600, color: 'var(--color-danger)' }}>Écarts non résolus : {formatDT(totalEcart)}</p>
+                  <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>{pendingEcarts.length} écart(s) en attente</p>
+                </div>
+              );
+            })()}
+
+            <div className="modal-actions">
+              <button type="button" className="btn btn-secondary" onClick={() => setShowTerminer(false)}>Annuler</button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => { setShowTerminer(false); setShowTerminerPassword(true); setPassword(''); setActionError(''); }}
+              >
+                Confirmer et terminer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Terminer password confirmation (step 2) */}
+      {showTerminerPassword && (
+        <div className="modal-overlay" onClick={() => { setShowTerminerPassword(false); setShowTerminer(true); }}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px' }}>
+            <h3 className="modal-title">Confirmer la clôture</h3>
             <div className="modal-summary">
-              <p>Vous allez terminer : <strong>{livraison.reference}</strong></p>
-              <p>{livraison.items.length} produit(s) — CA estimé: <strong>{formatDT(ca)}</strong></p>
-              <p>Commission (10%): {formatDT(commission)} | Net à reverser: {formatDT(net_a_reverser)}</p>
+              <p>Vous allez terminer définitivement : <strong>{livraison.reference}</strong></p>
+              <p>CA: {formatDT(ca)} | Net à reverser: {formatDT(net_a_reverser)}</p>
             </div>
             {actionError && <div className="login-error">{actionError}</div>}
             <form onSubmit={handleTerminer}>
               <div className="form-group">
                 <label className="form-label" htmlFor="terminer-password">Mot de passe</label>
-                <input id="terminer-password" type="password" className="form-input" value={password} onChange={(e) => setPassword(e.target.value)} />
+                <input id="terminer-password" type="password" className="form-input" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus />
               </div>
               <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowTerminer(false)}>Annuler</button>
+                <button type="button" className="btn btn-secondary" onClick={() => { setShowTerminerPassword(false); setShowTerminer(true); }}>Retour</button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? '...' : 'Confirmer'}</button>
               </div>
             </form>
@@ -1005,7 +1241,7 @@ function LivraisonDetailPage() {
             <h3 className="modal-title">Confirmer le Bon de Retour</h3>
             <div className="modal-summary">
               <p><strong>{livraison.reference}</strong></p>
-              <p>CA: {formatDT(ca)} | Commission: {formatDT(commission)} | Net: {formatDT(net_a_reverser)}</p>
+              {!isCommercial && <p>CA: {formatDT(ca)} | Commission: {formatDT(commission)} | Net: {formatDT(net_a_reverser)}</p>}
               {isCloture && <p>Cette action clôturera définitivement la livraison.</p>}
             </div>
             {actionError && <div className="login-error">{actionError}</div>}
@@ -1053,7 +1289,7 @@ function LivraisonDetailPage() {
               </table>
             </div>
             <p><strong>CA Total:</strong> {formatDT(terminerSummary.ca_total)}</p>
-            <p><strong>Commission (10%):</strong> {formatDT(terminerSummary.commission)}</p>
+            {!isCommercial && <p><strong>Commission (10%):</strong> {formatDT(terminerSummary.commission)}</p>}
             <p><strong>Net à reverser:</strong> {formatDT(terminerSummary.net_a_reverser)}</p>
             <div className="modal-actions" style={{ marginTop: 'var(--space-4)' }}>
               <button className="btn btn-primary" onClick={() => setTerminerSummary(null)}>Fermer</button>
@@ -1166,6 +1402,20 @@ function LivraisonDetailPage() {
                 />
               </div>
               <div className="form-group">
+                <label className="form-label" htmlFor="avance-method">Mode de paiement</label>
+                <select
+                  id="avance-method"
+                  className="form-input"
+                  value={avancePaymentMethod}
+                  onChange={(e) => setAvancePaymentMethod(e.target.value)}
+                >
+                  <option value="ESPECES">Espèces</option>
+                  <option value="WAFA_CASH">Wafa Cash</option>
+                  <option value="IZI_CASH">Izi Cash</option>
+                  <option value="VERSEMENT">Versement</option>
+                </select>
+              </div>
+              <div className="form-group">
                 <label className="form-label">Preuve de paiement (image)</label>
                 <div
                   style={{
@@ -1206,6 +1456,149 @@ function LivraisonDetailPage() {
                 <button type="button" className="btn btn-secondary" onClick={() => setShowAvanceModal(false)}>Annuler</button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>
                   {submitting ? '...' : 'Déclarer l\'avance'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Demander réouverture modal (Commercial) */}
+      {showReouverture && (
+        <div className="modal-overlay" onClick={() => setShowReouverture(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
+            <h3 className="modal-title">Demander la réouverture</h3>
+            <div className="modal-summary">
+              <p>Vous demandez la réouverture de la livraison <strong>{livraison?.reference}</strong>.</p>
+              <p>Un administrateur devra confirmer cette demande.</p>
+            </div>
+            {actionError && <div className="login-error">{actionError}</div>}
+            <form onSubmit={handleDemanderReouverture}>
+              <div className="form-group">
+                <label className="form-label">Motif (optionnel)</label>
+                <textarea
+                  className="form-input"
+                  rows={2}
+                  placeholder="Raison de la réouverture..."
+                  value={reopenReason}
+                  onChange={(e) => setReopenReason(e.target.value)}
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowReouverture(false)} disabled={submitting}>
+                  Annuler
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={submitting}>
+                  {submitting ? '...' : 'Envoyer la demande'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmer réouverture modal (Admin) */}
+      {showConfirmerReouverture && (
+        <div className="modal-overlay" onClick={() => setShowConfirmerReouverture(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
+            <h3 className="modal-title">Confirmer la réouverture</h3>
+            <div className="modal-summary">
+              <p>Vous allez rouvrir la livraison <strong>{livraison?.reference}</strong>.</p>
+              <p>Le statut repassera à <strong>En cours</strong>. Le commercial pourra à nouveau déclarer des ventes.</p>
+            </div>
+            {actionError && <div className="login-error">{actionError}</div>}
+            <form onSubmit={handleConfirmerReouverture}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="reopen-password">Votre mot de passe *</label>
+                <input
+                  id="reopen-password"
+                  type="password"
+                  className="form-input"
+                  placeholder="Mot de passe pour confirmer"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowConfirmerReouverture(false)} disabled={submitting}>
+                  Annuler
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={submitting}>
+                  {submitting ? '...' : 'Confirmer la réouverture'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Demander retour création modal (Commercial) */}
+      {showRetourCreation && (
+        <div className="modal-overlay" onClick={() => setShowRetourCreation(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
+            <h3 className="modal-title">Retour à la création</h3>
+            <div className="modal-summary">
+              <p>Vous demandez le retour de la livraison <strong>{livraison?.reference}</strong> à l'état "Création".</p>
+              <p>Un administrateur devra confirmer cette demande. Les ventes déclarées seront conservées.</p>
+            </div>
+            {actionError && <div className="login-error">{actionError}</div>}
+            <form onSubmit={handleDemanderRetourCreation}>
+              <div className="form-group">
+                <label className="form-label">Motif (optionnel)</label>
+                <textarea
+                  className="form-input"
+                  rows={2}
+                  placeholder="Raison du retour à la création..."
+                  value={retourCreationReason}
+                  onChange={(e) => setRetourCreationReason(e.target.value)}
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowRetourCreation(false)} disabled={submitting}>
+                  Annuler
+                </button>
+                <button type="submit" className="btn btn-warning" disabled={submitting}>
+                  {submitting ? '...' : 'Envoyer la demande'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmer retour création modal (Admin) */}
+      {showConfirmerRetourCreation && (
+        <div className="modal-overlay" onClick={() => setShowConfirmerRetourCreation(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
+            <h3 className="modal-title">Confirmer le retour à la création</h3>
+            <div className="modal-summary">
+              <p>Vous allez retourner la livraison <strong>{livraison?.reference}</strong> à l'état <strong>Création (Confirmé)</strong>.</p>
+              <p>Le commercial pourra à nouveau modifier les produits chargés. Les ventes déclarées seront conservées.</p>
+              {livraison?.return_reason && (
+                <p style={{ marginTop: 'var(--space-2)', fontStyle: 'italic' }}>
+                  Motif du commercial : « {livraison.return_reason} »
+                </p>
+              )}
+            </div>
+            {actionError && <div className="login-error">{actionError}</div>}
+            <form onSubmit={handleConfirmerRetourCreation}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="retour-creation-password">Votre mot de passe *</label>
+                <input
+                  id="retour-creation-password"
+                  type="password"
+                  className="form-input"
+                  placeholder="Mot de passe pour confirmer"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowConfirmerRetourCreation(false)} disabled={submitting}>
+                  Annuler
+                </button>
+                <button type="submit" className="btn btn-warning" disabled={submitting}>
+                  {submitting ? '...' : 'Confirmer le retour à la création'}
                 </button>
               </div>
             </form>

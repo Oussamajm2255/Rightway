@@ -1,24 +1,34 @@
 // Custom service worker for Right Way PWA
 // Workbox precache manifest & runtime are injected by vite-plugin-pwa at build time.
 
-// ─── Workbox Precaching ───────────────────────────────────────────────────
 import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
 import { clientsClaim } from 'workbox-core';
+import { NavigationRoute, registerRoute } from 'workbox-routing';
+import { CacheFirst, NetworkFirst } from 'workbox-strategies';
+import { ExpirationPlugin } from 'workbox-expiration';
 
-// Take control of all pages immediately (autoUpdate)
+// ─── Lifecycle ────────────────────────────────────────────────────────────
 clientsClaim();
 self.skipWaiting();
-
-// Clean up old precache entries on new SW activation
 cleanupOutdatedCaches();
 
-// self.__WB_MANIFEST is replaced by vite-plugin-pwa with the precache manifest
-precacheAndRoute(self.__WB_MANIFEST);
+// ─── Navigation: ALWAYS network-first for HTML ──────────────────────────
+// MUST be registered BEFORE precacheAndRoute so it takes precedence over
+// any precached index.html. NetworkFirst ensures users always get the latest
+// HTML, falling back to cached copy only when offline.
+registerRoute(
+  new NavigationRoute(
+    new NetworkFirst({
+      cacheName: 'pages-cache',
+      networkTimeoutSeconds: 3,
+    })
+  )
+);
 
-// ─── Runtime Caching ──────────────────────────────────────────────────────
-import { registerRoute } from 'workbox-routing';
-import { CacheFirst } from 'workbox-strategies';
-import { ExpirationPlugin } from 'workbox-expiration';
+// ─── Workbox Precaching ───────────────────────────────────────────────────
+// self.__WB_MANIFEST is replaced by vite-plugin-pwa with the precache manifest.
+// Registered AFTER NavigationRoute so navigation requests bypass stale HTML.
+precacheAndRoute(self.__WB_MANIFEST);
 
 // Google Fonts — cache aggressively (they rarely change)
 registerRoute(

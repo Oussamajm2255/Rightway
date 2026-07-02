@@ -41,7 +41,18 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globPatterns: ['**/*.{js,css,ico,png,svg,woff2}'],
+        globIgnores: ['**/index.html'],
+        navigateFallback: null,
+        // Force-exclude index.html from precache — stale HTML referencing
+        // deleted chunks causes "Failed to fetch dynamically imported module".
+        // Navigation is handled by NetworkFirst route in sw.js instead.
+        manifestTransforms: [
+          (manifest) => ({
+            manifest: manifest.filter(entry => entry.url !== 'index.html'),
+            warnings: [],
+          }),
+        ],
       },
     }),
   ],

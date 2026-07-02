@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiGet, apiPut, apiPost } from '../lib/api';
+import { formatDateTime } from '../lib/utils';
 import './UsersPage.css';
 
 function UsersPage() {
@@ -168,7 +169,7 @@ function UsersPage() {
                   </td>
                   <td className="td-date">
                     {user.last_login_at
-                      ? new Date(user.last_login_at).toLocaleString('fr-FR')
+                      ? formatDateTime(user.last_login_at)
                       : 'Jamais'}
                   </td>
                   <td className="td-actions">

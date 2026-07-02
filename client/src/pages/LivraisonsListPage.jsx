@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../lib/api';
+import { formatDateTime } from '../lib/utils';
 import './LivraisonsPage.css';
 
 const STATUS_LABELS = {
@@ -95,6 +96,7 @@ function LivraisonsListPage() {
                 <th>Commercial</th>
                 <th>Véhicule</th>
                 <th>Statut</th>
+                <th style={{textAlign:'center'}}>Avance</th>
                 <th style={{textAlign:'center'}}>Écart</th>
                 <th>Créé par</th>
                 <th>Date</th>
@@ -116,6 +118,15 @@ function LivraisonsListPage() {
                   </td>
                   <td>{getStatusBadge(l.status)}</td>
                   <td style={{textAlign:'center'}}>
+                    {l.has_avance ? (
+                      <span style={{color:'var(--color-primary)', fontWeight:500, fontSize:'0.85rem'}} title={`${Number(l.total_avances).toFixed(3)} DT`}>
+                        ✔ {Number(l.total_avances).toFixed(3)} DT
+                      </span>
+                    ) : (
+                      <span style={{color:'var(--color-text-muted)', fontSize:'0.75rem'}}>—</span>
+                    )}
+                  </td>
+                  <td style={{textAlign:'center'}}>
                     {l.has_pending_ecart ? (
                       <span className="ecart-badge ecart-badge-pending" title="Écart en attente de confirmation">
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
@@ -132,10 +143,10 @@ function LivraisonsListPage() {
                   </td>
                   <td>{l.admin_name}</td>
                   <td className="td-date">
-                    {new Date(l.created_at).toLocaleString('fr-FR')}
+                    {formatDateTime(l.created_at)}
                   </td>
                   <td className="td-date">
-                    {l.closed_at ? new Date(l.closed_at).toLocaleString('fr-FR') : '—'}
+                    {l.closed_at ? formatDateTime(l.closed_at) : '—'}
                   </td>
                 </tr>
               ))}

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { apiGet, openPdf } from '../lib/api';
+import { formatDate as fmtDate, formatDateTime } from '../lib/utils';
 import './HistoriquePage.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
@@ -12,7 +13,7 @@ function formatDT(value) {
 
 function formatDate(d) {
   if (!d) return '—';
-  return new Date(d).toLocaleString('fr-FR');
+  return fmtDate(d);
 }
 
 const STATUS_LABELS = { EN_ATTENTE_COMMERCIAL: 'En attente', EN_COURS: 'En cours', EN_RETOUR: 'En retour', EN_ATTENTE_ANNULATION: 'Annulation demandée', ANNULE: 'Annulé', CLOTURE: 'Clôturé' };

@@ -20,6 +20,10 @@ const {
   archiveLivraison,
   demanderAnnulation,
   confirmerAnnulation,
+  demanderReouverture,
+  confirmerReouverture,
+  demanderRetourCreation,
+  confirmerRetourCreation,
   declarerAvance,
   getAvances,
   accepterAvance,
@@ -79,6 +83,14 @@ router.put('/:id/archive', authorize('SUPER_ADMIN'), archiveLivraison);
 // Annulation flow: commercial requests → admin confirms
 router.put('/:id/demander-annulation', authorize('COMMERCIAL'), demanderAnnulation);
 router.put('/:id/confirmer-annulation', authorize('SUPER_ADMIN', 'ADMIN'), confirmerAnnulation);
+
+// Reopen flow: commercial requests → admin confirms (Cloture → EN_COURS)
+router.post('/:id/demander-reouverture', authorize('COMMERCIAL'), demanderReouverture);
+router.put('/:id/confirmer-reouverture', authorize('SUPER_ADMIN', 'ADMIN'), confirmerReouverture);
+
+// Retour creation flow: commercial requests → admin confirms (EN_COURS → CONFIRME)
+router.put('/:id/demander-retour-creation', authorize('COMMERCIAL'), demanderRetourCreation);
+router.put('/:id/confirmer-retour-creation', authorize('SUPER_ADMIN', 'ADMIN'), confirmerRetourCreation);
 
 // Avances (advance payments during EN_COURS)
 router.post('/:id/avances', authorize('COMMERCIAL'), declarerAvance);

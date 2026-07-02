@@ -1,6 +1,8 @@
 const livraisonModel = require('../models/livraison');
 const avanceModel = require('../models/livraisonAvance');
 const ecartModel = require('../models/livraisonEcart');
+const reopenLogModel = require('../models/livraisonReopenLog');
+const retourCreationLogModel = require('../models/livraisonRetourCreationLog');
 const notificationModel = require('../models/notification');
 const { COMMISSION_RATE } = require('../models/livraison');
 const { verifyPassword } = require('../utils/password');
@@ -243,21 +245,139 @@ async function confirmerAnnulation(req, res) {
 }
 
 // ============================================================
+// REOPEN (Cloture → EN_COURS with admin confirmation)
+// ============================================================
+
+async function demanderReouverture(req, res) {
+  try {
+    const { reason } = req.body;
+
+    const livraison = await livraisonModel.findById(req.params.id);
+    if (!livraison) return res.status(404).json({ error: 'Livraison introuvable.' });
+    if (livraison.status !== 'CLOTURE') return res.status(400).json({ error: 'Seules les livraisons clôturées peuvent être réouvertes.' });
+    if (livraison.commercial_id !== req.user.id) return res.status(403).json({ error: 'Cette livraison ne vous est pas assignée.' });
+
+    const log = await reopenLogModel.create(req.params.id, req.user.id, reason || null);
+
+    await notificationModel.create(
+      livraison.admin_id,
+      `Le commercial ${req.user.full_name} demande la réouverture de la livraison ${livraison.reference}.${reason ? ' Motif : ' + reason : ''}`,
+      livraison.id
+    );
+
+    res.status(201).json({ log, message: 'Demande de réouverture envoyée à l\'administrateur.' });
+  } catch (err) {
+    console.error('demanderReouverture error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+async function confirmerReouverture(req, res) {
+  try {
+    const { password } = req.body;
+    if (!password) return res.status(400).json({ error: 'Mot de passe requis.' });
+
+    const valid = await verifyPassword(req.user.id, password);
+    if (!valid) return res.status(400).json({ error: 'Mot de passe incorrect.' });
+
+    const result = await reopenLogModel.confirm(req.params.id, req.user.id);
+    if (result.error) return res.status(400).json({ error: result.error });
+
+    const livraison = await livraisonModel.findById(req.params.id);
+    await notificationModel.create(
+      livraison.commercial_id,
+      `L'admin ${req.user.full_name} a confirmé la réouverture de la livraison ${livraison.reference}.`,
+      livraison.id
+    );
+
+    res.json({ livraison, message: 'Livraison réouverte avec succès.' });
+  } catch (err) {
+    console.error('confirmerReouverture error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+// ============================================================
+// RETOUR CREATION (EN_COURS → CONFIRME with admin confirmation)
+// ============================================================
+
+async function demanderRetourCreation(req, res) {
+  try {
+    const { reason } = req.body;
+
+    const livraison = await livraisonModel.findById(req.params.id);
+    if (!livraison) return res.status(404).json({ error: 'Livraison introuvable.' });
+    if (livraison.status !== 'EN_COURS') return res.status(400).json({ error: 'Seules les livraisons en cours peuvent être retournées à la création.' });
+    if (livraison.commercial_id !== req.user.id) return res.status(403).json({ error: 'Cette livraison ne vous est pas assignée.' });
+
+    // Update reason on the livraison row
+    if (reason) {
+      await pool.query('UPDATE livraisons SET return_reason = $2 WHERE id = $1', [req.params.id, reason]);
+    }
+
+    const log = await retourCreationLogModel.create(req.params.id, req.user.id, reason || null);
+
+    await notificationModel.create(
+      livraison.admin_id,
+      `Le commercial ${req.user.full_name} demande le retour à la création de la livraison ${livraison.reference}.${reason ? ' Motif : ' + reason : ''}`,
+      livraison.id
+    );
+
+    res.status(201).json({ log, message: 'Demande de retour à la création envoyée à l\'administrateur.' });
+  } catch (err) {
+    console.error('demanderRetourCreation error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+async function confirmerRetourCreation(req, res) {
+  try {
+    const { password } = req.body;
+    if (!password) return res.status(400).json({ error: 'Mot de passe requis.' });
+
+    const valid = await verifyPassword(req.user.id, password);
+    if (!valid) return res.status(400).json({ error: 'Mot de passe incorrect.' });
+
+    const result = await retourCreationLogModel.confirm(req.params.id, req.user.id);
+    if (result.error) return res.status(400).json({ error: result.error });
+
+    const livraison = await livraisonModel.findById(req.params.id);
+    await notificationModel.create(
+      livraison.commercial_id,
+      `L'admin ${req.user.full_name} a confirmé le retour à la création de la livraison ${livraison.reference}.`,
+      livraison.id
+    );
+
+    res.json({ message: 'Livraison retournée à la création avec succès.', livraison });
+  } catch (err) {
+    console.error('confirmerRetourCreation error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+// ============================================================
 // AVANCES (advance payment declarations)
 // ============================================================
 
 async function declarerAvance(req, res) {
   try {
-    const { amount, image_base64 } = req.body;
+    const { amount, payment_method, image_base64 } = req.body;
     if (!amount || isNaN(amount) || Number(amount) <= 0) return res.status(400).json({ error: 'Veuillez entrer un montant valide.' });
 
-    // Verify livraison is EN_COURS and assigned to this commercial
+    const VALID_METHODS = ['WAFA_CASH', 'IZI_CASH', 'VERSEMENT', 'ESPECES'];
+    if (payment_method && !VALID_METHODS.includes(payment_method)) {
+      return res.status(400).json({ error: 'Méthode de paiement invalide.' });
+    }
+
+    // Verify livraison is in an allowed status and assigned to this commercial
+    // Avances are payment justifications — allowed from CONFIRME through CLOTURE
+    const ALLOWED_STATUSES = ['CONFIRME', 'EN_COURS', 'EN_RETOUR', 'CLOTURE'];
     const livraison = await livraisonModel.findById(req.params.id);
     if (!livraison) return res.status(404).json({ error: 'Livraison introuvable.' });
-    if (livraison.status !== 'EN_COURS') return res.status(400).json({ error: 'Les avances ne peuvent être déclarées que sur une livraison en cours.' });
+    if (!ALLOWED_STATUSES.includes(livraison.status)) return res.status(400).json({ error: 'Les avances ne peuvent être déclarées que sur une livraison confirmée, en cours, en retour ou clôturée.' });
     if (livraison.commercial_id !== req.user.id) return res.status(403).json({ error: 'Cette livraison ne vous est pas assignée.' });
 
-    const avance = await avanceModel.create(req.params.id, req.user.id, Number(amount), image_base64 || null);
+    const avance = await avanceModel.create(req.params.id, req.user.id, Number(amount), payment_method || 'ESPECES', image_base64 || null);
 
     await notificationModel.create(livraison.admin_id, `Le commercial ${req.user.full_name} a déclaré une avance de ${Number(amount).toFixed(3)} DT pour la livraison ${livraison.reference}.`, livraison.id);
 
@@ -440,4 +560,4 @@ async function confirmPaymentEcart(req, res) {
   }
 }
 
-module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier, archiveLivraison, demanderAnnulation, confirmerAnnulation, declarerAvance, getAvances, accepterAvance, refuserAvance, realtimeData, declarerEcart, listEcarts, confirmerEcart, requestPaymentEcart, confirmPaymentEcart };
+module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier, archiveLivraison, demanderAnnulation, confirmerAnnulation, demanderReouverture, confirmerReouverture, demanderRetourCreation, confirmerRetourCreation, declarerAvance, getAvances, accepterAvance, refuserAvance, realtimeData, declarerEcart, listEcarts, confirmerEcart, requestPaymentEcart, confirmPaymentEcart };

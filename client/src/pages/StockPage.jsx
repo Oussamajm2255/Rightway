@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiGet, apiPut } from '../lib/api';
+import { formatDate } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import './StockPage.css';
 
@@ -57,10 +58,12 @@ function StockPage() {
   const [alertThreshold, setAlertThreshold] = useState(20);
   const [adjustingItem, setAdjustingItem] = useState(null);
   const [adjustDirection, setAdjustDirection] = useState('add');
+  const [adjustMode, setAdjustMode] = useState('single'); // 'single' | 'multiple'
   const [adjustForm, setAdjustForm] = useState({
     quantity_change: '', reason: '', password: '',
     movement_date: '', invoice_number: '', company_name: '',
   });
+  const [multiItems, setMultiItems] = useState([{ product_id: '', quantity: '' }]);
   const [adjustError, setAdjustError] = useState('');
   const [adjusting, setAdjusting] = useState(false);
 
@@ -124,23 +127,18 @@ function StockPage() {
   function handleAdjustClick(item) {
     setAdjustingItem(item);
     setAdjustDirection('add');
+    setAdjustMode('single');
     setAdjustForm({
       quantity_change: '', reason: '', password: '',
       movement_date: '', invoice_number: '', company_name: '',
     });
+    setMultiItems([{ product_id: '', quantity: '' }]);
     setAdjustError('');
   }
 
   async function handleAdjustSubmit(e) {
     e.preventDefault();
     setAdjustError('');
-
-    const absQty = parseInt(adjustForm.quantity_change, 10);
-    if (isNaN(absQty) || absQty <= 0) {
-      setAdjustError('Veuillez saisir une quantité valide supérieure à 0.');
-      return;
-    }
-    const qty = adjustDirection === 'add' ? absQty : -absQty;
 
     if (!adjustForm.reason.trim()) {
       setAdjustError('Veuillez indiquer un motif d\'ajustement.');
@@ -154,8 +152,6 @@ function StockPage() {
     setAdjusting(true);
     try {
       const body = {
-        product_id: adjustingItem.id,
-        quantity_change: qty,
         reason: adjustForm.reason,
         password: adjustForm.password,
       };
@@ -164,6 +160,39 @@ function StockPage() {
         if (adjustForm.invoice_number.trim()) body.invoice_number = adjustForm.invoice_number.trim();
         if (adjustForm.company_name.trim()) body.company_name = adjustForm.company_name.trim();
       }
+
+      if (adjustMode === 'multiple') {
+        // Validate multi items
+        const validItems = [];
+        for (let i = 0; i < multiItems.length; i++) {
+          const item = multiItems[i];
+          if (!item.product_id) {
+            setAdjustError(`Ligne ${i + 1} : veuillez sélectionner un produit.`);
+            setAdjusting(false);
+            return;
+          }
+          const qty = parseInt(item.quantity, 10);
+          if (isNaN(qty) || qty <= 0) {
+            setAdjustError(`Ligne ${i + 1} : quantité invalide.`);
+            setAdjusting(false);
+            return;
+          }
+          const signedQty = adjustDirection === 'add' ? qty : -qty;
+          validItems.push({ product_id: item.product_id, quantity_change: signedQty });
+        }
+        body.items = validItems;
+      } else {
+        const absQty = parseInt(adjustForm.quantity_change, 10);
+        if (isNaN(absQty) || absQty <= 0) {
+          setAdjustError('Veuillez saisir une quantité valide supérieure à 0.');
+          setAdjusting(false);
+          return;
+        }
+        const qty = adjustDirection === 'add' ? absQty : -absQty;
+        body.product_id = adjustingItem.id;
+        body.quantity_change = qty;
+      }
+
       const data = await apiPut('/stock/adjust', body);
       setSuccessMsg(data.message);
       setAdjustingItem(null);
@@ -353,17 +382,130 @@ function StockPage() {
                 </div>
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Quantité</label>
-                <input
-                  type="number"
-                  className="form-input"
-                  placeholder={adjustDirection === 'add' ? 'Ex: 50' : 'Ex: 10'}
-                  value={adjustForm.quantity_change}
-                  onChange={(e) => setAdjustForm((p) => ({ ...p, quantity_change: e.target.value }))}
-                  min="1"
-                />
-              </div>
+              {/* Mode toggle: single vs multiple */}
+              {adjustDirection === 'add' && (
+                <div className="form-group">
+                  <label className="form-label">Mode</label>
+                  <div className="toggle-group">
+                    <button
+                      type="button"
+                      className={`toggle-btn ${adjustMode === 'single' ? 'toggle-btn-active' : ''}`}
+                      onClick={() => setAdjustMode('single')}
+                    >
+                      <span>Produit unique</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`toggle-btn ${adjustMode === 'multiple' ? 'toggle-btn-active' : ''}`}
+                      onClick={() => setAdjustMode('multiple')}
+                    >
+                      <span>Ajout multiple</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Single mode: quantity input */}
+              {adjustMode === 'single' && (
+                <div className="form-group">
+                  <label className="form-label">Quantité</label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    placeholder={adjustDirection === 'add' ? 'Ex: 50' : 'Ex: 10'}
+                    value={adjustForm.quantity_change}
+                    onChange={(e) => setAdjustForm((p) => ({ ...p, quantity_change: e.target.value }))}
+                    min="1"
+                  />
+                </div>
+              )}
+
+              {/* Multiple mode: dynamic product table */}
+              {adjustMode === 'multiple' && (
+                <div className="form-group">
+                  <label className="form-label">Produits à ajouter</label>
+                  <div style={{ border: '1px solid var(--color-border)', borderRadius: 6, overflow: 'hidden' }}>
+                    <table style={{ width: '100%', fontSize: '0.85rem', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ background: 'var(--color-bg-secondary)', borderBottom: '1px solid var(--color-border)' }}>
+                          <th style={{ padding: '6px 8px', textAlign: 'left', width: '40%' }}>Produit</th>
+                          <th style={{ padding: '6px 8px', textAlign: 'center', width: '30%' }}>Quantité</th>
+                          <th style={{ padding: '6px 8px', textAlign: 'center', width: '30px' }}></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {multiItems.map((item, idx) => (
+                          <tr key={idx} style={{ borderBottom: idx < multiItems.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
+                            <td style={{ padding: '4px 8px' }}>
+                              <select
+                                className="form-input"
+                                style={{ fontSize: '0.8rem', padding: '4px 6px' }}
+                                value={item.product_id}
+                                onChange={(e) => {
+                                  const newItems = [...multiItems];
+                                  newItems[idx] = { ...newItems[idx], product_id: e.target.value };
+                                  setMultiItems(newItems);
+                                }}
+                              >
+                                <option value="">— Sélectionner —</option>
+                                {stock
+                                  .filter(s => !multiItems.some((mi, i) => i !== idx && mi.product_id === s.id))
+                                  .map((s) => (
+                                    <option key={s.id} value={s.id}>
+                                      [{s.category}] {s.name} (stock: {s.quantity})
+                                    </option>
+                                  ))}
+                              </select>
+                            </td>
+                            <td style={{ padding: '4px 8px', textAlign: 'center' }}>
+                              <input
+                                type="number"
+                                className="form-input"
+                                style={{ width: 80, fontSize: '0.8rem', padding: '4px 6px', textAlign: 'center' }}
+                                placeholder="Qté"
+                                value={item.quantity}
+                                min="1"
+                                onChange={(e) => {
+                                  const newItems = [...multiItems];
+                                  newItems[idx] = { ...newItems[idx], quantity: e.target.value };
+                                  setMultiItems(newItems);
+                                }}
+                              />
+                            </td>
+                            <td style={{ padding: '4px 8px', textAlign: 'center' }}>
+                              {multiItems.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setMultiItems(multiItems.filter((_, i) => i !== idx))}
+                                  style={{
+                                    background: 'none', border: 'none', color: 'var(--color-danger)',
+                                    cursor: 'pointer', fontSize: '1.1rem', padding: '2px 6px',
+                                  }}
+                                  title="Supprimer cette ligne"
+                                >
+                                  ×
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'var(--space-2)' }}>
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary btn-sm"
+                      onClick={() => setMultiItems([...multiItems, { product_id: '', quantity: '' }])}
+                    >
+                      + Ajouter une ligne
+                    </button>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                      Total : {multiItems.reduce((sum, i) => sum + (parseInt(i.quantity, 10) || 0), 0)} unités
+                    </span>
+                  </div>
+                </div>
+              )}
 
               {/* Conditional fields for Add */}
               {adjustDirection === 'add' && (
@@ -519,8 +661,8 @@ function StockPage() {
                     <tr key={m.id}>
                       <td className="td-date">
                         {m.movement_date
-                          ? new Date(m.movement_date).toLocaleDateString('fr-FR')
-                          : new Date(m.created_at).toLocaleDateString('fr-FR')}
+                          ? formatDate(m.movement_date)
+                          : formatDate(m.created_at)}
                       </td>
                       <td className="td-name">{m.product_name}</td>
                       <td>{m.product_category || '—'}</td>

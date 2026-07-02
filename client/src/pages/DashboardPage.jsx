@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { apiGet } from '../lib/api';
+import { formatDate } from '../lib/utils';
 import { Chart } from 'chart.js/auto';
 import './DashboardPage.css';
 
@@ -593,7 +594,7 @@ function CommercialView({ data, navigate, user }) {
                 </span>
               </div>
               <div className="delivery-ref">{data.active_livraison.reference}</div>
-              <div className="delivery-date">Démarrée le {new Date(data.active_livraison.created_at).toLocaleDateString('fr-FR', {day:'2-digit', month:'long', year:'numeric'})}</div>
+              <div className="delivery-date">Démarrée le {formatDate(data.active_livraison.created_at)}</div>
               <div className="delivery-progress-section">
                 <div className="delivery-progress-labels">
                   <span>Écoulement : <strong>{data.active_livraison.vendu} / {data.active_livraison.charge} produits vendus</strong></span>
@@ -624,7 +625,7 @@ function CommercialView({ data, navigate, user }) {
                   <div className="bon-icon">{Icons.check}</div>
                   <div className="bon-info">
                     <div className="bon-ref">{bon.reference}</div>
-                    <div className="bon-meta">Créé par {bon.admin_name} le {new Date(bon.created_at).toLocaleDateString('fr-FR', {day:'2-digit', month:'long', year:'numeric'})}</div>
+                    <div className="bon-meta">Créé par {bon.admin_name} le {formatDate(bon.created_at)}</div>
                   </div>
                   <button className="btn btn-sm btn-success-ghost" onClick={(e) => { e.stopPropagation(); navigate(`/livraisons/${bon.id}`); }}>
                     {Icons.check} Confirmer
@@ -665,7 +666,7 @@ function CommercialView({ data, navigate, user }) {
                   {data.recent_livraisons.map((l) => (
                     <tr key={l.id} onClick={() => navigate(`/livraisons/${l.id}`)} className="clickable-row">
                       <td className="td-mono td-ref">{l.reference}</td>
-                      <td className="td-date">{new Date(l.created_at).toLocaleDateString('fr-FR')}</td>
+                      <td className="td-date">{formatDate(l.created_at)}</td>
                       <td><StatusBadge status={l.status} /></td>
                       <td className="td-mono">{l.charge}</td>
                       <td className="td-mono">{l.vendu}</td>
