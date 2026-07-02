@@ -211,7 +211,7 @@ async function findAll({ status, commercial_id, date_from, date_to, admin_id, in
            c.full_name AS commercial_name, c.vehicle_name, c.vehicle_plate,
            a.full_name AS admin_name,
            EXISTS(SELECT 1 FROM livraison_ecarts e WHERE e.livraison_id = l.id) AS has_ecart,
-           EXISTS(SELECT 1 FROM livraison_ecarts e WHERE e.livraison_id = l.id AND e.status IN ('PENDING','PAYMENT_REQUESTED')) AS has_pending_ecart,
+           EXISTS(SELECT 1 FROM livraison_ecarts e WHERE e.livraison_id = l.id AND e.status IN ('PENDING','CONFIRMED','PAYMENT_REQUESTED')) AS has_pending_ecart,
            COALESCE(av.total_avances, 0) AS total_avances,
            CASE WHEN av.total_avances > 0 THEN true ELSE false END AS has_avance
     FROM livraisons l
