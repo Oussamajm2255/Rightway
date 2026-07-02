@@ -398,7 +398,12 @@ function StockPage() {
                     <button
                       type="button"
                       className={`toggle-btn ${adjustMode === 'multiple' ? 'toggle-btn-active' : ''}`}
-                      onClick={() => setAdjustMode('multiple')}
+                      onClick={() => {
+                                              setAdjustMode('multiple');
+                                              if (adjustingItem) {
+                                                setMultiItems([{ product_id: adjustingItem.id, quantity: adjustForm.quantity_change || '' }]);
+                                              }
+                                            }}
                     >
                       <span>Ajout multiple</span>
                     </button>
