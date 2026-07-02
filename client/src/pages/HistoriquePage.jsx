@@ -157,7 +157,7 @@ function HistoriquePage() {
                     </tr>
                     ))}
                     <tr className="cat-subtotal" style={{ background: catCol.bg, borderLeftColor: catCol.bar, borderTopColor: catCol.bar }}>
-                      <td colSpan="2" style={{ color: catCol.text }}>Sous-total {cat}</td>
+                      <td colSpan="2" style={{ color: catCol.text, textAlign: 'center', fontWeight: 700 }}>Sous-total {cat}</td>
                       <td className="td-qty">{catItems.reduce((s,i) => s + i.qte_chargee, 0)}</td>
                       <td></td>
                       <td className="td-price">{formatDT(catItems.reduce((s,i) => s + i.qte_chargee * Number(i.prix_ttc), 0))}</td>
@@ -213,7 +213,7 @@ function HistoriquePage() {
                       </tr>;
                     })}
                     <tr className="cat-subtotal" style={{ background: catCol.bg, borderLeftColor: catCol.bar, borderTopColor: catCol.bar }}>
-                      <td colSpan="2" style={{ color: catCol.text }}>Sous-total {cat}</td>
+                      <td colSpan="2" style={{ color: catCol.text, textAlign: 'center', fontWeight: 700 }}>Sous-total {cat}</td>
                       <td className="td-qty">{catItems.reduce((s,i) => s + i.qte_chargee, 0)}</td>
                       <td className="td-qty">{catItems.reduce((s,i) => s + i.qte_vendue, 0)}</td>
                       <td className="td-qty">{catItems.reduce((s,i) => s + (i.qte_chargee - i.qte_vendue), 0)}</td>

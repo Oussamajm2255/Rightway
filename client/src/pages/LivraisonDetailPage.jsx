@@ -972,7 +972,7 @@ function LivraisonDetailPage() {
                       );
                     })}
                     <tr className="cat-subtotal" style={{ background: catCol.bg, borderLeftColor: catCol.bar, borderTopColor: catCol.bar }}>
-                      <td colSpan="3" style={{ color: catCol.text }}>
+                      <td colSpan="3" style={{ color: catCol.text, textAlign: 'center', fontWeight: 700 }}>
                         Sous-total {cat}
                       </td>
                       <td className="td-qty">{catItems.reduce((s,i) => s + i.qte_chargee, 0)}</td>
@@ -1158,7 +1158,7 @@ function LivraisonDetailPage() {
                   </tr>
                   ))}
                   <tr className="cat-subtotal" style={{ background: catCol.bg, borderLeftColor: catCol.bar, borderTopColor: catCol.bar }}>
-                    <td colSpan="4" style={{ color: catCol.text }}>
+                    <td colSpan="4" style={{ color: catCol.text, textAlign: 'center', fontWeight: 700 }}>
                       Sous-total {cat}
                     </td>
                     <td className="td-qty">{catItems.reduce((s,i) => s + i.qte_chargee, 0)}</td>
