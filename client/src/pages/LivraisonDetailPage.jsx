@@ -540,7 +540,7 @@ function LivraisonDetailPage() {
           <span key={s.label} className={`timeline-step ${s.done ? 'current' : ''}`}>
             <span className={`timeline-dot ${s.done ? ((isCloture || isAnnule) || (i < arr.length - 1 && arr[i+1].done) ? 'done' : 'active') : ''}`} />
             <span className="timeline-label">{s.label}</span>
-            {i < arr.length - 1 && <span className={`timeline-line ${arr[i+1].done ? 'done' : ''}`} />}
+            {i < arr.length - 1 && <span className="timeline-line" />}
           </span>
         ))}
       </div>

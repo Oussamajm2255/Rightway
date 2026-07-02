@@ -124,11 +124,6 @@
   height: 2px;
   background: var(--color-border-strong);
   border-radius: 1px;
-  transition: background var(--transition-base);
-}
-
-.timeline-line.done {
-  background: var(--color-success);
 }
 
 .timeline-label {
