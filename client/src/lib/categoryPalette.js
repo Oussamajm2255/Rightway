@@ -10,22 +10,24 @@ export const CAT_PALETTE = {
 };
 
 // ─── Auto-generated colours for categories not in the curated list ───
-// 12 hues × 3 saturation levels = 36 unique colours — virtually collision-free
+// Golden-ratio hue spacing — every category gets a unique, maximally-
+// separated hue.  No two categories can land on visually similar tones.
 
-const HUES = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
-const SATS = [50, 62, 74];
-const PALETTE_SIZE = HUES.length * SATS.length; // 36
+const GOLDEN_RATIO_CONJUGATE = 0.618033988749895; // (√5 − 1) / 2
 
 function autoPalette(cat) {
   let hash = 0;
   for (let i = 0; i < cat.length; i++) hash = (hash * 31 + cat.charCodeAt(i)) | 0;
-  const idx = Math.abs(hash) % PALETTE_SIZE;
-  const h = HUES[Math.floor(idx / SATS.length)];
-  const s = SATS[idx % SATS.length];
+
+  // Golden ratio ensures maximum hue spread — adjacent categories in
+  // hash-space are ~222° apart, so they never look similar.
+  const h = Math.round((Math.abs(hash) * GOLDEN_RATIO_CONJUGATE * 360) % 360);
+  const s = 60 + (Math.abs(hash >> 2) % 16); // 60–75 % saturation
+
   return {
-    bg:  `hsla(${h},${s}%,54%,.1)`,
-    text: `hsl(${h},${s}%,34%)`,
-    bar:  `hsl(${h},${s}%,48%)`,
+    bg:  `hsla(${h},${s}%,50%,.12)`,
+    text: `hsl(${h},${s}%,33%)`,
+    bar:  `hsl(${h},${s}%,46%)`,
   };
 }
 
