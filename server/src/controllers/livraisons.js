@@ -417,6 +417,22 @@ async function refuserAvance(req, res) {
   } catch (err) { console.error('refuserAvance error:', err); res.status(500).json({ error: 'Erreur interne du serveur' }); }
 }
 
+async function modifierAvancePaiement(req, res) {
+  try {
+    const { payment_method } = req.body;
+    const VALID_METHODS = ['WAFA_CASH', 'IZI_CASH', 'VERSEMENT', 'ESPECES'];
+    if (!payment_method || !VALID_METHODS.includes(payment_method)) {
+      return res.status(400).json({ error: 'Méthode de paiement invalide.' });
+    }
+    const avance = await avanceModel.updatePaymentMethod(req.params.avanceId, payment_method);
+    if (!avance) return res.status(404).json({ error: 'Avance introuvable.' });
+    res.json({ avance, message: 'Mode de paiement mis à jour.' });
+  } catch (err) {
+    console.error('modifierAvancePaiement error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
 async function realtimeData(req, res) {
   try {
     const data = await livraisonModel.getRealtimeData(req.params.id);
@@ -560,4 +576,4 @@ async function confirmPaymentEcart(req, res) {
   }
 }
 
-module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier, archiveLivraison, demanderAnnulation, confirmerAnnulation, demanderReouverture, confirmerReouverture, demanderRetourCreation, confirmerRetourCreation, declarerAvance, getAvances, accepterAvance, refuserAvance, realtimeData, declarerEcart, listEcarts, confirmerEcart, requestPaymentEcart, confirmPaymentEcart };
+module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier, archiveLivraison, demanderAnnulation, confirmerAnnulation, demanderReouverture, confirmerReouverture, demanderRetourCreation, confirmerRetourCreation, declarerAvance, getAvances, accepterAvance, refuserAvance, modifierAvancePaiement, realtimeData, declarerEcart, listEcarts, confirmerEcart, requestPaymentEcart, confirmPaymentEcart };

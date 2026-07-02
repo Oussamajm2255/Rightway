@@ -60,6 +60,20 @@ async function refuser(id, admin_id, note) {
 }
 
 /**
+ * Super admin updates payment method of an existing avance
+ */
+async function updatePaymentMethod(id, payment_method) {
+  const { rows } = await pool.query(
+    `UPDATE livraison_avances
+     SET payment_method = $2
+     WHERE id = $1
+     RETURNING *`,
+    [id, payment_method]
+  );
+  return rows[0] || null;
+}
+
+/**
  * Total accepted avances for a livraison
  */
 async function getTotalAccepted(livraison_id) {
@@ -72,4 +86,4 @@ async function getTotalAccepted(livraison_id) {
   return Number(rows[0].total);
 }
 
-module.exports = { create, findByLivraison, accepter, refuser, getTotalAccepted };
+module.exports = { create, findByLivraison, accepter, refuser, updatePaymentMethod, getTotalAccepted };

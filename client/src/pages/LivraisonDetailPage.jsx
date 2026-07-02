@@ -57,6 +57,7 @@ function LivraisonDetailPage() {
   const [avanceError, setAvanceError] = useState('');
   const [refuseAvanceNote, setRefuseAvanceNote] = useState('');
   const [refusingAvanceId, setRefusingAvanceId] = useState(null);
+  const [editingAvanceId, setEditingAvanceId] = useState(null);
   // Écarts
   const [showEcartModal, setShowEcartModal] = useState(false);
   const [ecartAmount, setEcartAmount] = useState('');
@@ -356,6 +357,29 @@ function LivraisonDetailPage() {
       setActionError(err.message);
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleUpdateAvancePaymentMethod(avanceId, paymentMethod) {
+    if (!paymentMethod) return;
+    const prevAvance = (livraison?.avances || []).find(a => a.id === avanceId);
+    // Optimistic update
+    setLivraison(prev => ({
+      ...prev,
+      avances: prev.avances.map(a => a.id === avanceId ? { ...a, payment_method: paymentMethod } : a),
+    }));
+    setEditingAvanceId(null);
+    try {
+      await apiPut(`/livraisons/${id}/avances/${avanceId}/mode-paiement`, {
+        payment_method: paymentMethod,
+      });
+    } catch (err) {
+      // Revert on failure
+      setLivraison(prev => ({
+        ...prev,
+        avances: prev.avances.map(a => a.id === avanceId ? { ...a, payment_method: prevAvance.payment_method } : a),
+      }));
+      setActionError(err.message);
     }
   }
 
@@ -686,10 +710,42 @@ function LivraisonDetailPage() {
                       <td style={{ fontSize: '0.85rem' }}>{formatDateTime(av.created_at)}</td>
                       <td className="td-price">{formatDT(av.amount)}</td>
                       <td style={{ fontSize: '0.8rem' }}>
-                        {av.payment_method === 'WAFA_CASH' ? 'Wafa Cash' :
-                         av.payment_method === 'IZI_CASH' ? 'Izi Cash' :
-                         av.payment_method === 'VERSEMENT' ? 'Versement' :
-                         av.payment_method === 'ESPECES' ? 'Espèces' : '—'}
+                        {isSuperAdmin ? (
+                          editingAvanceId === av.id ? (
+                            <select
+                              className="form-input"
+                              value={av.payment_method}
+                              onChange={(e) => handleUpdateAvancePaymentMethod(av.id, e.target.value)}
+                              onBlur={() => setEditingAvanceId(null)}
+                              autoFocus
+                              style={{ fontSize: '0.75rem', padding: '2px 6px', minWidth: '110px' }}
+                            >
+                              <option value="WAFA_CASH">Wafa Cash</option>
+                              <option value="IZI_CASH">Izi Cash</option>
+                              <option value="VERSEMENT">Versement</option>
+                              <option value="ESPECES">Espèces</option>
+                            </select>
+                          ) : (
+                            <span
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', cursor: 'pointer', padding: '2px 0' }}
+                              onClick={() => setEditingAvanceId(av.id)}
+                              title="Modifier le mode de paiement"
+                            >
+                              {av.payment_method === 'WAFA_CASH' ? 'Wafa Cash' :
+                               av.payment_method === 'IZI_CASH' ? 'Izi Cash' :
+                               av.payment_method === 'VERSEMENT' ? 'Versement' :
+                               av.payment_method === 'ESPECES' ? 'Espèces' : '—'}
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4, flexShrink: 0 }}>
+                                <path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                              </svg>
+                            </span>
+                          )
+                        ) : (
+                          <>{av.payment_method === 'WAFA_CASH' ? 'Wafa Cash' :
+                             av.payment_method === 'IZI_CASH' ? 'Izi Cash' :
+                             av.payment_method === 'VERSEMENT' ? 'Versement' :
+                             av.payment_method === 'ESPECES' ? 'Espèces' : '—'}</>
+                        )}
                       </td>
                       <td>
                         <span className={`badge ${isAccepted ? 'badge-ok' : 'badge-status-pending'}`}>
