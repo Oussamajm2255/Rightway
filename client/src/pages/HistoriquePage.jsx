@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { apiGet, openPdf } from '../lib/api';
 import { formatDate as fmtDate, formatDateTime } from '../lib/utils';
@@ -137,9 +137,34 @@ function HistoriquePage() {
             <div className="table-container"><table className="data-table" style={{ fontSize: '0.82rem' }}>
               <thead><tr><th>Code</th><th>Produit</th><th>Qté Chargée</th><th>PU TTC</th><th>Total</th></tr></thead>
               <tbody>
-                {selectedDossier.livraison.items.map((item) => (
-                  <tr key={item.id} style={{ background: catColors(item.category || 'Sans catégorie').bg }}><td className="td-code">{item.product_id}</td><td>{item.product_name}</td><td>{item.qte_chargee}</td><td>{formatDT(item.prix_ttc)}</td><td className="td-price">{formatDT(item.qte_chargee * Number(item.prix_ttc))}</td></tr>
-                ))}
+                {Object.entries(
+                  selectedDossier.livraison.items.reduce((acc, item) => {
+                    const cat = item.category || 'Sans catégorie';
+                    (acc[cat] = acc[cat] || []).push(item);
+                    return acc;
+                  }, {})
+                ).map(([cat, catItems]) => {
+                  const catCol = catColors(cat);
+                  return (
+                  <Fragment key={cat}>
+                    {catItems.map((item) => (
+                    <tr key={item.id} style={{ background: catCol.bg }}>
+                      <td className="td-code">{item.product_id}</td>
+                      <td>{item.product_name}</td>
+                      <td>{item.qte_chargee}</td>
+                      <td>{formatDT(item.prix_ttc)}</td>
+                      <td className="td-price">{formatDT(item.qte_chargee * Number(item.prix_ttc))}</td>
+                    </tr>
+                    ))}
+                    <tr className="cat-subtotal">
+                      <td colSpan="2" style={{ color: catCol.text }}>Sous-total {cat}</td>
+                      <td className="td-qty">{catItems.reduce((s,i) => s + i.qte_chargee, 0)}</td>
+                      <td></td>
+                      <td className="td-price">{formatDT(catItems.reduce((s,i) => s + i.qte_chargee * Number(i.prix_ttc), 0))}</td>
+                    </tr>
+                  </Fragment>
+                  );
+                })}
               </tbody>
             </table></div>
             {selectedDossier.livraison.confirmed_by_commercial_at && (
@@ -166,9 +191,36 @@ function HistoriquePage() {
             <div className="table-container"><table className="data-table" style={{ fontSize: '0.82rem' }}>
               <thead><tr><th>Code</th><th>Article</th><th>Qté Sortie</th><th>Qté Vendue</th><th>Qté Retour</th><th>Montant Vendu</th></tr></thead>
               <tbody>
-                {selectedDossier.livraison.items.map((item) => {
-                  const retour = item.qte_chargee - item.qte_vendue;
-                  return <tr key={item.id} style={{ background: catColors(item.category || 'Sans catégorie').bg }}><td className="td-code">{item.product_id}</td><td>{item.product_name}</td><td>{item.qte_chargee}</td><td>{item.qte_vendue}</td><td className={retour > 0 ? 'td-qty' : ''}>{retour}</td><td className="td-price">{formatDT(item.qte_vendue * Number(item.prix_ttc))}</td></tr>;
+                {Object.entries(
+                  selectedDossier.livraison.items.reduce((acc, item) => {
+                    const cat = item.category || 'Sans catégorie';
+                    (acc[cat] = acc[cat] || []).push(item);
+                    return acc;
+                  }, {})
+                ).map(([cat, catItems]) => {
+                  const catCol = catColors(cat);
+                  return (
+                  <Fragment key={cat}>
+                    {catItems.map((item) => {
+                      const retour = item.qte_chargee - item.qte_vendue;
+                      return <tr key={item.id} style={{ background: catCol.bg }}>
+                        <td className="td-code">{item.product_id}</td>
+                        <td>{item.product_name}</td>
+                        <td>{item.qte_chargee}</td>
+                        <td>{item.qte_vendue}</td>
+                        <td className={retour > 0 ? 'td-qty' : ''}>{retour}</td>
+                        <td className="td-price">{formatDT(item.qte_vendue * Number(item.prix_ttc))}</td>
+                      </tr>;
+                    })}
+                    <tr className="cat-subtotal">
+                      <td colSpan="2" style={{ color: catCol.text }}>Sous-total {cat}</td>
+                      <td className="td-qty">{catItems.reduce((s,i) => s + i.qte_chargee, 0)}</td>
+                      <td className="td-qty">{catItems.reduce((s,i) => s + i.qte_vendue, 0)}</td>
+                      <td className="td-qty">{catItems.reduce((s,i) => s + (i.qte_chargee - i.qte_vendue), 0)}</td>
+                      <td className="td-price">{formatDT(catItems.reduce((s,i) => s + i.qte_vendue * Number(i.prix_ttc), 0))}</td>
+                    </tr>
+                  </Fragment>
+                  );
                 })}
               </tbody>
             </table></div>

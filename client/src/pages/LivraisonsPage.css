@@ -133,6 +133,18 @@
   white-space: nowrap;
 }
 
+/* ===== Category Subtotal Footer Row ===== */
+.cat-subtotal {
+  border-top: 2px solid var(--color-border);
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-sm);
+  background: var(--color-surface);
+}
+.cat-subtotal td:first-child {
+  color: var(--color-text-secondary);
+  padding-left: var(--space-2);
+}
+
 .timeline-step.current .timeline-label {
   color: var(--color-primary);
   font-weight: var(--weight-semibold);

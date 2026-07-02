@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, Fragment } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { apiGet, apiPost, apiPut, openPdf } from '../lib/api';
@@ -946,20 +946,42 @@ function LivraisonDetailPage() {
                 </tr>
               </thead>
               <tbody>
-                {livraison.items.map((item) => {
-                  const qte_retour = item.qte_chargee - item.qte_vendue;
-                  const cat = item.category || 'Sans catégorie';
+                {Object.entries(
+                  livraison.items.reduce((acc, item) => {
+                    const cat = item.category || 'Sans catégorie';
+                    (acc[cat] = acc[cat] || []).push(item);
+                    return acc;
+                  }, {})
+                ).map(([cat, catItems]) => {
+                  const catCol = catColors(cat);
                   return (
-                    <tr key={item.id} style={{ background: catColors(cat).bg }}>
-                      <td className="td-code">{item.product_id}</td>
-                      <td>{item.category || '—'}</td>
-                      <td>{item.product_name}</td>
-                      <td className="td-qty">{item.qte_chargee}</td>
-                      <td className="td-qty">{item.qte_vendue}</td>
-                      <td className={`td-qty ${qte_retour > 0 ? '' : ''}`}>{qte_retour}</td>
-                      <td className="td-price">{formatDT(item.prix_ttc)}</td>
-                      <td className="td-price">{formatDT(item.qte_vendue * Number(item.prix_ttc))}</td>
+                  <Fragment key={cat}>
+                    {catItems.map((item) => {
+                      const qte_retour = item.qte_chargee - item.qte_vendue;
+                      return (
+                      <tr key={item.id} style={{ background: catCol.bg }}>
+                        <td className="td-code">{item.product_id}</td>
+                        <td>{item.category || '—'}</td>
+                        <td>{item.product_name}</td>
+                        <td className="td-qty">{item.qte_chargee}</td>
+                        <td className="td-qty">{item.qte_vendue}</td>
+                        <td className="td-qty">{qte_retour}</td>
+                        <td className="td-price">{formatDT(item.prix_ttc)}</td>
+                        <td className="td-price">{formatDT(item.qte_vendue * Number(item.prix_ttc))}</td>
+                      </tr>
+                      );
+                    })}
+                    <tr className="cat-subtotal">
+                      <td colSpan="3" style={{ color: catCol.text }}>
+                        Sous-total {cat}
+                      </td>
+                      <td className="td-qty">{catItems.reduce((s,i) => s + i.qte_chargee, 0)}</td>
+                      <td className="td-qty">{catItems.reduce((s,i) => s + i.qte_vendue, 0)}</td>
+                      <td className="td-qty">{catItems.reduce((s,i) => s + (i.qte_chargee - i.qte_vendue), 0)}</td>
+                      <td></td>
+                      <td className="td-price">{formatDT(catItems.reduce((s,i) => s + i.qte_vendue * Number(i.prix_ttc), 0))}</td>
                     </tr>
+                  </Fragment>
                   );
                 })}
               </tbody>
@@ -1115,18 +1137,35 @@ function LivraisonDetailPage() {
               </tr>
             </thead>
             <tbody>
-              {livraison.items.map((item) => {
-                const cat = item.category || 'Sans catégorie';
+              {Object.entries(
+                livraison.items.reduce((acc, item) => {
+                  const cat = item.category || 'Sans catégorie';
+                  (acc[cat] = acc[cat] || []).push(item);
+                  return acc;
+                }, {})
+              ).map(([cat, catItems]) => {
+                const catCol = catColors(cat);
                 return (
-                <tr key={item.id} style={{ background: catColors(cat).bg }}>
-                  <td className="td-code">{item.product_id}</td>
-                  <td>{item.category || '—'}</td>
-                  <td>{item.product_name}</td>
-                  <td className="td-price">{formatDT(item.prix_ttc)}</td>
-                  <td className="td-qty">{item.qte_chargee}</td>
-                  {(isEnCours || isEnRetour || isCloture) && <td className="td-qty">{item.qte_vendue}</td>}
-                </tr>
-              );
+                <Fragment key={cat}>
+                  {catItems.map((item) => (
+                  <tr key={item.id} style={{ background: catCol.bg }}>
+                    <td className="td-code">{item.product_id}</td>
+                    <td>{item.category || '—'}</td>
+                    <td>{item.product_name}</td>
+                    <td className="td-price">{formatDT(item.prix_ttc)}</td>
+                    <td className="td-qty">{item.qte_chargee}</td>
+                    {(isEnCours || isEnRetour || isCloture) && <td className="td-qty">{item.qte_vendue}</td>}
+                  </tr>
+                  ))}
+                  <tr className="cat-subtotal">
+                    <td colSpan="4" style={{ color: catCol.text }}>
+                      Sous-total {cat}
+                    </td>
+                    <td className="td-qty">{catItems.reduce((s,i) => s + i.qte_chargee, 0)}</td>
+                    {(isEnCours || isEnRetour || isCloture) && <td className="td-qty">{catItems.reduce((s,i) => s + i.qte_vendue, 0)}</td>}
+                  </tr>
+                </Fragment>
+                );
               })}
             </tbody>
           </table>
