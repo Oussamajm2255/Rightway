@@ -15,6 +15,20 @@ function UsersPage() {
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteError, setDeleteError] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [togglingRem, setTogglingRem] = useState(null); // id of user being toggled
+
+  async function handleToggleRemuneration(user) {
+    const newType = user.remuneration_type === 'SALAIRE' ? 'COMMISSION' : 'SALAIRE';
+    setTogglingRem(user.id);
+    try {
+      await apiPut(`/users/${user.id}`, { remuneration_type: newType });
+      fetchUsers();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setTogglingRem(null);
+    }
+  }
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -139,6 +153,7 @@ function UsersPage() {
                 <th>Nom complet</th>
                 <th>Email</th>
                 <th>Rôle</th>
+                <th>Rémunération</th>
                 <th>Téléphone</th>
                 <th>Véhicule</th>
                 <th>Statut</th>
@@ -152,6 +167,22 @@ function UsersPage() {
                   <td className="td-name">{user.full_name}</td>
                   <td>{user.email}</td>
                   <td>{getRoleBadge(user.role)}</td>
+                  <td>
+                    {user.role === 'COMMERCIAL' ? (
+                      <button
+                        className={`btn btn-sm ${user.remuneration_type === 'SALAIRE' ? 'btn-outline-warning' : 'btn-outline-success'}`}
+                        onClick={() => handleToggleRemuneration(user)}
+                        disabled={togglingRem === user.id}
+                        title={user.remuneration_type === 'SALAIRE' ? 'Passer en Commission' : 'Passer en Salaire'}
+                      >
+                        {togglingRem === user.id ? '...' : (
+                          user.remuneration_type === 'SALAIRE' ? '💼 Salaire' : '💰 Commission'
+                        )}
+                      </button>
+                    ) : (
+                      <span className="text-muted">—</span>
+                    )}
+                  </td>
                   <td>{user.phone || '—'}</td>
                   <td className="td-vehicle">
                     {user.vehicle_name ? (

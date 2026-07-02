@@ -55,6 +55,10 @@ const updateUserRules = [
   body('is_active')
     .optional()
     .isBoolean().withMessage('Le champ is_active doit être un booléen.'),
+  body('remuneration_type')
+    .optional()
+    .trim()
+    .isIn(['COMMISSION', 'SALAIRE']).withMessage('Type de rémunération invalide. Autorisé: COMMISSION, SALAIRE.'),
 ];
 
 module.exports = { createUserRules, updateUserRules };

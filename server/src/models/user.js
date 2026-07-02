@@ -1,7 +1,7 @@
 const pool = require('../db/pool');
 
 async function findAll({ role, is_active, search } = {}) {
-  let query = 'SELECT id, full_name, email, role, phone, vehicle_name, vehicle_plate, is_active, last_login_at, created_at FROM users WHERE 1=1';
+  let query = 'SELECT id, full_name, email, role, phone, vehicle_name, vehicle_plate, is_active, remuneration_type, last_login_at, created_at FROM users WHERE 1=1';
   const params = [];
   let idx = 1;
 
@@ -29,7 +29,7 @@ async function findAll({ role, is_active, search } = {}) {
 
 async function findById(id) {
   const { rows } = await pool.query(
-    'SELECT id, full_name, email, role, phone, vehicle_name, vehicle_plate, is_active, last_login_at, created_at FROM users WHERE id = $1',
+    'SELECT id, full_name, email, role, phone, vehicle_name, vehicle_plate, is_active, remuneration_type, last_login_at, created_at FROM users WHERE id = $1',
     [id]
   );
   return rows[0] || null;
@@ -54,7 +54,7 @@ async function create({ full_name, email, password_hash, role, phone, vehicle_na
 }
 
 async function update(id, fields) {
-  const allowed = ['full_name', 'email', 'phone', 'vehicle_name', 'vehicle_plate', 'is_active', 'password_hash'];
+  const allowed = ['full_name', 'email', 'phone', 'vehicle_name', 'vehicle_plate', 'is_active', 'password_hash', 'remuneration_type'];
   const sets = [];
   const params = [id];
   let idx = 2;
@@ -73,7 +73,7 @@ async function update(id, fields) {
   if (sets.length === 0) return findById(id);
 
   const { rows } = await pool.query(
-    `UPDATE users SET ${sets.join(', ')} WHERE id = $1 RETURNING id, full_name, email, role, phone, vehicle_name, vehicle_plate, is_active, last_login_at, created_at`,
+    `UPDATE users SET ${sets.join(', ')} WHERE id = $1 RETURNING id, full_name, email, role, phone, vehicle_name, vehicle_plate, is_active, remuneration_type, last_login_at, created_at`,
     params
   );
   return rows[0] || null;

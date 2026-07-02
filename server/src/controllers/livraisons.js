@@ -188,11 +188,12 @@ async function getDossier(req, res) {
       [req.params.id]
     );
     const ca_total = livraison.items.reduce((sum, i) => sum + i.qte_vendue * Number(i.prix_ttc), 0);
-    const commission = Number((ca_total * COMMISSION_RATE).toFixed(3));
+    const isSalaire = livraison.commercial_remuneration_type === 'SALAIRE';
+    const commission = isSalaire ? 0 : Number((ca_total * COMMISSION_RATE).toFixed(3));
     const total_avances = (livraison.avances || [])
       .filter(a => a.status === 'ACCEPTE')
       .reduce((sum, a) => sum + Number(a.amount), 0);
-    const net_a_reverser = Number((ca_total - commission - total_avances).toFixed(3));
+    const net_a_reverser = isSalaire ? ca_total : Number((ca_total - commission - total_avances).toFixed(3));
     const duration = livraison.closed_at ? Math.round((new Date(livraison.closed_at) - new Date(livraison.created_at)) / 3600000) : null;
     res.json({ dossier: { livraison, sales_log: salesLog, financials: { ca_total: Number(ca_total.toFixed(3)), commission, total_avances, net_a_reverser }, meta: { duration, is_locked: livraison.status === 'CLOTURE' } } });
   } catch (err) { console.error('getDossier error:', err); res.status(500).json({ error: 'Erreur interne du serveur' }); }

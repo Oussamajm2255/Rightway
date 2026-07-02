@@ -225,7 +225,20 @@ function HistoriquePage() {
               </tbody>
             </table></div>
             {/* Financials */}
-            <div className="financials"><div><span>CA Total:</span> <strong>{formatDT(selectedDossier.financials.ca_total)}</strong></div><div><span>Commission (10%):</span> {formatDT(selectedDossier.financials.commission)}</div><div><span>Net à reverser:</span> <strong>{formatDT(selectedDossier.financials.net_a_reverser)}</strong></div></div>
+            {(() => {
+              const isSalaire = selectedDossier.livraison.commercial_remuneration_type === 'SALAIRE';
+              return (
+                <div className="financials">
+                  <div><span>CA Total:</span> <strong>{formatDT(selectedDossier.financials.ca_total)}</strong></div>
+                  {isSalaire ? (
+                    <div><span>Rémunération:</span> <em>Salaire mensuel</em></div>
+                  ) : (
+                    <div><span>Commission (10%):</span> {formatDT(selectedDossier.financials.commission)}</div>
+                  )}
+                  <div><span>Net à reverser:</span> <strong>{formatDT(selectedDossier.financials.net_a_reverser)}</strong></div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}

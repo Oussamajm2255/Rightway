@@ -16,8 +16,9 @@ async function getAllCommercials(req, res) {
     const enriched = commercials.map(c => {
       const ca = Number(c.ca_total);
       const avances = Number(c.avances_total);
-      const commission = Number((ca * COMMISSION_RATE).toFixed(3));
-      const net = Number((ca - commission - avances).toFixed(3));
+      const isSalaire = c.remuneration_type === 'SALAIRE';
+      const commission = isSalaire ? 0 : Number((ca * COMMISSION_RATE).toFixed(3));
+      const net = isSalaire ? Number((ca - avances).toFixed(3)) : Number((ca - commission - avances).toFixed(3));
       const completion = c.livraisons_total > 0
         ? Math.round((c.livraisons_cloturees / c.livraisons_total) * 100)
         : 0;
@@ -43,6 +44,7 @@ async function getAllCommercials(req, res) {
         id: c.id,
         full_name: c.full_name,
         initials,
+        remuneration_type: c.remuneration_type || 'COMMISSION',
         vehicle_name: c.vehicle_name || '—',
         vehicle_plate: c.vehicle_plate || '—',
         is_active: c.is_active,
@@ -66,7 +68,8 @@ async function getAllCommercials(req, res) {
     const activeAgents = enriched.filter(c => c.is_active).length;
     const encours = enriched.filter(c => c.status === 'EN_COURS' || c.status === 'EN_RETOUR').length;
     const caGlobal = enriched.reduce((sum, c) => sum + c.ca_total, 0);
-    const commGlobal = Number((caGlobal * COMMISSION_RATE).toFixed(3));
+    const caCommissionOnly = enriched.filter(c => c.remuneration_type !== 'SALAIRE').reduce((sum, c) => sum + c.ca_total, 0);
+    const commGlobal = Number((caCommissionOnly * COMMISSION_RATE).toFixed(3));
     const completionAvg = enriched.length > 0
       ? Math.round(enriched.reduce((sum, c) => sum + c.completion, 0) / enriched.length)
       : 0;

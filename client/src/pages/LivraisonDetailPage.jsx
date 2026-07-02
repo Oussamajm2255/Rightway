@@ -449,8 +449,9 @@ function LivraisonDetailPage() {
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
   const isAssignedCommercial = isCommercial && livraison?.commercial_id === user?.id;
+  const isSalaire = livraison?.commercial_remuneration_type === 'SALAIRE';
   const ca = computeCA();
-  const commission = Number((ca * 0.10).toFixed(3));
+  const commission = isSalaire ? 0 : Number((ca * 0.10).toFixed(3));
   const net_a_reverser = Number((ca - commission).toFixed(3));
   const totalAvances = (livraison?.avances || [])
     .filter(a => a.status === 'ACCEPTE')
@@ -990,10 +991,16 @@ function LivraisonDetailPage() {
                   <td colSpan="7" style={{ textAlign: 'right' }}><strong>Total CA</strong></td>
                   <td className="td-price"><strong>{formatDT(ca)}</strong></td>
                 </tr>
-                {!isCommercial && (
+                {!isCommercial && !isSalaire && (
                 <tr>
                   <td colSpan="7" style={{ textAlign: 'right' }}>Commission Commerciale (10%)</td>
                   <td className="td-price">{formatDT(commission)}</td>
+                </tr>
+                )}
+                {isSalaire && !isCommercial && (
+                <tr>
+                  <td colSpan="7" style={{ textAlign: 'right', fontStyle: 'italic', color: 'var(--color-text-tertiary)' }}>Salaire mensuel — pas de commission</td>
+                  <td className="td-price" style={{ color: 'var(--color-text-tertiary)' }}>—</td>
                 </tr>
                 )}
                 <tr>
@@ -1084,7 +1091,8 @@ function LivraisonDetailPage() {
           )}
           <div className="detail-grid">
             <div className="detail-card"><h3>CA Total</h3><p className="detail-value">{formatDT(ca)}</p></div>
-            {!isCommercial && <div className="detail-card"><h3>Commission (10%)</h3><p className="detail-value">{formatDT(commission)}</p></div>}
+            {!isCommercial && !isSalaire && <div className="detail-card"><h3>Commission (10%)</h3><p className="detail-value">{formatDT(commission)}</p></div>}
+            {isSalaire && !isCommercial && <div className="detail-card"><h3>Salaire</h3><p className="detail-value" style={{ color: 'var(--color-text-tertiary)', fontStyle: 'italic', fontSize: '0.85rem' }}>Mensuel fixe</p></div>}
             <div className="detail-card"><h3>Net à reverser</h3><p className="detail-value">{formatDT(net_a_reverser)}</p></div>
             {totalAvances > 0 && (
               <>
@@ -1257,7 +1265,8 @@ function LivraisonDetailPage() {
             {/* Financial summary */}
             <div className="detail-grid" style={{ marginBottom: 'var(--space-4)' }}>
               <div className="detail-card"><h3>CA Total</h3><p className="detail-value">{formatDT(ca)}</p></div>
-              {!isCommercial && <div className="detail-card"><h3>Commission (10%)</h3><p className="detail-value">{formatDT(commission)}</p></div>}
+              {!isCommercial && !isSalaire && <div className="detail-card"><h3>Commission (10%)</h3><p className="detail-value">{formatDT(commission)}</p></div>}
+              {isSalaire && !isCommercial && <div className="detail-card"><h3>Salaire</h3><p className="detail-value" style={{ color: 'var(--color-text-tertiary)', fontStyle: 'italic', fontSize: '0.85rem' }}>Mensuel fixe</p></div>}
               <div className="detail-card"><h3>Net à reverser</h3><p className="detail-value">{formatDT(net_a_reverser)}</p></div>
               {totalAvances > 0 && (
                 <>
@@ -1376,7 +1385,8 @@ function LivraisonDetailPage() {
               </table>
             </div>
             <p><strong>CA Total:</strong> {formatDT(terminerSummary.ca_total)}</p>
-            {!isCommercial && <p><strong>Commission (10%):</strong> {formatDT(terminerSummary.commission)}</p>}
+            {!isCommercial && !isSalaire && <p><strong>Commission (10%):</strong> {formatDT(terminerSummary.commission)}</p>}
+            {isSalaire && !isCommercial && <p style={{ fontStyle: 'italic', color: 'var(--color-text-tertiary)' }}>Salaire mensuel — pas de commission</p>}
             <p><strong>Net à reverser:</strong> {formatDT(terminerSummary.net_a_reverser)}</p>
             <div className="modal-actions" style={{ marginTop: 'var(--space-4)' }}>
               <button className="btn btn-primary" onClick={() => setTerminerSummary(null)}>Fermer</button>

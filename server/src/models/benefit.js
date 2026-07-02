@@ -35,6 +35,7 @@ async function getGlobalBenefits({ date_from, date_to } = {}) {
       FROM livraison_items li
       JOIN livraisons l ON li.livraison_id = l.id
       JOIN products p   ON li.product_id = p.id
+      JOIN users u      ON l.commercial_id = u.id AND u.remuneration_type = 'COMMISSION'
       WHERE l.status = 'CLOTURE' AND l.is_archived = false
         ${dateWhere}
       GROUP BY li.product_id

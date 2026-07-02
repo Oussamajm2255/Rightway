@@ -55,7 +55,7 @@ async function getAllWithStats() {
       GROUP BY commercial_id
     )
     SELECT
-      u.id, u.full_name, u.vehicle_name, u.vehicle_plate, u.is_active,
+      u.id, u.full_name, u.vehicle_name, u.vehicle_plate, u.is_active, u.remuneration_type,
       COALESCE(cs.total_livraisons, 0)::INT AS livraisons_total,
       COALESCE(cs.actives, 0)::INT AS livraisons_actives,
       COALESCE(cs.cloturees, 0)::INT AS livraisons_cloturees,
@@ -114,6 +114,7 @@ async function getHistory({ commercial_id, date_from, date_to, status } = {}) {
       l.id, l.reference, l.status, l.created_at, l.closed_at,
       l.commercial_id,
       u.full_name AS commercial_name,
+      u.remuneration_type AS commercial_remuneration_type,
       u.vehicle_name, u.vehicle_plate,
       COALESCE(SUM(li.qte_chargee), 0)::INT AS total_charge,
       COALESCE(SUM(li.qte_vendue), 0)::INT AS total_vendu,
@@ -162,8 +163,9 @@ async function getHistory({ commercial_id, date_from, date_to, status } = {}) {
     const vendu = Number(row.total_vendu);
     const ca = Number(row.ca);
     const avances = Number(row.avances);
-    const commission = Number((ca * COMMISSION_RATE).toFixed(3));
-    const net = Number((ca - commission - avances).toFixed(3));
+    const isSalaire = row.commercial_remuneration_type === 'SALAIRE';
+    const commission = isSalaire ? 0 : Number((ca * COMMISSION_RATE).toFixed(3));
+    const net = isSalaire ? Number((ca - avances).toFixed(3)) : Number((ca - commission - avances).toFixed(3));
     const ecoulement = charge > 0 ? Math.round((vendu / charge) * 100) : 0;
     const duree = row.closed_at
       ? Math.ceil((new Date(row.closed_at) - new Date(row.created_at)) / (1000 * 60 * 60 * 24))
@@ -176,6 +178,7 @@ async function getHistory({ commercial_id, date_from, date_to, status } = {}) {
       date: row.created_at,
       commercial_id: row.commercial_id,
       commercial_name: row.commercial_name,
+      commercial_remuneration_type: row.commercial_remuneration_type || 'COMMISSION',
       vehicle_name: row.vehicle_name,
       vehicle_plate: row.vehicle_plate,
       charge,

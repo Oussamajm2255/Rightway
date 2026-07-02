@@ -149,7 +149,7 @@ async function create({ commercial_id, admin_id, items }) {
 async function findById(id) {
   const { rows: livRows } = await pool.query(
     `SELECT l.*,
-            c.full_name AS commercial_name, c.vehicle_name, c.vehicle_plate, c.phone AS commercial_phone,
+            c.full_name AS commercial_name, c.vehicle_name, c.vehicle_plate, c.phone AS commercial_phone, c.remuneration_type AS commercial_remuneration_type,
             a.full_name AS admin_name
      FROM livraisons l
      JOIN users c ON l.commercial_id = c.id
@@ -208,7 +208,7 @@ async function findById(id) {
 async function findAll({ status, commercial_id, date_from, date_to, admin_id, include_archived, limit = 100, offset = 0 } = {}) {
   let query = `
     SELECT l.reference, l.id, l.status, l.created_at, l.closed_at, l.is_archived,
-           c.full_name AS commercial_name, c.vehicle_name, c.vehicle_plate,
+           c.full_name AS commercial_name, c.vehicle_name, c.vehicle_plate, c.remuneration_type AS commercial_remuneration_type,
            a.full_name AS admin_name,
            EXISTS(SELECT 1 FROM livraison_ecarts e WHERE e.livraison_id = l.id) AS has_ecart,
            EXISTS(SELECT 1 FROM livraison_ecarts e WHERE e.livraison_id = l.id AND e.status IN ('PENDING','CONFIRMED','PAYMENT_REQUESTED')) AS has_pending_ecart,

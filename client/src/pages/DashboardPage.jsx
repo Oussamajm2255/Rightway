@@ -392,8 +392,38 @@ function SuperAdminView({ data, navigate, user }) {
                       <td className="td-mono">{c.livraisons}</td>
                       <td className="td-mono">{fmtDTShort(c.ca)}</td>
                       <td style={{minWidth:120}}><ProgressBar pct={c.ecoulement} color={[PALETTE.blue, PALETTE.green, PALETTE.purple, PALETTE.amber, PALETTE.orange][c.rank - 1]} /></td>
-                      <td className="td-mono">{fmtDTShort(c.commission)}</td>
+                      <td className="td-mono">{c.remuneration_type === 'SALAIRE' ? <em style={{fontSize:'11px',color:'var(--color-text-tertiary)'}}>Salaire</em> : fmtDTShort(c.commission)}</td>
                       <td><StatusBadge status={c.status} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Salaire commercials notification */}
+        {data.salaire_commerciaux && data.salaire_commerciaux.length > 0 && (
+          <div>
+            <SectionHeader title="Commerciaux salariés" />
+            <div className="table-card">
+              <table className="data-table-db">
+                <thead>
+                  <tr>
+                    <th>Commercial</th><th>Livraisons clôturées (mois)</th><th>Livraisons actives</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.salaire_commerciaux.map((s) => (
+                    <tr key={s.id}>
+                      <td>
+                        <span className="avatar-name">
+                          <Avatar initials={s.full_name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()} color={PALETTE.purple} />
+                          {s.full_name}
+                        </span>
+                      </td>
+                      <td className="td-mono">{s.cloturees}</td>
+                      <td className="td-mono">{s.actives}</td>
                     </tr>
                   ))}
                 </tbody>

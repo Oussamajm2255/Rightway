@@ -42,6 +42,7 @@ async function superAdminDashboard(req, res) {
       products,
       activeL,
       caTotal,
+      caCommission,
       alerts,
       monthlyCA,
       statusDist,
@@ -52,6 +53,7 @@ async function superAdminDashboard(req, res) {
       ecartsPendantes,
       ecartsTotals,
       ecartsDetails,
+      salaireCommerciaux,
     ] = await Promise.all([
       // KPI: active users
       pool.query('SELECT COUNT(*)::INT AS count FROM users WHERE is_active = true'),
@@ -59,9 +61,15 @@ async function superAdminDashboard(req, res) {
       pool.query('SELECT COUNT(*)::INT AS count FROM products WHERE is_active = true'),
       // KPI: active livraisons
       pool.query("SELECT COUNT(*)::INT AS count FROM livraisons WHERE is_archived = false AND status IN ('EN_COURS','EN_ATTENTE_COMMERCIAL','EN_RETOUR')"),
-      // KPI: CA global
+      // KPI: CA global (all CLOTURE)
       pool.query(`SELECT COALESCE(SUM(li.qte_vendue * li.prix_ttc), 0)::NUMERIC(12,3) AS total
         FROM livraison_items li JOIN livraisons l ON li.livraison_id = l.id
+        WHERE l.status = 'CLOTURE' AND l.is_archived = false`),
+      // KPI: CA from COMMISSION commercials only (exclude SALAIRE)
+      pool.query(`SELECT COALESCE(SUM(li.qte_vendue * li.prix_ttc), 0)::NUMERIC(12,3) AS total
+        FROM livraison_items li
+        JOIN livraisons l ON li.livraison_id = l.id
+        JOIN users u ON l.commercial_id = u.id AND u.remuneration_type = 'COMMISSION'
         WHERE l.status = 'CLOTURE' AND l.is_archived = false`),
       // KPI: stock alerts count
       pool.query(`SELECT COUNT(*)::INT AS count
@@ -98,7 +106,7 @@ async function superAdminDashboard(req, res) {
           GROUP BY l.commercial_id
         )
         SELECT
-          u.id, u.full_name, u.is_active,
+          u.id, u.full_name, u.is_active, u.remuneration_type,
           COALESCE(s.total_livraisons, 0) AS livraisons,
           COALESCE(s.actives, 0) AS actives,
           COALESCE(s.en_retour, 0) AS en_retour,
@@ -222,6 +230,16 @@ async function superAdminDashboard(req, res) {
         JOIN livraisons l ON e.livraison_id = l.id
         WHERE e.status != 'PAID'
         ORDER BY e.declared_at DESC`),
+      // Salaire-based commercials (for monthly notification)
+      pool.query(`SELECT
+          u.id, u.full_name,
+          COUNT(l.id) FILTER (WHERE l.status = 'CLOTURE' AND l.is_archived = false)::INT AS cloturees,
+          COUNT(l.id) FILTER (WHERE l.status IN ('EN_COURS','EN_RETOUR') AND l.is_archived = false)::INT AS actives
+        FROM users u
+        LEFT JOIN livraisons l ON l.commercial_id = u.id AND l.is_archived = false
+        WHERE u.role = 'COMMERCIAL' AND u.is_active = true AND u.remuneration_type = 'SALAIRE'
+        GROUP BY u.id, u.full_name
+        ORDER BY u.full_name`),
     ]);
 
     // Build monthly CA array
@@ -250,6 +268,7 @@ async function superAdminDashboard(req, res) {
         livraisons: c.livraisons,
         ca,
         ecoulement: c.ecoulement,
+        remuneration_type: c.remuneration_type || 'COMMISSION',
         commission: Number((ca * COMMISSION_RATE).toFixed(3)),
         status,
       };
@@ -264,13 +283,14 @@ async function superAdminDashboard(req, res) {
     }));
 
     const caGlobal = Number(caTotal.rows[0].total || 0);
+    const caCommissionOnly = Number(caCommission.rows[0].total || 0);
 
     res.json({
       users_count: users.rows[0].count,
       products_count: products.rows[0].count,
       active_livraisons: activeL.rows[0].count,
       ca_total: caGlobal,
-      commissions: Number((caGlobal * COMMISSION_RATE).toFixed(3)),
+      commissions: Number((caCommissionOnly * COMMISSION_RATE).toFixed(3)),
       stock_alerts_count: alerts.rows[0].count,
       monthly_ca: buildMonthlyArray(caMap),
       monthly_labels: monthLabels(),
@@ -308,6 +328,12 @@ async function superAdminDashboard(req, res) {
         confirmed_at: r.confirmed_at,
         payment_requested_at: r.payment_requested_at,
         payment_confirmed_at: r.payment_confirmed_at,
+      })),
+      salaire_commerciaux: salaireCommerciaux.rows.map(r => ({
+        id: r.id,
+        full_name: r.full_name,
+        cloturees: r.cloturees,
+        actives: r.actives,
       })),
     });
   } catch (err) {

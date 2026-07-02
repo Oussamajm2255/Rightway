@@ -377,7 +377,7 @@ export default function CommercialsPage() {
     const totalLivs = historyData.length;
     const totalCloture = clôturéesOnly.length;
     const compl = totalLivs > 0 ? Math.round((totalCloture / totalLivs) * 100) : 0;
-    const totalComm = Number((totalCA * 0.10).toFixed(3));
+    const totalComm = clôturéesOnly.reduce((a, h) => a + (h.commission || 0), 0);
     const totalAvances = historyData.reduce((a, h) => a + (h.avances || 0), 0);
     const totalNet = totalCA - totalComm - totalAvances;
 
@@ -584,7 +584,7 @@ export default function CommercialsPage() {
                       <td className="comm-mono">{c.livraisons_total}</td>
                       <td><span className={`comm-badge ${statusBadgeClass(c.status)}`}>{c.livraisons_actives || 0}</span></td>
                       <td className="comm-mono" style={{ color: c.color, fontWeight: 600 }}>{fmtDTShort(c.ca_total)}</td>
-                      <td className="comm-mono" style={{ color: '#0f9e6a' }}>{fmtDTShort(c.ca_total * 0.1)}</td>
+                      <td className="comm-mono" style={{ color: '#0f9e6a' }}>{c.remuneration_type === 'SALAIRE' ? <em style={{fontSize:'11px',color:'var(--color-text-tertiary)'}}>Salaire</em> : fmtDTShort(c.commission)}</td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <div className="comm-mini-bar"><div className="comm-mini-bar-inner" style={{ width: `${c.completion}%`, background: '#0f9e6a' }} /></div>
@@ -723,7 +723,7 @@ export default function CommercialsPage() {
                       <tbody>
                         {[
                           { label: 'CA Total', fn: c => fmtDTShort(c.ca_total) },
-                          { label: 'Commission (10%)', fn: c => fmtDTShort(c.ca_total * 0.1) },
+                          { label: 'Commission (10%)', fn: c => c.remuneration_type === 'SALAIRE' ? 'Salaire' : fmtDTShort(c.commission) },
                           { label: 'Livraisons totales', fn: c => c.livraisons_total },
                           { label: 'Clôturées', fn: c => c.livraisons_cloturees },
                           { label: 'Annulées', fn: c => c.livraisons_annulees },
@@ -804,7 +804,7 @@ export default function CommercialsPage() {
                             </div>
                           </td>
                           <td className="comm-mono" style={{ fontWeight: 600 }}>{fmtDT(h.ca)}</td>
-                          <td className="comm-mono" style={{ color: '#0f9e6a' }}>{fmtDT(h.commission)}</td>
+                          <td className="comm-mono" style={{ color: '#0f9e6a' }}>{h.commercial_remuneration_type === 'SALAIRE' ? <em style={{fontSize:'11px',color:'var(--color-text-tertiary)'}}>Salaire</em> : fmtDT(h.commission)}</td>
                           <td className="comm-mono">{fmtDT(h.avances)}</td>
                           <td className="comm-mono" style={{ color: PALETTE[0] }}>{fmtDT(Math.max(0, h.net_a_reverser))}</td>
                           <td className="comm-mono">{h.duree}j</td>

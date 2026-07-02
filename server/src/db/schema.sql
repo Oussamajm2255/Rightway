@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
   vehicle_name VARCHAR(100),
   vehicle_plate VARCHAR(30),
   is_active BOOLEAN DEFAULT true,
+  remuneration_type VARCHAR(20) DEFAULT 'COMMISSION' CHECK (remuneration_type IN ('COMMISSION', 'SALAIRE')),
   failed_login_attempts INTEGER DEFAULT 0,
   locked_until TIMESTAMPTZ,
   last_login_at TIMESTAMPTZ,

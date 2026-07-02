@@ -147,6 +147,7 @@ function generateBonDeSortie(livraison) {
 // BON DE RETOUR
 // ============================================================
 function generateBonDeRetour(livraison) {
+  const isSalaire = livraison.commercial_remuneration_type === 'SALAIRE';
   const ca = livraison.items.reduce((sum, i) => sum + i.qte_vendue * Number(i.prix_ttc), 0);
   const commission = Number((ca * COMMISSION_RATE).toFixed(3));
   const net = Number((ca - commission).toFixed(3));
@@ -154,6 +155,21 @@ function generateBonDeRetour(livraison) {
     .filter(a => a.status === 'ACCEPTE')
     .reduce((sum, a) => sum + Number(a.amount), 0);
   const resteAPayer = Number((net - totalAvances).toFixed(3));
+
+  const financialStack = isSalaire
+    ? [
+        { text: [{ text: 'Total CA: ', bold: true }, formatDT(ca)], style: 'tableCell', margin: [0, 2] },
+        { text: [{ text: 'Salaire mensuel — pas de commission', italics: true }], style: 'tableCell', margin: [0, 2], color: '#6c757d' },
+      ]
+    : [
+        { text: [{ text: 'Total CA: ', bold: true }, formatDT(ca)], style: 'tableCell', margin: [0, 2] },
+        { text: [{ text: `Commission (${Math.round(COMMISSION_RATE * 100)}%): ` }, formatDT(commission)], style: 'tableCell', margin: [0, 2] },
+        { text: [{ text: 'Net à reverser: ', bold: true }, formatDT(net)], style: 'tableCell', margin: [0, 2] },
+        ...(totalAvances > 0 ? [
+          { text: [{ text: 'Avances acceptées: ' }, formatDT(totalAvances)], style: 'tableCell', margin: [4, 2, 0, 2], color: '#1a3c34' },
+          { text: [{ text: 'Reste à payer: ', bold: true }, formatDT(resteAPayer)], style: 'tableCell', margin: [0, 2] },
+        ] : []),
+      ];
 
   const docDefinition = {
     pageSize: 'A4',
@@ -201,15 +217,7 @@ function generateBonDeRetour(livraison) {
       // Financial summary
       { columns: [
         { width: '*', text: '' },
-        { width: 'auto', stack: [
-          { text: [{ text: 'Total CA: ', bold: true }, formatDT(ca)], style: 'tableCell', margin: [0, 2] },
-          { text: [{ text: `Commission (${Math.round(COMMISSION_RATE * 100)}%): ` }, formatDT(commission)], style: 'tableCell', margin: [0, 2] },
-          { text: [{ text: 'Net à reverser: ', bold: true }, formatDT(net)], style: 'tableCell', margin: [0, 2] },
-          ...(totalAvances > 0 ? [
-            { text: [{ text: 'Avances acceptées: ' }, formatDT(totalAvances)], style: 'tableCell', margin: [4, 2, 0, 2], color: '#1a3c34' },
-            { text: [{ text: 'Reste à payer: ', bold: true }, formatDT(resteAPayer)], style: 'tableCell', margin: [0, 2] },
-          ] : []),
-        ]},
+        { width: 'auto', stack: financialStack },
       ]},
 
       { text: '', margin: [0, 12] },
@@ -239,6 +247,7 @@ function generateBonDeRetour(livraison) {
 // DOSSIER COMPLET
 // ============================================================
 function generateDossierComplet(livraison, salesLog) {
+  const isSalaire = livraison.commercial_remuneration_type === 'SALAIRE';
   const ca = livraison.items.reduce((sum, i) => sum + i.qte_vendue * Number(i.prix_ttc), 0);
   const commission = Number((ca * COMMISSION_RATE).toFixed(3));
   const net = Number((ca - commission).toFixed(3));
@@ -249,6 +258,21 @@ function generateDossierComplet(livraison, salesLog) {
   const duration = livraison.closed_at
     ? Math.round((new Date(livraison.closed_at) - new Date(livraison.created_at)) / 3600000)
     : null;
+
+  const financialStack = isSalaire
+    ? [
+        { text: [{ text: 'CA Total: ', bold: true }, formatDT(ca)], margin: [0, 2] },
+        { text: [{ text: 'Salaire mensuel — pas de commission', italics: true }], margin: [0, 2], color: '#6c757d' },
+      ]
+    : [
+        { text: [{ text: 'CA Total: ', bold: true }, formatDT(ca)], margin: [0, 2] },
+        { text: [{ text: `Commission (${Math.round(COMMISSION_RATE * 100)}%): ` }, formatDT(commission)], margin: [0, 2] },
+        { text: [{ text: 'Net à reverser: ', bold: true }, formatDT(net)], margin: [0, 2] },
+        ...(totalAvances > 0 ? [
+          { text: [{ text: 'Avances acceptées: ' }, formatDT(totalAvances)], margin: [6, 2, 0, 2], color: '#1a3c34' },
+          { text: [{ text: 'Reste à payer: ', bold: true }, formatDT(resteAPayer)], margin: [0, 2] },
+        ] : []),
+      ];
 
   const content = [
     ...companyHeader(),
@@ -324,15 +348,7 @@ function generateDossierComplet(livraison, salesLog) {
     { text: '4. Résumé financier', style: 'sectionTitle' },
     { columns: [
       { width: '*', text: '' },
-      { width: 'auto', stack: [
-        { text: [{ text: 'CA Total: ', bold: true }, formatDT(ca)], margin: [0, 2] },
-        { text: [{ text: `Commission (${Math.round(COMMISSION_RATE * 100)}%): ` }, formatDT(commission)], margin: [0, 2] },
-        { text: [{ text: 'Net à reverser: ', bold: true }, formatDT(net)], margin: [0, 2] },
-        ...(totalAvances > 0 ? [
-          { text: [{ text: 'Avances acceptées: ' }, formatDT(totalAvances)], margin: [6, 2, 0, 2], color: '#1a3c34' },
-          { text: [{ text: 'Reste à payer: ', bold: true }, formatDT(resteAPayer)], margin: [0, 2] },
-        ] : []),
-      ]},
+      { width: 'auto', stack: financialStack },
     ]},
 
     { text: '', margin: [0, 15] },

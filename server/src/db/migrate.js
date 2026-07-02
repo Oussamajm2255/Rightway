@@ -9,6 +9,11 @@ const migrations = [
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER DEFAULT 0`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ`,
 
+  // Salaire vs Commission: commercial remuneration type
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS remuneration_type VARCHAR(20) DEFAULT 'COMMISSION'`,
+  `ALTER TABLE users DROP CONSTRAINT IF EXISTS users_remuneration_type_check`,
+  `ALTER TABLE users ADD CONSTRAINT users_remuneration_type_check CHECK (remuneration_type IN ('COMMISSION', 'SALAIRE'))`,
+
   // Prelevement (expense management — SUPER_ADMIN only)
   `CREATE TABLE IF NOT EXISTS prelevement_categories (
     id            SERIAL PRIMARY KEY,

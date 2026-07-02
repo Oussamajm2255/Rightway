@@ -109,6 +109,7 @@ async function updateUser(req, res) {
     if (req.body.vehicle_name !== undefined) fields.vehicle_name = req.body.vehicle_name;
     if (req.body.vehicle_plate !== undefined) fields.vehicle_plate = req.body.vehicle_plate;
     if (req.body.is_active !== undefined) fields.is_active = req.body.is_active;
+    if (req.body.remuneration_type !== undefined) fields.remuneration_type = req.body.remuneration_type;
 
     const updated = await userModel.update(id, fields);
     res.json({ user: updated });
