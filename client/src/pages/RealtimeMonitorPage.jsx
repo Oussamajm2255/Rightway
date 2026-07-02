@@ -96,9 +96,24 @@ export default function RealtimeMonitorPage() {
     if (!data?.categories || data.categories.length === 0) return;
 
     const categories = data.categories;
+    const barCount = categories.length;
+    const isMobile = window.innerWidth <= 640;
+
+    // Shorten labels on small screens so every bar fits
+    const MAX_LABEL = isMobile ? 16 : 24;
     const labels = categories.map((c) =>
-      c.name.length > 24 ? c.name.slice(0, 24) + '\u2026' : c.name
+      c.name.length > MAX_LABEL ? c.name.slice(0, MAX_LABEL) + '\u2026' : c.name
     );
+
+    // Dynamic height: each bar needs ~30px; enforce min so labels don't collide
+    const chartH = isMobile
+      ? Math.max(barCount * 28, 150)
+      : Math.max(barCount * 32, 200);
+
+    // Push height onto the wrapper
+    const wrap = chartRef.current?.parentElement;
+    if (wrap) wrap.style.height = chartH + 'px';
+
     const colors = categories.map((_, i) => CATEGORY_COLORS[i % CATEGORY_COLORS.length]);
     const soldData = categories.map((c) => c.sell_through_pct);
     const remData = categories.map((c) => 100 - c.sell_through_pct);
@@ -109,6 +124,9 @@ export default function RealtimeMonitorPage() {
       chartInstance.current.data.datasets[0].data = soldData;
       chartInstance.current.data.datasets[0].backgroundColor = colors;
       chartInstance.current.data.datasets[1].data = remData;
+      chartInstance.current.options.scales.y.ticks.font.size = isMobile ? 10 : 11;
+      chartInstance.current.data.datasets[0].barThickness = isMobile ? 14 : 18;
+      chartInstance.current.data.datasets[1].barThickness = isMobile ? 14 : 18;
       chartInstance.current.update();
       return;
     }
@@ -127,14 +145,14 @@ export default function RealtimeMonitorPage() {
             data: soldData,
             backgroundColor: colors,
             borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
-            barThickness: 18,
+            barThickness: isMobile ? 14 : 18,
           },
           {
             label: 'Restant %',
             data: remData,
             backgroundColor: 'rgba(0,0,0,0.06)',
             borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
-            barThickness: 18,
+            barThickness: isMobile ? 14 : 18,
           },
         ],
       },
@@ -178,8 +196,9 @@ export default function RealtimeMonitorPage() {
             grid: { display: false },
             border: { display: false },
             ticks: {
+              autoSkip: false,
               color: '#52566a',
-              font: { family: "'Inter', sans-serif", size: 11 },
+              font: { family: "'Inter', sans-serif", size: isMobile ? 10 : 11 },
             },
           },
         },

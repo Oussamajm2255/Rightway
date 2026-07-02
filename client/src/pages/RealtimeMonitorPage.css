@@ -388,7 +388,7 @@
   }
 
   .chart-wrap {
-    height: 200px;
+    /* height managed dynamically by JS based on category count */
   }
 
   .realtime-chart-panel {
@@ -474,7 +474,7 @@
   }
 
   .chart-wrap {
-    height: 180px;
+    /* height managed dynamically by JS based on category count */
   }
 
   .realtime-chart-panel {
@@ -582,7 +582,7 @@
   }
 
   .chart-wrap {
-    height: 160px;
+    /* height managed dynamically by JS based on category count */
   }
 
   .realtime-chart-panel {
