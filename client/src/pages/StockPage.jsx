@@ -309,11 +309,11 @@ function StockPage() {
               {stock.map((item) => {
                 const low = isLowStock(item.quantity);
                 return (
-                  <tr key={item.id} className={low ? 'row-alert' : ''} style={{ background: catColors(item.category || 'Sans catégorie').bg }}>
+                  <tr key={item.id} className={low ? 'row-alert' : ''} style={{ borderLeftColor: catColors(item.category || 'Sans catégorie').bar }}>
                     <td className="td-code">{item.id}</td>
                     <td>{item.barcode}</td>
                     <td className="td-name">{item.name}</td>
-                    <td><span className="category-tag">{item.category || '—'}</span></td>
+                    <td><span className="cat-pill" style={{ background: catColors(item.category || 'Sans catégorie').bg, color: catColors(item.category || 'Sans catégorie').text }}>{item.category || 'Sans catégorie'}</span></td>
                     <td className="td-price">{formatDT(item.selling_price_ttc)}</td>
                     <td className={`td-qty ${low ? 'qty-low' : ''}`}>
                       {item.quantity}
@@ -664,14 +664,14 @@ function StockPage() {
                 </thead>
                 <tbody>
                   {movements.map((m) => (
-                    <tr key={m.id} style={{ background: catColors(m.product_category || 'Sans catégorie').bg }}>
+                    <tr key={m.id} style={{ borderLeftColor: catColors(m.product_category || 'Sans catégorie').bar }}>
                       <td className="td-date">
                         {m.movement_date
                           ? formatDate(m.movement_date)
                           : formatDate(m.created_at)}
                       </td>
                       <td className="td-name">{m.product_name}</td>
-                      <td>{m.product_category || '—'}</td>
+                      <td><span className="cat-pill" style={{ background: catColors(m.product_category || 'Sans catégorie').bg, color: catColors(m.product_category || 'Sans catégorie').text }}>{m.product_category || 'Sans catégorie'}</span></td>
                       <td>
                         <span className={`movement-badge ${m.quantity > 0 ? 'movement-add' : 'movement-remove'}`}>
                           {m.quantity > 0 ? 'Ajout' : 'Retrait'}

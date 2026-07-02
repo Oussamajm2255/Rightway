@@ -141,13 +141,15 @@ function ProductsPage() {
               </tr>
             </thead>
             <tbody>
-              {products.map((product) => (
-                <tr key={product.id} className={!product.is_active ? 'row-inactive' : ''} style={{ background: catColors(product.category || 'Sans catégorie').bg }}>
+              {products.map((product) => {
+                const catCol = catColors(product.category || 'Sans catégorie');
+                return (
+                <tr key={product.id} className={!product.is_active ? 'row-inactive' : ''} style={{ borderLeftColor: catCol.bar }}>
                   <td className="td-code">{product.id}</td>
                   <td>{product.barcode}</td>
                   <td className="td-name">{product.name}</td>
                   <td>
-                    <span className="category-tag">{product.category || '—'}</span>
+                    <span className="cat-pill" style={{ background: catCol.bg, color: catCol.text }}>{product.category || 'Sans catégorie'}</span>
                   </td>
                   <td className="td-price">{formatDT(product.purchase_price)}</td>
                   <td className="td-price">{formatDT(product.selling_price_ttc)}</td>
@@ -172,7 +174,8 @@ function ProductsPage() {
                     )}
                   </td>
                 </tr>
-              ))}
+              );
+            })}
             </tbody>
           </table>
         </div>

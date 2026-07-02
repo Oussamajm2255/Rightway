@@ -317,9 +317,9 @@ function CreateLivraisonPage() {
                 {getSelectedProducts().map((p) => {
                   const cat = p.category || 'Sans catégorie';
                   return (
-                    <tr key={p.id} style={{ background: catColors(cat).bg }}>
+                    <tr key={p.id} style={{ borderLeftColor: catColors(cat).bar }}>
                       <td className="td-code">{p.barcode || p.id}</td>
-                      <td>{p.category || '—'}</td>
+                      <td><span className="cat-pill" style={{ background: catColors(cat).bg, color: catColors(cat).text }}>{p.category || 'Sans catégorie'}</span></td>
                       <td>{p.name}</td>
                       <td className="td-price">{formatDT(p.selling_price_ttc)}</td>
                       <td className="td-qty">{selectedItems[p.id]}</td>

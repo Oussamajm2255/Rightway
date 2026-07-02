@@ -148,7 +148,7 @@ function HistoriquePage() {
                   return (
                   <Fragment key={cat}>
                     {catItems.map((item) => (
-                    <tr key={item.id} style={{ background: catCol.bg }}>
+                    <tr key={item.id} style={{ borderLeftColor: catCol.bar }}>
                       <td className="td-code">{item.product_id}</td>
                       <td>{item.product_name}</td>
                       <td>{item.qte_chargee}</td>
@@ -203,7 +203,7 @@ function HistoriquePage() {
                   <Fragment key={cat}>
                     {catItems.map((item) => {
                       const retour = item.qte_chargee - item.qte_vendue;
-                      return <tr key={item.id} style={{ background: catCol.bg }}>
+                      return <tr key={item.id} style={{ borderLeftColor: catCol.bar }}>
                         <td className="td-code">{item.product_id}</td>
                         <td>{item.product_name}</td>
                         <td>{item.qte_chargee}</td>
