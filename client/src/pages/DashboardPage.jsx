@@ -575,9 +575,8 @@ function CommercialView({ data, navigate, user }) {
       <DashboardTopbar subtitle={`Bonjour ${firstName} 👋`} user={user} />
       <div className="dash-content">
         {/* KPI Row */}
-        <div className="kpi-grid kpi-grid-5">
+        <div className="kpi-grid kpi-grid-4">
           <KpiCard icon={Icons.dollar} label="Mon CA Total" value={fmtDT(data.ca_total)} sub="livraisons clôturées" color={PALETTE.blue} />
-          <KpiCard icon={Icons.percent} label="Ma Commission" value={fmtDT(data.commission)} sub="10% du CA" color={PALETTE.green} />
           <KpiCard icon={Icons.pie} label="Taux complétion" value={<span style={{color:PALETTE.purple}}>{data.completion_rate}%</span>} sub={`${data.completion_details?.cloturees || 0} / ${data.completion_details?.total || 0} livraisons`} color={PALETTE.purple} />
           <KpiCard icon={Icons.truck} label="En tournée" value={fmtInt(data.en_tournee)} sub="active" color={PALETTE.orange} onClick={() => navigate('/livraisons')} />
           <KpiCard icon={Icons.wallet} label="Avances acceptées" value={fmtDT(data.avances_acceptees)} sub="total" color={PALETTE.amber} />
