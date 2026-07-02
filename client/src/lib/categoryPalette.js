@@ -1,12 +1,12 @@
 // ─── Curated category colour map ───
 export const CAT_PALETTE = {
-  'Épicerie':          { bg: 'rgba(42,120,214,.1)',   text: '#1a58a6', bar: '#2a78d6' },
-  'Boissons':          { bg: 'rgba(8,145,178,.1)',    text: '#066d8f', bar: '#0891b2' },
-  'Produits Laitiers': { bg: 'rgba(15,158,106,.1)',   text: '#0a7a51', bar: '#0f9e6a' },
-  'Hygiène':           { bg: 'rgba(124,58,237,.1)',   text: '#5b1fcf', bar: '#7c3aed' },
-  'Nettoyage':         { bg: 'rgba(217,89,38,.1)',    text: '#a0390a', bar: '#d95926' },
-  'Confiserie':        { bg: 'rgba(219,39,119,.1)',   text: '#9d1560', bar: '#db2777' },
-  'Conserves':         { bg: 'rgba(201,133,0,.1)',    text: '#835800', bar: '#c98500' },
+  'Épicerie':          { bg: 'rgba(42,120,214,.055)',   text: '#0f3d7a', bar: '#2a78d6' },
+  'Boissons':          { bg: 'rgba(8,145,178,.055)',    text: '#044b63', bar: '#0891b2' },
+  'Produits Laitiers': { bg: 'rgba(15,158,106,.055)',   text: '#065535', bar: '#0f9e6a' },
+  'Hygiène':           { bg: 'rgba(124,58,237,.055)',   text: '#3d148c', bar: '#7c3aed' },
+  'Nettoyage':         { bg: 'rgba(217,89,38,.055)',    text: '#702707', bar: '#d95926' },
+  'Confiserie':        { bg: 'rgba(219,39,119,.055)',   text: '#6e0e43', bar: '#db2777' },
+  'Conserves':         { bg: 'rgba(201,133,0,.055)',    text: '#5c3d00', bar: '#c98500' },
 };
 
 // ─── Auto-generated colours for categories not in the curated list ───
@@ -25,8 +25,8 @@ function autoPalette(cat) {
   const s = 60 + (Math.abs(hash >> 2) % 16); // 60–75 % saturation
 
   return {
-    bg:  `hsla(${h},${s}%,50%,.12)`,
-    text: `hsl(${h},${s}%,33%)`,
+    bg:  `hsla(${h},${s}%,50%,.06)`,
+    text: `hsl(${h},${s}%,22%)`,
     bar:  `hsl(${h},${s}%,46%)`,
   };
 }

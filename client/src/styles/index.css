@@ -619,7 +619,6 @@ textarea.form-input {
 }
 
 .data-table tbody tr {
-  background: var(--color-bg);
   border-left: 4px solid transparent;
   transition: background var(--transition-fast), border-color var(--transition-fast);
 }
@@ -630,11 +629,6 @@ textarea.form-input {
 
 .data-table tbody tr:last-child td {
   border-bottom: none;
-}
-
-/* protect category subtotal footer rows from left-border accent */
-.data-table tbody tr.cat-subtotal {
-  border-left: none;
 }
 
 .data-table tfoot td {

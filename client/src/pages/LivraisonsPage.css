@@ -135,14 +135,13 @@
 
 /* ===== Category Subtotal Footer Row ===== */
 .cat-subtotal {
-  border-top: 2px solid var(--color-border);
-  font-weight: var(--weight-semibold);
+  border-top: 2px solid var(--color-border-strong);
+  font-weight: var(--weight-bold);
   font-size: var(--text-sm);
-  background: var(--color-surface);
+  background: #F1F3F5;
 }
-.cat-subtotal td:first-child {
-  color: var(--color-text-secondary);
-  padding-left: var(--space-2);
+.cat-subtotal td {
+  font-weight: var(--weight-bold);
 }
 
 .timeline-step.current .timeline-label {

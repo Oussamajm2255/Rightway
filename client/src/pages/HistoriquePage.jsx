@@ -148,7 +148,7 @@ function HistoriquePage() {
                   return (
                   <Fragment key={cat}>
                     {catItems.map((item) => (
-                    <tr key={item.id} style={{ borderLeftColor: catCol.bar }}>
+                    <tr key={item.id} style={{ background: catCol.bg, borderLeftColor: catCol.bar }}>
                       <td className="td-code">{item.product_id}</td>
                       <td>{item.product_name}</td>
                       <td>{item.qte_chargee}</td>
@@ -156,7 +156,7 @@ function HistoriquePage() {
                       <td className="td-price">{formatDT(item.qte_chargee * Number(item.prix_ttc))}</td>
                     </tr>
                     ))}
-                    <tr className="cat-subtotal">
+                    <tr className="cat-subtotal" style={{ background: catCol.bg, borderLeftColor: catCol.bar, borderTopColor: catCol.bar }}>
                       <td colSpan="2" style={{ color: catCol.text }}>Sous-total {cat}</td>
                       <td className="td-qty">{catItems.reduce((s,i) => s + i.qte_chargee, 0)}</td>
                       <td></td>
@@ -203,7 +203,7 @@ function HistoriquePage() {
                   <Fragment key={cat}>
                     {catItems.map((item) => {
                       const retour = item.qte_chargee - item.qte_vendue;
-                      return <tr key={item.id} style={{ borderLeftColor: catCol.bar }}>
+                      return <tr key={item.id} style={{ background: catCol.bg, borderLeftColor: catCol.bar }}>
                         <td className="td-code">{item.product_id}</td>
                         <td>{item.product_name}</td>
                         <td>{item.qte_chargee}</td>
@@ -212,7 +212,7 @@ function HistoriquePage() {
                         <td className="td-price">{formatDT(item.qte_vendue * Number(item.prix_ttc))}</td>
                       </tr>;
                     })}
-                    <tr className="cat-subtotal">
+                    <tr className="cat-subtotal" style={{ background: catCol.bg, borderLeftColor: catCol.bar, borderTopColor: catCol.bar }}>
                       <td colSpan="2" style={{ color: catCol.text }}>Sous-total {cat}</td>
                       <td className="td-qty">{catItems.reduce((s,i) => s + i.qte_chargee, 0)}</td>
                       <td className="td-qty">{catItems.reduce((s,i) => s + i.qte_vendue, 0)}</td>

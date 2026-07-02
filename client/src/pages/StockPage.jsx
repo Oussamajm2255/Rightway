@@ -309,7 +309,7 @@ function StockPage() {
               {stock.map((item) => {
                 const low = isLowStock(item.quantity);
                 return (
-                  <tr key={item.id} className={low ? 'row-alert' : ''} style={{ borderLeftColor: catColors(item.category || 'Sans catégorie').bar }}>
+                  <tr key={item.id} className={low ? 'row-alert' : ''} style={{ background: catColors(item.category || 'Sans catégorie').bg, borderLeftColor: catColors(item.category || 'Sans catégorie').bar }}>
                     <td className="td-code">{item.id}</td>
                     <td>{item.barcode}</td>
                     <td className="td-name">{item.name}</td>
@@ -664,7 +664,7 @@ function StockPage() {
                 </thead>
                 <tbody>
                   {movements.map((m) => (
-                    <tr key={m.id} style={{ borderLeftColor: catColors(m.product_category || 'Sans catégorie').bar }}>
+                    <tr key={m.id} style={{ background: catColors(m.product_category || 'Sans catégorie').bg, borderLeftColor: catColors(m.product_category || 'Sans catégorie').bar }}>
                       <td className="td-date">
                         {m.movement_date
                           ? formatDate(m.movement_date)

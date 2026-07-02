@@ -144,7 +144,7 @@ function ProductsPage() {
               {products.map((product) => {
                 const catCol = catColors(product.category || 'Sans catégorie');
                 return (
-                <tr key={product.id} className={!product.is_active ? 'row-inactive' : ''} style={{ borderLeftColor: catCol.bar }}>
+                <tr key={product.id} className={!product.is_active ? 'row-inactive' : ''} style={{ background: catCol.bg, borderLeftColor: catCol.bar }}>
                   <td className="td-code">{product.id}</td>
                   <td>{product.barcode}</td>
                   <td className="td-name">{product.name}</td>

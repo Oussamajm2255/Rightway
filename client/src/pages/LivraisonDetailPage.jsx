@@ -959,7 +959,7 @@ function LivraisonDetailPage() {
                     {catItems.map((item) => {
                       const qte_retour = item.qte_chargee - item.qte_vendue;
                       return (
-                      <tr key={item.id} style={{ borderLeftColor: catCol.bar }}>
+                      <tr key={item.id} style={{ background: catCol.bg, borderLeftColor: catCol.bar }}>
                         <td className="td-code">{item.product_id}</td>
                         <td><span className="cat-pill" style={{ background: catCol.bg, color: catCol.text }}>{item.category || 'Sans catégorie'}</span></td>
                         <td>{item.product_name}</td>
@@ -971,7 +971,7 @@ function LivraisonDetailPage() {
                       </tr>
                       );
                     })}
-                    <tr className="cat-subtotal">
+                    <tr className="cat-subtotal" style={{ background: catCol.bg, borderLeftColor: catCol.bar, borderTopColor: catCol.bar }}>
                       <td colSpan="3" style={{ color: catCol.text }}>
                         Sous-total {cat}
                       </td>
@@ -1148,7 +1148,7 @@ function LivraisonDetailPage() {
                 return (
                 <Fragment key={cat}>
                   {catItems.map((item) => (
-                  <tr key={item.id} style={{ borderLeftColor: catCol.bar }}>
+                  <tr key={item.id} style={{ background: catCol.bg, borderLeftColor: catCol.bar }}>
                     <td className="td-code">{item.product_id}</td>
                     <td><span className="cat-pill" style={{ background: catCol.bg, color: catCol.text }}>{item.category || 'Sans catégorie'}</span></td>
                     <td>{item.product_name}</td>
@@ -1157,7 +1157,7 @@ function LivraisonDetailPage() {
                     {(isEnCours || isEnRetour || isCloture) && <td className="td-qty">{item.qte_vendue}</td>}
                   </tr>
                   ))}
-                  <tr className="cat-subtotal">
+                  <tr className="cat-subtotal" style={{ background: catCol.bg, borderLeftColor: catCol.bar, borderTopColor: catCol.bar }}>
                     <td colSpan="4" style={{ color: catCol.text }}>
                       Sous-total {cat}
                     </td>
@@ -1239,7 +1239,7 @@ function LivraisonDetailPage() {
                   {livraison.items.filter(i => i.qte_vendue > 0).map((item) => {
                       const cat = item.category || 'Sans catégorie';
                       return (
-                    <tr key={item.id} style={{ borderLeftColor: catColors(cat).bar }}>
+                    <tr key={item.id} style={{ background: catColors(cat).bg, borderLeftColor: catColors(cat).bar }}>
                       <td>{item.product_name}</td>
                       <td className="td-qty">{item.qte_vendue}</td>
                       <td className="td-price">{formatDT(item.prix_ttc)}</td>
@@ -1363,7 +1363,7 @@ function LivraisonDetailPage() {
                   {terminerSummary.summary.map((s) => {
                       const cat = s.category || 'Sans catégorie';
                       return (
-                    <tr key={s.product_id} style={{ borderLeftColor: catColors(cat).bar }}>
+                    <tr key={s.product_id} style={{ background: catColors(cat).bg, borderLeftColor: catColors(cat).bar }}>
                       <td>{s.product_name}</td>
                       <td className="td-qty">{s.qte_chargee}</td>
                       <td className="td-qty">{s.qte_vendue}</td>
