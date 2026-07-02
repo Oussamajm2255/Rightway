@@ -1197,14 +1197,17 @@ function LivraisonDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {livraison.items.filter(i => i.qte_vendue > 0).map((item) => (
-                    <tr key={item.id}>
+                  {livraison.items.filter(i => i.qte_vendue > 0).map((item) => {
+                      const cat = item.category || 'Sans catégorie';
+                      return (
+                    <tr key={item.id} style={{ background: catColors(cat).bg }}>
                       <td>{item.product_name}</td>
                       <td className="td-qty">{item.qte_vendue}</td>
                       <td className="td-price">{formatDT(item.prix_ttc)}</td>
                       <td className="td-price">{formatDT(item.qte_vendue * Number(item.prix_ttc))}</td>
                     </tr>
-                  ))}
+                      );
+                    })}
                   {livraison.items.filter(i => i.qte_vendue > 0).length === 0 && (
                     <tr><td colSpan="4" style={{ textAlign: 'center', color: 'var(--color-text-muted)' }}>Aucune vente enregistrée</td></tr>
                   )}
@@ -1318,15 +1321,18 @@ function LivraisonDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {terminerSummary.summary.map((s) => (
-                    <tr key={s.product_id}>
+                  {terminerSummary.summary.map((s) => {
+                      const cat = s.category || 'Sans catégorie';
+                      return (
+                    <tr key={s.product_id} style={{ background: catColors(cat).bg }}>
                       <td>{s.product_name}</td>
                       <td className="td-qty">{s.qte_chargee}</td>
                       <td className="td-qty">{s.qte_vendue}</td>
                       <td className="td-qty">{s.qte_retour}</td>
                       <td className="td-price">{formatDT(s.montant_vendu)}</td>
                     </tr>
-                  ))}
+                      );
+                    })}
                 </tbody>
               </table>
             </div>

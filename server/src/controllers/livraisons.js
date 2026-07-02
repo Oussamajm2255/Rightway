@@ -117,6 +117,7 @@ async function terminerLivraison(req, res) {
     await notificationModel.create(result.livraison.admin_id, `Livraison ${result.livraison.reference} de ${req.user.full_name} terminée. Retour en cours.`, result.livraison.id);
     const summary = result.livraison.items.map((item) => ({
       product_id: item.product_id, product_name: item.product_name, barcode: item.barcode,
+      category: item.category,
       qte_chargee: item.qte_chargee, qte_vendue: item.qte_vendue, qte_retour: item.qte_chargee - item.qte_vendue,
       prix_ttc: item.prix_ttc, montant_vendu: Number((item.qte_vendue * Number(item.prix_ttc)).toFixed(3)),
     }));

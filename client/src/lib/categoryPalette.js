@@ -10,20 +10,22 @@ export const CAT_PALETTE = {
 };
 
 // ─── Auto-generated colours for categories not in the curated list ───
+// 12 hues × 3 saturation levels = 36 unique colours — virtually collision-free
 
-/** Hash a string to a stable hue 0–360 so every category gets a distinct colour. */
-function hashHue(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) hash = (hash * 31 + str.charCodeAt(i)) | 0;
-  return Math.abs(hash) % 360;
-}
+const HUES = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
+const SATS = [50, 62, 74];
+const PALETTE_SIZE = HUES.length * SATS.length; // 36
 
 function autoPalette(cat) {
-  const h = hashHue(cat);
+  let hash = 0;
+  for (let i = 0; i < cat.length; i++) hash = (hash * 31 + cat.charCodeAt(i)) | 0;
+  const idx = Math.abs(hash) % PALETTE_SIZE;
+  const h = HUES[Math.floor(idx / SATS.length)];
+  const s = SATS[idx % SATS.length];
   return {
-    bg:  `hsla(${h},58%,54%,.1)`,
-    text: `hsl(${h},58%,34%)`,
-    bar:  `hsl(${h},58%,45%)`,
+    bg:  `hsla(${h},${s}%,54%,.1)`,
+    text: `hsl(${h},${s}%,34%)`,
+    bar:  `hsl(${h},${s}%,48%)`,
   };
 }
 
