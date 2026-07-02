@@ -1,14 +1,15 @@
 // ─── Curated category colour map ───
 // 7 categories, each drawn from a non-overlapping region of the colour wheel.
-// bg = solid pastel (row background + pill fill), text/bar = bold saturated accent.
+// bg = visible pastel (T100 shades → ~10-15% saturated), text = T800 (dark), bar = T600 (vivid).
+// No two colours can be confused — hues span 0deg→270deg with wide gaps.
 export const CAT_PALETTE = {
-  'Confiserie':        { bg: '#FEF2F2', text: '#B91C1C', bar: '#B91C1C' },  // Scarlet (Red     ~0deg)
-  'Nettoyage':         { bg: '#FFF7ED', text: '#C2410C', bar: '#C2410C' },  // Tangerine (Orange  ~25deg)
-  'Épicerie':          { bg: '#FFFBEB', text: '#B45309', bar: '#B45309' },  // Honey (Amber      ~45deg)
-  'Produits Laitiers': { bg: '#ECFDF5', text: '#047857', bar: '#047857' },  // Emerald (Green     ~160deg)
-  'Boissons':          { bg: '#ECFEFF', text: '#0E7490', bar: '#0E7490' },  // Teal (Cyan        ~195deg)
-  'Hygiène':           { bg: '#EFF6FF', text: '#1D4ED8', bar: '#1D4ED8' },  // Sapphire (Blue     ~225deg)
-  'Conserves':         { bg: '#F5F3FF', text: '#6D28D9', bar: '#6D28D9' },  // Amethyst (Violet   ~270deg)
+  'Confiserie':        { bg: '#FEE2E2', text: '#991B1B', bar: '#DC2626' },  // Red
+  'Nettoyage':         { bg: '#FFEDD5', text: '#9A3412', bar: '#EA580C' },  // Orange
+  'Épicerie':          { bg: '#FEF3C7', text: '#92400E', bar: '#D97706' },  // Amber
+  'Produits Laitiers': { bg: '#D1FAE5', text: '#065F46', bar: '#059669' },  // Green
+  'Boissons':          { bg: '#CFFAFE', text: '#155E75', bar: '#0891B2' },  // Teal
+  'Hygiène':           { bg: '#DBEAFE', text: '#1E40AF', bar: '#2563EB' },  // Blue
+  'Conserves':         { bg: '#EDE9FE', text: '#5B21B6', bar: '#7C3AED' },  // Violet
 };
 
 // ─── Auto-generated colours for categories not in the curated list ───
