@@ -185,6 +185,10 @@
   cursor: pointer;
   user-select: none;
   transition: background var(--transition-fast);
+  position: sticky;
+  top: 64px;
+  z-index: 40;
+  background: var(--color-surface);
 }
 .sales-cat-header:hover { background: var(--color-surface-hover); }
 .sales-cat-header-icon {
@@ -541,6 +545,7 @@
     background: rgba(255,255,255,.95);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 1px 0 var(--color-border), 0 4px 8px rgba(0,0,0,.04);
   }
 }
 
