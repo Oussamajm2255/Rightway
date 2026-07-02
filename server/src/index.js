@@ -74,9 +74,9 @@ app.use(helmet({
       scriptSrc: isProduction
         ? ["'self'"]                          // production build has no inline scripts
         : ["'self'", "'unsafe-inline'"],      // Vite HMR requires inline in development
-      styleSrc: ["'self'", "'unsafe-inline'"], // React style={{}} requires inline style attributes
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'], // React style={{}} requires inline style attributes
       imgSrc: ["'self'", 'data:', 'blob:'],
-      fontSrc: ["'self'"],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
       connectSrc: ["'self'"],
       frameAncestors: ["'none'"],
       formAction: ["'self'"],
