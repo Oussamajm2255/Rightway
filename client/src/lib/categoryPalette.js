@@ -1,15 +1,15 @@
 // ─── Curated category colour map ───
 // 7 categories, each drawn from a non-overlapping region of the colour wheel.
-// bg = visible pastel (T100 shades → ~10-15% saturated), text = T800 (dark), bar = T600 (vivid).
-// No two colours can be confused — hues span 0deg→270deg with wide gaps.
+// bg = T200 visibly-tinted pastel (~20-35% saturation), text = T900 near-black, bar = T500 vivid.
+// No two colours can be confused — hues span 0deg→270deg with ~45deg gaps.
 export const CAT_PALETTE = {
-  'Confiserie':        { bg: '#FEE2E2', text: '#991B1B', bar: '#DC2626' },  // Red
-  'Nettoyage':         { bg: '#FFEDD5', text: '#9A3412', bar: '#EA580C' },  // Orange
-  'Épicerie':          { bg: '#FEF3C7', text: '#92400E', bar: '#D97706' },  // Amber
-  'Produits Laitiers': { bg: '#D1FAE5', text: '#065F46', bar: '#059669' },  // Green
-  'Boissons':          { bg: '#CFFAFE', text: '#155E75', bar: '#0891B2' },  // Teal
-  'Hygiène':           { bg: '#DBEAFE', text: '#1E40AF', bar: '#2563EB' },  // Blue
-  'Conserves':         { bg: '#EDE9FE', text: '#5B21B6', bar: '#7C3AED' },  // Violet
+  'Confiserie':        { bg: '#FECACA', text: '#7F1D1D', bar: '#EF4444' },  // Red
+  'Nettoyage':         { bg: '#FED7AA', text: '#7C2D12', bar: '#F97316' },  // Orange
+  'Épicerie':          { bg: '#FDE68A', text: '#78350F', bar: '#F59E0B' },  // Amber
+  'Produits Laitiers': { bg: '#A7F3D0', text: '#064E3B', bar: '#10B981' },  // Green
+  'Boissons':          { bg: '#A5F3FC', text: '#164E63', bar: '#06B6D4' },  // Teal
+  'Hygiène':           { bg: '#BFDBFE', text: '#1E3A8A', bar: '#3B82F6' },  // Blue
+  'Conserves':         { bg: '#DDD6FE', text: '#4C1D95', bar: '#8B5CF6' },  // Violet
 };
 
 // ─── Auto-generated colours for categories not in the curated list ───
@@ -28,9 +28,9 @@ function autoPalette(cat) {
   const s = 60 + (Math.abs(hash >> 2) % 16); // 60–75 % saturation
 
   return {
-    bg:  `hsla(${h},${s}%,50%,.06)`,
-    text: `hsl(${h},${s}%,22%)`,
-    bar:  `hsl(${h},${s}%,46%)`,
+    bg:  `hsl(${h},${s}%,88%)`,
+    text: `hsl(${h},${s}%,18%)`,
+    bar:  `hsl(${h},${s}%,50%)`,
   };
 }
 
