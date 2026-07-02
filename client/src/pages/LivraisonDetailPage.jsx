@@ -534,7 +534,7 @@ function LivraisonDetailPage() {
           { label: 'Créé', date: livraison.created_at, done: true },
           { label: 'Confirmé', date: livraison.confirmed_by_commercial_at, done: !!livraison.confirmed_by_commercial_at },
           { label: 'En cours', date: null, done: isEnCours || isEnRetour || isEnAttenteAnnulation || isAnnule || isCloture },
-          { label: 'Retour', date: livraison.end_declared_at, done: isEnRetour || isAnnule || isCloture },
+          { label: 'Retour', date: livraison.end_declared_at, done: isEnRetour || isCloture },
           { label: isAnnule ? 'Annulé' : 'Clôturé', date: livraison.closed_at, done: isAnnule || isCloture },
         ].map((s, i, arr) => (
           <span key={s.label} className={`timeline-step ${s.done ? 'current' : ''}`}>
