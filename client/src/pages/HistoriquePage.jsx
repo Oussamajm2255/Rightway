@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { apiGet, openPdf } from '../lib/api';
 import { formatDate as fmtDate, formatDateTime } from '../lib/utils';
+import { catColors } from '../lib/categoryPalette';
 import './HistoriquePage.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
@@ -137,7 +138,7 @@ function HistoriquePage() {
               <thead><tr><th>Code</th><th>Produit</th><th>Qté Chargée</th><th>PU TTC</th><th>Total</th></tr></thead>
               <tbody>
                 {selectedDossier.livraison.items.map((item) => (
-                  <tr key={item.id}><td className="td-code">{item.product_id}</td><td>{item.product_name}</td><td>{item.qte_chargee}</td><td>{formatDT(item.prix_ttc)}</td><td className="td-price">{formatDT(item.qte_chargee * Number(item.prix_ttc))}</td></tr>
+                  <tr key={item.id} style={{ background: catColors(item.category || 'Sans catégorie').bg }}><td className="td-code">{item.product_id}</td><td>{item.product_name}</td><td>{item.qte_chargee}</td><td>{formatDT(item.prix_ttc)}</td><td className="td-price">{formatDT(item.qte_chargee * Number(item.prix_ttc))}</td></tr>
                 ))}
               </tbody>
             </table></div>
@@ -167,7 +168,7 @@ function HistoriquePage() {
               <tbody>
                 {selectedDossier.livraison.items.map((item) => {
                   const retour = item.qte_chargee - item.qte_vendue;
-                  return <tr key={item.id}><td className="td-code">{item.product_id}</td><td>{item.product_name}</td><td>{item.qte_chargee}</td><td>{item.qte_vendue}</td><td className={retour > 0 ? 'td-qty' : ''}>{retour}</td><td className="td-price">{formatDT(item.qte_vendue * Number(item.prix_ttc))}</td></tr>;
+                  return <tr key={item.id} style={{ background: catColors(item.category || 'Sans catégorie').bg }}><td className="td-code">{item.product_id}</td><td>{item.product_name}</td><td>{item.qte_chargee}</td><td>{item.qte_vendue}</td><td className={retour > 0 ? 'td-qty' : ''}>{retour}</td><td className="td-price">{formatDT(item.qte_vendue * Number(item.prix_ttc))}</td></tr>;
                 })}
               </tbody>
             </table></div>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiGet, apiPut, apiPost, apiDelete } from '../lib/api';
+import { catColors } from '../lib/categoryPalette';
 import './ProductsPage.css';
 
 function formatDT(value) {
@@ -141,7 +142,7 @@ function ProductsPage() {
             </thead>
             <tbody>
               {products.map((product) => (
-                <tr key={product.id} className={!product.is_active ? 'row-inactive' : ''}>
+                <tr key={product.id} className={!product.is_active ? 'row-inactive' : ''} style={{ background: catColors(product.category || 'Sans catégorie').bg }}>
                   <td className="td-code">{product.id}</td>
                   <td>{product.barcode}</td>
                   <td className="td-name">{product.name}</td>

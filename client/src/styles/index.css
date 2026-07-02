@@ -703,16 +703,8 @@ textarea.form-input {
 }
 
 /* Category row coloring — cycles 5 subtle pastels */
-.cat-row-0 { background: #f0f4ff; }
-.cat-row-0:hover { background: #e4ecfd; }
-.cat-row-1 { background: #f0faf4; }
-.cat-row-1:hover { background: #e2f5ea; }
-.cat-row-2 { background: #fefce8; }
-.cat-row-2:hover { background: #fdf7cf; }
-.cat-row-3 { background: #f8f5ff; }
-.cat-row-3:hover { background: #efe8fd; }
-.cat-row-4 { background: #fff5f5; }
-.cat-row-4:hover { background: #fde8e8; }
+/* ===== Category row coloring now uses inline styles via catColors() from categoryPalette.js ===== */
+
 
 .clickable-row:hover {
   background: var(--color-primary-subtle);

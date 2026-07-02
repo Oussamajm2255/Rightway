@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiGet, apiPut } from '../lib/api';
 import { formatDate } from '../lib/utils';
+import { catColors } from '../lib/categoryPalette';
 import { useAuth } from '../context/AuthContext';
 import './StockPage.css';
 
@@ -308,7 +309,7 @@ function StockPage() {
               {stock.map((item) => {
                 const low = isLowStock(item.quantity);
                 return (
-                  <tr key={item.id} className={low ? 'row-alert' : ''}>
+                  <tr key={item.id} className={low ? 'row-alert' : ''} style={{ background: catColors(item.category || 'Sans catégorie').bg }}>
                     <td className="td-code">{item.id}</td>
                     <td>{item.barcode}</td>
                     <td className="td-name">{item.name}</td>
@@ -658,7 +659,7 @@ function StockPage() {
                 </thead>
                 <tbody>
                   {movements.map((m) => (
-                    <tr key={m.id}>
+                    <tr key={m.id} style={{ background: catColors(m.product_category || 'Sans catégorie').bg }}>
                       <td className="td-date">
                         {m.movement_date
                           ? formatDate(m.movement_date)

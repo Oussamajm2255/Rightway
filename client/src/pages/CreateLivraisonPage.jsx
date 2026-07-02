@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet, apiPost } from '../lib/api';
+import { catColors } from '../lib/categoryPalette';
 import './CreateLivraisonPage.css';
 
 function IconCarton() {
@@ -81,19 +82,6 @@ function CreateLivraisonPage() {
 
   function getSelectedProducts() {
     return stock.filter((s) => selectedItems[s.id] && selectedItems[s.id] > 0);
-  }
-
-  function getCategoryColorIndex(products) {
-    const map = {};
-    let idx = 0;
-    for (const p of products) {
-      const cat = p.category || 'Sans catégorie';
-      if (!(cat in map)) {
-        map[cat] = idx % 5;
-        idx++;
-      }
-    }
-    return map;
   }
 
   function getTotal() {
@@ -326,11 +314,10 @@ function CreateLivraisonPage() {
                 </tr>
               </thead>
               <tbody>
-                {(() => {
-                  const selected = getSelectedProducts();
-                  const catColors = getCategoryColorIndex(selected);
-                  return selected.map((p) => (
-                    <tr key={p.id} className={`cat-row-${catColors[p.category || 'Sans catégorie']}`}>
+                {getSelectedProducts().map((p) => {
+                  const cat = p.category || 'Sans catégorie';
+                  return (
+                    <tr key={p.id} style={{ background: catColors(cat).bg }}>
                       <td className="td-code">{p.barcode || p.id}</td>
                       <td>{p.category || '—'}</td>
                       <td>{p.name}</td>
@@ -338,8 +325,8 @@ function CreateLivraisonPage() {
                       <td className="td-qty">{selectedItems[p.id]}</td>
                       <td className="td-price">{formatDT(selectedItems[p.id] * Number(p.selling_price_ttc))}</td>
                     </tr>
-                  ));
-                })()}
+                  );
+                })}
               </tbody>
               <tfoot>
                 <tr>
