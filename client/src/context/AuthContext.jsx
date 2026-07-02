@@ -59,10 +59,10 @@ export function AuthProvider({ children }) {
       setShowExpiryModal(false);
       return true;
     } catch {
-      logout();
+      executeLogout();
       return false;
     }
-  }, [logout]);
+  }, [executeLogout]);
 
   const login = useCallback(async (email, password) => {
     const data = await apiPost('/auth/login', { email, password });
@@ -87,7 +87,7 @@ export function AuthProvider({ children }) {
         localStorage.setItem(USER_KEY, JSON.stringify(userData));
         setUser(userData);
       } catch {
-        logout();
+        executeLogout();
       } finally {
         setLoading(false);
       }
@@ -115,7 +115,7 @@ export function AuthProvider({ children }) {
     checkExpiry();
 
     return () => clearInterval(interval);
-  }, [token, logout]);
+  }, [token, executeLogout]);
 
   return (
     <AuthContext.Provider value={{
@@ -123,7 +123,6 @@ export function AuthProvider({ children }) {
       token,
       loading,
       login,
-      logout,
       refreshSession,
       showExpiryModal,
       setShowExpiryModal,
