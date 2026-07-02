@@ -542,9 +542,7 @@
     margin-right: calc(-1 * var(--space-4));
     padding-left: var(--space-4);
     padding-right: var(--space-4);
-    background: rgba(255,255,255,.95);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: #fff;
     box-shadow: 0 1px 0 var(--color-border), 0 4px 8px rgba(0,0,0,.04);
   }
 }
