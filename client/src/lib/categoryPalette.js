@@ -1,12 +1,14 @@
 // ─── Curated category colour map ───
+// 7 categories, each drawn from a non-overlapping region of the colour wheel.
+// bg = solid pastel (row background + pill fill), text/bar = bold saturated accent.
 export const CAT_PALETTE = {
-  'Épicerie':          { bg: 'rgba(42,120,214,.055)',   text: '#0f3d7a', bar: '#2a78d6' },
-  'Boissons':          { bg: 'rgba(8,145,178,.055)',    text: '#044b63', bar: '#0891b2' },
-  'Produits Laitiers': { bg: 'rgba(15,158,106,.055)',   text: '#065535', bar: '#0f9e6a' },
-  'Hygiène':           { bg: 'rgba(124,58,237,.055)',   text: '#3d148c', bar: '#7c3aed' },
-  'Nettoyage':         { bg: 'rgba(217,89,38,.055)',    text: '#702707', bar: '#d95926' },
-  'Confiserie':        { bg: 'rgba(219,39,119,.055)',   text: '#6e0e43', bar: '#db2777' },
-  'Conserves':         { bg: 'rgba(201,133,0,.055)',    text: '#5c3d00', bar: '#c98500' },
+  'Confiserie':        { bg: '#FEF2F2', text: '#B91C1C', bar: '#B91C1C' },  // Scarlet (Red     ~0deg)
+  'Nettoyage':         { bg: '#FFF7ED', text: '#C2410C', bar: '#C2410C' },  // Tangerine (Orange  ~25deg)
+  'Épicerie':          { bg: '#FFFBEB', text: '#B45309', bar: '#B45309' },  // Honey (Amber      ~45deg)
+  'Produits Laitiers': { bg: '#ECFDF5', text: '#047857', bar: '#047857' },  // Emerald (Green     ~160deg)
+  'Boissons':          { bg: '#ECFEFF', text: '#0E7490', bar: '#0E7490' },  // Teal (Cyan        ~195deg)
+  'Hygiène':           { bg: '#EFF6FF', text: '#1D4ED8', bar: '#1D4ED8' },  // Sapphire (Blue     ~225deg)
+  'Conserves':         { bg: '#F5F3FF', text: '#6D28D9', bar: '#6D28D9' },  // Amethyst (Violet   ~270deg)
 };
 
 // ─── Auto-generated colours for categories not in the curated list ───
