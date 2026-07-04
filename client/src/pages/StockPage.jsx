@@ -321,7 +321,9 @@ function StockPage() {
                 <th>Produit</th>
                 <th>Catégorie</th>
                 <th>Prix vente TTC</th>
-                <th>Quantité</th>
+                <th>Stock Dépôt</th>
+                <th>En Transit</th>
+                <th>Stock Virtuel</th>
                 <th>Statut</th>
                 <th>Actions</th>
               </tr>
@@ -348,6 +350,12 @@ function StockPage() {
                           <td className="td-price">{formatDT(item.selling_price_ttc)}</td>
                           <td className={`td-qty ${low ? 'qty-low' : ''}`}>
                             {item.quantity}
+                          </td>
+                          <td className="td-qty" style={{ color: 'var(--color-text-secondary)' }}>
+                            {item.in_transit || 0}
+                          </td>
+                          <td className="td-qty" style={{ fontWeight: 600 }}>
+                            {item.virtual_stock || 0}
                           </td>
                           <td>
                             {low ? (
@@ -377,6 +385,12 @@ function StockPage() {
                       </td>
                       <td className="td-qty" style={{ fontWeight: 700 }}>
                         {catItems.reduce((s, i) => s + i.quantity, 0)}
+                      </td>
+                      <td className="td-qty" style={{ fontWeight: 700 }}>
+                        {catItems.reduce((s, i) => s + (i.in_transit || 0), 0)}
+                      </td>
+                      <td className="td-qty" style={{ fontWeight: 700 }}>
+                        {catItems.reduce((s, i) => s + (i.virtual_stock || 0), 0)}
                       </td>
                       <td colSpan="2"></td>
                     </tr>

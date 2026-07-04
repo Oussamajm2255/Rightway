@@ -2,13 +2,23 @@ const pool = require('../db/pool');
 
 async function getStockLevels({ category, below_threshold } = {}) {
   let query = `
+    WITH en_cours_stock AS (
+      SELECT li.product_id, SUM(li.qte_chargee)::INT AS in_transit
+      FROM livraison_items li
+      JOIN livraisons l ON li.livraison_id = l.id
+      WHERE l.status = 'EN_COURS' AND l.is_archived = false
+      GROUP BY li.product_id
+    )
     SELECT
       p.id, p.barcode, p.name, p.category,
       p.purchase_price, p.selling_price_ttc,
       COALESCE(ds.quantity, 0) AS quantity,
+      COALESCE(ecs.in_transit, 0) AS in_transit,
+      (COALESCE(ds.quantity, 0) + COALESCE(ecs.in_transit, 0)) AS virtual_stock,
       ds.last_updated
     FROM products p
     LEFT JOIN depot_stock ds ON p.id = ds.product_id
+    LEFT JOIN en_cours_stock ecs ON p.id = ecs.product_id
     WHERE p.is_active = true
   `;
   const params = [];
