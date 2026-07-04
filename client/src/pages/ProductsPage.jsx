@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import { apiGet, apiPut, apiPost, apiDelete } from '../lib/api';
 import { catColors } from '../lib/categoryPalette';
 import './ProductsPage.css';
@@ -141,41 +141,51 @@ function ProductsPage() {
               </tr>
             </thead>
             <tbody>
-              {products.map((product) => {
-                const catCol = catColors(product.category || 'Sans catégorie');
+              {Object.entries(
+                products.reduce((acc, product) => {
+                  const cat = product.category || 'Sans catégorie';
+                  (acc[cat] = acc[cat] || []).push(product);
+                  return acc;
+                }, {})
+              ).map(([cat, catItems]) => {
+                const catCol = catColors(cat);
                 return (
-                <tr key={product.id} className={!product.is_active ? 'row-inactive' : ''} style={{ background: catCol.bg, borderLeftColor: catCol.bar }}>
-                  <td className="td-code">{product.id}</td>
-                  <td>{product.barcode}</td>
-                  <td className="td-name">{product.name}</td>
-                  <td>
-                    <span className="cat-pill" style={{ background: catCol.bg, color: catCol.text }}>{product.category || 'Sans catégorie'}</span>
-                  </td>
-                  <td className="td-price">{formatDT(product.purchase_price)}</td>
-                  <td className="td-price">{formatDT(product.selling_price_ttc)}</td>
-                  <td>
-                    <span className={`status-dot ${product.is_active ? 'active' : 'inactive'}`} />
-                    {product.is_active ? 'Actif' : 'Archivé'}
-                  </td>
-                  <td className="td-actions">
-                    <button
-                      className="btn btn-sm btn-outline"
-                      onClick={() => handleEdit(product)}
-                    >
-                      Modifier
-                    </button>
-                    {product.is_active && (
-                      <button
-                        className="btn btn-sm btn-outline-danger"
-                        onClick={() => handleArchive(product)}
-                      >
-                        Archiver
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
+                  <Fragment key={cat}>
+                    {catItems.map((product) => (
+                      <tr key={product.id} className={!product.is_active ? 'row-inactive' : ''} style={{ background: catCol.bg, borderLeftColor: catCol.bar }}>
+                        <td className="td-code">{product.id}</td>
+                        <td>{product.barcode}</td>
+                        <td className="td-name">{product.name}</td>
+                        <td>
+                          <span className="cat-pill" style={{ background: catCol.bg, color: catCol.text }}>{cat}</span>
+                        </td>
+                        <td className="td-price">{formatDT(product.purchase_price)}</td>
+                        <td className="td-price">{formatDT(product.selling_price_ttc)}</td>
+                        <td>
+                          <span className={`status-dot ${product.is_active ? 'active' : 'inactive'}`} />
+                          {product.is_active ? 'Actif' : 'Archivé'}
+                        </td>
+                        <td className="td-actions">
+                          <button
+                            className="btn btn-sm btn-outline"
+                            onClick={() => handleEdit(product)}
+                          >
+                            Modifier
+                          </button>
+                          {product.is_active && (
+                            <button
+                              className="btn btn-sm btn-outline-danger"
+                              onClick={() => handleArchive(product)}
+                            >
+                              Archiver
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>

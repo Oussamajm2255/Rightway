@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet, apiPost } from '../lib/api';
 import { catColors } from '../lib/categoryPalette';
@@ -314,17 +314,34 @@ function CreateLivraisonPage() {
                 </tr>
               </thead>
               <tbody>
-                {getSelectedProducts().map((p) => {
-                  const cat = p.category || 'Sans catégorie';
+                {Object.entries(
+                  getSelectedProducts().reduce((acc, p) => {
+                    const cat = p.category || 'Sans catégorie';
+                    (acc[cat] = acc[cat] || []).push(p);
+                    return acc;
+                  }, {})
+                ).map(([cat, catItems]) => {
+                  const catCol = catColors(cat);
                   return (
-                    <tr key={p.id} style={{ background: catColors(cat).bg, borderLeftColor: catColors(cat).bar }}>
-                      <td className="td-code">{p.barcode || p.id}</td>
-                      <td><span className="cat-pill" style={{ background: catColors(cat).bg, color: catColors(cat).text }}>{p.category || 'Sans catégorie'}</span></td>
-                      <td>{p.name}</td>
-                      <td className="td-price">{formatDT(p.selling_price_ttc)}</td>
-                      <td className="td-qty">{selectedItems[p.id]}</td>
-                      <td className="td-price">{formatDT(selectedItems[p.id] * Number(p.selling_price_ttc))}</td>
-                    </tr>
+                    <Fragment key={cat}>
+                      {catItems.map((p) => (
+                        <tr key={p.id} style={{ background: catCol.bg, borderLeftColor: catCol.bar }}>
+                          <td className="td-code">{p.barcode || p.id}</td>
+                          <td><span className="cat-pill" style={{ background: catCol.bg, color: catCol.text }}>{cat}</span></td>
+                          <td>{p.name}</td>
+                          <td className="td-price">{formatDT(p.selling_price_ttc)}</td>
+                          <td className="td-qty">{selectedItems[p.id]}</td>
+                          <td className="td-price">{formatDT(selectedItems[p.id] * Number(p.selling_price_ttc))}</td>
+                        </tr>
+                      ))}
+                      <tr className="cat-subtotal" style={{ background: catCol.bg, borderLeftColor: catCol.bar, borderTopColor: catCol.bar }}>
+                        <td colSpan="4" style={{ color: catCol.text, textAlign: 'center', fontWeight: 700 }}>
+                          Sous-total {cat}
+                        </td>
+                        <td className="td-qty">{catItems.reduce((s, p) => s + selectedItems[p.id], 0)}</td>
+                        <td className="td-price">{formatDT(catItems.reduce((s, p) => s + (selectedItems[p.id] * Number(p.selling_price_ttc)), 0))}</td>
+                      </tr>
+                    </Fragment>
                   );
                 })}
               </tbody>

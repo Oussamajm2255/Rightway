@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import { apiGet, apiPut } from '../lib/api';
 import { formatDate } from '../lib/utils';
 import { catColors } from '../lib/categoryPalette';
@@ -306,38 +306,60 @@ function StockPage() {
               </tr>
             </thead>
             <tbody>
-              {stock.map((item) => {
-                const low = isLowStock(item.quantity);
+              {Object.entries(
+                stock.reduce((acc, item) => {
+                  const cat = item.category || 'Sans catégorie';
+                  (acc[cat] = acc[cat] || []).push(item);
+                  return acc;
+                }, {})
+              ).map(([cat, catItems]) => {
+                const catCol = catColors(cat);
                 return (
-                  <tr key={item.id} className={low ? 'row-alert' : ''} style={{ background: catColors(item.category || 'Sans catégorie').bg, borderLeftColor: catColors(item.category || 'Sans catégorie').bar }}>
-                    <td className="td-code">{item.id}</td>
-                    <td>{item.barcode}</td>
-                    <td className="td-name">{item.name}</td>
-                    <td><span className="cat-pill" style={{ background: catColors(item.category || 'Sans catégorie').bg, color: catColors(item.category || 'Sans catégorie').text }}>{item.category || 'Sans catégorie'}</span></td>
-                    <td className="td-price">{formatDT(item.selling_price_ttc)}</td>
-                    <td className={`td-qty ${low ? 'qty-low' : ''}`}>
-                      {item.quantity}
-                    </td>
-                    <td>
-                      {low ? (
-                        <span className="badge badge-alert">Stock faible</span>
-                      ) : item.quantity === 0 ? (
-                        <span className="badge badge-empty">Épuisé</span>
-                      ) : (
-                        <span className="badge badge-ok">OK</span>
-                      )}
-                    </td>
-                    <td>
-                      {user?.role === 'SUPER_ADMIN' && (
-                        <button
-                          className="btn btn-sm btn-outline"
-                          onClick={() => handleAdjustClick(item)}
-                        >
-                          Ajuster
-                        </button>
-                      )}
-                    </td>
-                  </tr>
+                  <Fragment key={cat}>
+                    {catItems.map((item) => {
+                      const low = isLowStock(item.quantity);
+                      return (
+                        <tr key={item.id} className={low ? 'row-alert' : ''} style={{ background: catCol.bg, borderLeftColor: catCol.bar }}>
+                          <td className="td-code">{item.id}</td>
+                          <td>{item.barcode}</td>
+                          <td className="td-name">{item.name}</td>
+                          <td><span className="cat-pill" style={{ background: catCol.bg, color: catCol.text }}>{cat}</span></td>
+                          <td className="td-price">{formatDT(item.selling_price_ttc)}</td>
+                          <td className={`td-qty ${low ? 'qty-low' : ''}`}>
+                            {item.quantity}
+                          </td>
+                          <td>
+                            {low ? (
+                              <span className="badge badge-alert">Stock faible</span>
+                            ) : item.quantity === 0 ? (
+                              <span className="badge badge-empty">Épuisé</span>
+                            ) : (
+                              <span className="badge badge-ok">OK</span>
+                            )}
+                          </td>
+                          <td>
+                            {user?.role === 'SUPER_ADMIN' && (
+                              <button
+                                className="btn btn-sm btn-outline"
+                                onClick={() => handleAdjustClick(item)}
+                              >
+                                Ajuster
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    <tr className="cat-subtotal" style={{ background: catCol.bg, borderLeftColor: catCol.bar, borderTopColor: catCol.bar }}>
+                      <td colSpan="5" style={{ color: catCol.text, textAlign: 'center', fontWeight: 700 }}>
+                        Sous-total {cat}
+                      </td>
+                      <td className="td-qty" style={{ fontWeight: 700 }}>
+                        {catItems.reduce((s, i) => s + i.quantity, 0)}
+                      </td>
+                      <td colSpan="2"></td>
+                    </tr>
+                  </Fragment>
                 );
               })}
             </tbody>

@@ -1244,17 +1244,37 @@ function LivraisonDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {livraison.items.filter(i => i.qte_vendue > 0).map((item) => {
+                  {Object.entries(
+                    livraison.items.filter(i => i.qte_vendue > 0).reduce((acc, item) => {
                       const cat = item.category || 'Sans catégorie';
-                      return (
-                    <tr key={item.id} style={{ background: catColors(cat).bg, borderLeftColor: catColors(cat).bar }}>
-                      <td>{item.product_name}</td>
-                      <td className="td-qty">{item.qte_vendue}</td>
-                      <td className="td-price">{formatDT(item.prix_ttc)}</td>
-                      <td className="td-price">{formatDT(item.qte_vendue * Number(item.prix_ttc))}</td>
-                    </tr>
-                      );
-                    })}
+                      (acc[cat] = acc[cat] || []).push(item);
+                      return acc;
+                    }, {})
+                  ).map(([cat, catItems]) => {
+                    const catCol = catColors(cat);
+                    return (
+                      <Fragment key={cat}>
+                        {catItems.map((item) => (
+                          <tr key={item.id} style={{ background: catCol.bg, borderLeftColor: catCol.bar }}>
+                            <td>{item.product_name}</td>
+                            <td className="td-qty">{item.qte_vendue}</td>
+                            <td className="td-price">{formatDT(item.prix_ttc)}</td>
+                            <td className="td-price">{formatDT(item.qte_vendue * Number(item.prix_ttc))}</td>
+                          </tr>
+                        ))}
+                        <tr className="cat-subtotal" style={{ background: catCol.bg, borderLeftColor: catCol.bar, borderTopColor: catCol.bar }}>
+                          <td style={{ color: catCol.text, textAlign: 'right', fontWeight: 700 }}>
+                            Sous-total {cat}
+                          </td>
+                          <td className="td-qty">{catItems.reduce((s, i) => s + i.qte_vendue, 0)}</td>
+                          <td></td>
+                          <td className="td-price" style={{ fontWeight: 700 }}>
+                            {formatDT(catItems.reduce((s, i) => s + (i.qte_vendue * Number(i.prix_ttc)), 0))}
+                          </td>
+                        </tr>
+                      </Fragment>
+                    );
+                  })}
                   {livraison.items.filter(i => i.qte_vendue > 0).length === 0 && (
                     <tr><td colSpan="4" style={{ textAlign: 'center', color: 'var(--color-text-muted)' }}>Aucune vente enregistrée</td></tr>
                   )}
