@@ -58,6 +58,7 @@ function StockPage() {
   const [showOnlyAlerts, setShowOnlyAlerts] = useState(false);
   const [alertThreshold, setAlertThreshold] = useState(20);
   const [adjustingItem, setAdjustingItem] = useState(null);
+  const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [adjustDirection, setAdjustDirection] = useState('add');
   const [adjustMode, setAdjustMode] = useState('single'); // 'single' | 'multiple'
   const [adjustForm, setAdjustForm] = useState({
@@ -129,16 +130,28 @@ function StockPage() {
 
   function handleAdjustClick(item) {
     setAdjustingItem(item);
-    setAdjustDirection('add');
     setAdjustMode('single');
+    setAdjustDirection('add');
     setAdjustForm({
       quantity_change: '', reason: '', password: '',
       movement_date: '', invoice_number: '', company_name: '',
     });
-    setMultiItems([{ product_id: '', quantity: '' }]);
+    setAdjustError('');
+    setShowAdjustModal(true);
+  }
+
+  function handleMultiAdjustClick() {
+    setAdjustingItem(null);
+    setAdjustMode('multiple');
+    setAdjustDirection('add');
+    setAdjustForm({
+      quantity_change: '', reason: '', password: '',
+      movement_date: '', invoice_number: '', company_name: '',
+    });
     setMultiItemsMap({});
     setMultiSearchTerm('');
     setAdjustError('');
+    setShowAdjustModal(true);
   }
 
   async function handleAdjustSubmit(e) {
@@ -196,6 +209,7 @@ function StockPage() {
 
       const data = await apiPut('/stock/adjust', body);
       setSuccessMsg(data.message);
+      setShowAdjustModal(false);
       setAdjustingItem(null);
       fetchStock();
       setTimeout(() => setSuccessMsg(''), 4000);
@@ -279,11 +293,18 @@ function StockPage() {
 
       {error && <div className="error-banner">{error}</div>}
 
-      <div className="stock-summary">
-        <span>{stock.length} produits</span>
-        <span className="summary-alert">
-          {stock.filter((s) => isLowStock(s.quantity)).length} en alerte (&lt; {alertThreshold})
-        </span>
+      <div className="stock-summary" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <span>{stock.length} produits</span>
+          <span className="summary-alert" style={{ marginLeft: '10px' }}>
+            {stock.filter((s) => isLowStock(s.quantity)).length} en alerte (&lt; {alertThreshold})
+          </span>
+        </div>
+        {user?.role === 'SUPER_ADMIN' && (
+          <button className="btn btn-primary btn-sm" onClick={handleMultiAdjustClick}>
+            <IconPlus /> Ajustement Multiple
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -368,16 +389,21 @@ function StockPage() {
       )}
 
       {/* Adjust Modal */}
-      {adjustingItem && (
-        <div className="modal-overlay" onClick={() => setAdjustingItem(null)}>
+      {showAdjustModal && (
+        <div className="modal-overlay" onClick={() => setShowAdjustModal(false)}>
           <div className="modal-card modal-form modal-adjust" onClick={(e) => e.stopPropagation()}>
-            <h3 className="modal-title">Ajuster le stock</h3>
-
-            <div className="modal-summary">
-              <p><strong>{adjustingItem.id}</strong> — {adjustingItem.name}</p>
-              <p>Stock actuel : <strong>{adjustingItem.quantity} unités</strong></p>
-              <p>Prix vente TTC : {formatDT(adjustingItem.selling_price_ttc)}</p>
-            </div>
+            {adjustMode === 'multiple' ? (
+              <h3 className="modal-title">Ajustement Multiple du Stock</h3>
+            ) : (
+              <>
+                <h3 className="modal-title">Ajuster le stock</h3>
+                <div className="modal-summary">
+                  <p><strong>{adjustingItem?.id}</strong> — {adjustingItem?.name}</p>
+                  <p>Stock actuel : <strong>{adjustingItem?.quantity} unités</strong></p>
+                  <p>Prix vente TTC : {formatDT(adjustingItem?.selling_price_ttc)}</p>
+                </div>
+              </>
+            )}
 
             {adjustError && <div className="login-error">{adjustError}</div>}
 
@@ -405,33 +431,7 @@ function StockPage() {
                 </div>
               </div>
 
-              {/* Mode toggle: single vs multiple */}
-              {adjustDirection === 'add' && (
-                <div className="form-group">
-                  <label className="form-label">Mode</label>
-                  <div className="toggle-group">
-                    <button
-                      type="button"
-                      className={`toggle-btn ${adjustMode === 'single' ? 'toggle-btn-active' : ''}`}
-                      onClick={() => setAdjustMode('single')}
-                    >
-                      <span>Produit unique</span>
-                    </button>
-                    <button
-                      type="button"
-                      className={`toggle-btn ${adjustMode === 'multiple' ? 'toggle-btn-active' : ''}`}
-                      onClick={() => {
-                                              setAdjustMode('multiple');
-                                              if (adjustingItem) {
-                                                setMultiItems([{ product_id: adjustingItem.id, quantity: adjustForm.quantity_change || '' }]);
-                                              }
-                                            }}
-                    >
-                      <span>Ajout multiple</span>
-                    </button>
-                  </div>
-                </div>
-              )}
+              {/* Add / Remove toggle */}
 
               {/* Single mode: quantity input */}
               {adjustMode === 'single' && (
@@ -618,7 +618,7 @@ function StockPage() {
               </div>
 
               <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setAdjustingItem(null)}>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowAdjustModal(false)}>
                   Annuler
                 </button>
                 <button type="submit" className="btn btn-primary" disabled={adjusting}>
