@@ -55,10 +55,20 @@ const migrations = [
     amount          NUMERIC(12,2) NOT NULL CHECK(amount > 0),
     description     TEXT,
     is_active       BOOLEAN DEFAULT true,
+    generation_day  INTEGER DEFAULT 1 CHECK (generation_day BETWEEN 1 AND 28),
     created_by      UUID NOT NULL REFERENCES users(id),
     created_at      TIMESTAMPTZ DEFAULT NOW(),
     updated_at      TIMESTAMPTZ DEFAULT NOW()
   )`,
+  `ALTER TABLE recurring_prelevements ADD COLUMN IF NOT EXISTS generation_day INTEGER DEFAULT 1 CHECK (generation_day BETWEEN 1 AND 28)`,
+
+  // Global Settings
+  `CREATE TABLE IF NOT EXISTS global_settings (
+    id SERIAL PRIMARY KEY,
+    salary_generation_day INTEGER DEFAULT 1 CHECK (salary_generation_day BETWEEN 1 AND 28),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+  )`,
+  `INSERT INTO global_settings (id, salary_generation_day) VALUES (1, 1) ON CONFLICT (id) DO NOTHING`,
 
   // Livraison ecarts (discrepancy declarations)
   `CREATE TABLE IF NOT EXISTS livraison_ecarts (

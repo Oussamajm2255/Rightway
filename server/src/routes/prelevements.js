@@ -26,6 +26,8 @@ const {
   updateRecurringPrelevement,
   deleteRecurringPrelevement,
   generateRecurring,
+  getSettings,
+  updateSettings,
 } = require('../controllers/prelevement');
 
 // All routes require SUPER_ADMIN
@@ -46,10 +48,14 @@ router.get('/recurring', listRecurringPrelevements);
 router.post('/recurring', createRecurringPrelevement);
 router.put('/recurring/:id', updateRecurringPrelevement);
 router.delete('/recurring/:id', deleteRecurringPrelevement);
-router.post('/generate-recurring', generateRecurring);
+router.post('/generate-recurring', generateRecurring); // Kept for cron or manual override if needed
+
+// Settings
+router.get('/settings', getSettings);
+router.put('/settings', updateSettings);
 
 // Salary Auto-Generation
-router.post('/generate-salaries', generateSalaries);
+router.post('/generate-salaries', generateSalaries); // Kept for cron
 router.put('/:id/status', updatePrelevementStatus);
 
 // Expenses

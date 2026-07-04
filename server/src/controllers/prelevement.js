@@ -466,6 +466,40 @@ async function generateRecurring(req, res) {
   }
 }
 
+// ═══════════════════════════════════════════════
+// GLOBAL SETTINGS (Salary generation day)
+// ═══════════════════════════════════════════════
+async function getSettings(req, res) {
+  try {
+    const { rows } = await pool.query('SELECT salary_generation_day FROM global_settings WHERE id = 1');
+    if (rows.length === 0) {
+      return res.json({ settings: { salary_generation_day: 1 } });
+    }
+    res.json({ settings: rows[0] });
+  } catch (err) {
+    console.error('getSettings error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+async function updateSettings(req, res) {
+  try {
+    const { salary_generation_day } = req.body;
+    if (salary_generation_day < 1 || salary_generation_day > 28) {
+      return res.status(400).json({ error: 'Le jour doit être compris entre 1 et 28.' });
+    }
+    const { rows } = await pool.query(`
+      INSERT INTO global_settings (id, salary_generation_day) VALUES (1, $1)
+      ON CONFLICT (id) DO UPDATE SET salary_generation_day = $1, updated_at = NOW()
+      RETURNING salary_generation_day
+    `, [salary_generation_day]);
+    res.json({ settings: rows[0] });
+  } catch (err) {
+    console.error('updateSettings error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
 module.exports = {
   listCategories,
   createCategory,
@@ -484,4 +518,6 @@ module.exports = {
   updateRecurringPrelevement,
   deleteRecurringPrelevement,
   generateRecurring,
+  getSettings,
+  updateSettings,
 };

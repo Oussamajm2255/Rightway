@@ -478,7 +478,7 @@ function RecurringModal({ categories, onClose }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
-  const [form, setForm] = useState({ category_id: '', amount: '', description: '' });
+  const [form, setForm] = useState({ category_id: '', amount: '', description: '', generation_day: 1 });
   const mainCats = categories.filter(c => !c.parent_id);
 
   const fetchItems = useCallback(async () => {
@@ -502,9 +502,10 @@ function RecurringModal({ categories, onClose }) {
       await apiPost('/prelevements/recurring', {
         category_id: parseInt(form.category_id),
         amount: parseFloat(form.amount),
-        description: form.description || undefined
+        description: form.description || undefined,
+        generation_day: parseInt(form.generation_day) || 1
       });
-      setForm({ category_id: '', amount: '', description: '' });
+      setForm({ category_id: '', amount: '', description: '', generation_day: 1 });
       fetchItems();
     } catch (e) { setError(e.message); }
   }
@@ -545,6 +546,7 @@ function RecurringModal({ categories, onClose }) {
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <input className="prel-form-input" placeholder="Description (ex: Loyer, Internet...)" value={form.description} onChange={e => setForm({...form, description: e.target.value})} style={{ flex: 1 }} />
+            <input className="prel-form-input" type="number" min="1" max="28" placeholder="Jour (1-28)" value={form.generation_day} onChange={e => setForm({...form, generation_day: e.target.value})} title="Jour du mois" style={{ width: '90px' }} required />
             <button type="submit" className="btn btn-primary btn-sm"><IconPlus /> Ajouter</button>
           </div>
         </form>
@@ -556,7 +558,9 @@ function RecurringModal({ categories, onClose }) {
                 <li key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--color-border-light)' }}>
                   <div>
                     <div style={{ fontWeight: 500, opacity: item.is_active ? 1 : 0.5 }}>{item.description || 'Sans description'} - {formatMoney(item.amount)}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--color-text-tertiary)' }}>{item.parent_category_name ? `${item.parent_category_name} › ` : ''}{item.category_name}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--color-text-tertiary)' }}>
+                      {item.parent_category_name ? `${item.parent_category_name} › ` : ''}{item.category_name} &bull; Généré le <strong>{item.generation_day}</strong> du mois
+                    </div>
                   </div>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button className="btn btn-ghost btn-sm" style={{ color: item.is_active ? 'var(--color-success)' : 'var(--color-text-tertiary)' }} onClick={() => handleToggle(item.id, item.is_active)}>
@@ -572,6 +576,59 @@ function RecurringModal({ categories, onClose }) {
 
         <div className="prel-modal-actions" style={{marginTop:'var(--space-4)'}}>
           <button className="btn btn-secondary" onClick={onClose}>Fermer</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ===== Settings Modal ===== */
+function SettingsModal({ onClose }) {
+  const [day, setDay] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    apiGet('/prelevements/settings')
+      .then(res => setDay(res.settings?.salary_generation_day || 1))
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handleSave() {
+    setError('');
+    setSaving(true);
+    try {
+      await apiPut('/prelevements/settings', { salary_generation_day: parseInt(day) });
+      toast?.success?.("Paramètres enregistrés.");
+      onClose();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="prel-cat-modal-overlay" onClick={onClose}>
+      <div className="prel-cat-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+        <h3>Configuration Globale</h3>
+        {error && <div className="prel-error">{error}</div>}
+        
+        {loading ? <p>Chargement...</p> : (
+          <div style={{ margin: '16px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontWeight: 500 }}>Jour de génération automatique des salaires (1-28)</label>
+            <input className="prel-form-input" type="number" min="1" max="28" value={day} onChange={e => setDay(e.target.value)} />
+            <p style={{ fontSize: '0.8rem', color: 'var(--color-text-tertiary)' }}>
+              Les prélèvements de salaires seront générés automatiquement chaque mois à ce jour en statut "EN ATTENTE".
+            </p>
+          </div>
+        )}
+
+        <div className="prel-modal-actions">
+          <button className="btn btn-secondary" onClick={onClose}>Annuler</button>
+          <button className="btn btn-primary" onClick={handleSave} disabled={loading || saving}>{saving ? '...' : 'Enregistrer'}</button>
         </div>
       </div>
     </div>
@@ -596,10 +653,10 @@ export default function PrelevementPage() {
   // Modals
   const [showCatModal, setShowCatModal] = useState(false);
   const [showRecurringModal, setShowRecurringModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
   const [deletingExpense, setDeletingExpense] = useState(null);
   const [categoriesError, setCategoriesError] = useState(null);
-  const [generating, setGenerating] = useState(false);
 
   const LIMIT = 20;
 
@@ -675,34 +732,6 @@ export default function PrelevementPage() {
     fetchExpenses();
   }
 
-  async function handleGenerateSalaries() {
-    if (!window.confirm("Voulez-vous générer les propositions de salaires pour ce mois ?")) return;
-    setGenerating(true);
-    try {
-      const res = await apiPost('/prelevements/generate-salaries');
-      toast?.success?.(res.message || 'Salaires générés.');
-      fetchExpenses();
-    } catch (err) {
-      toast?.error?.(err.message || 'Erreur lors de la génération.');
-    } finally {
-      setGenerating(false);
-    }
-  }
-
-  async function handleGenerateRecurring() {
-    if (!window.confirm("Voulez-vous générer les charges fixes pour ce mois ?")) return;
-    setGenerating(true);
-    try {
-      const res = await apiPost('/prelevements/generate-recurring');
-      toast?.success?.(res.message || 'Charges fixes générées.');
-      fetchExpenses();
-    } catch (err) {
-      toast?.error?.(err.message || 'Erreur lors de la génération.');
-    } finally {
-      setGenerating(false);
-    }
-  }
-
   async function handleUpdateStatus(id, newStatus) {
     if (!window.confirm(`Voulez-vous vraiment ${newStatus === 'VALIDE' ? 'valider' : 'rejeter'} ce prélèvement ?`)) return;
     try {
@@ -747,7 +776,7 @@ export default function PrelevementPage() {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
               <button className="prel-cat-btn" onClick={() => setShowCatModal(true)} style={{ flex: 1 }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                 Gérer les catégories
@@ -755,14 +784,6 @@ export default function PrelevementPage() {
               <button className="prel-cat-btn" onClick={() => setShowRecurringModal(true)} style={{ flex: 1 }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
                 Gérer les charges fixes
-              </button>
-            </div>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-              <button className="btn btn-sm btn-outline-primary" onClick={handleGenerateSalaries} disabled={generating} style={{ flex: 1, padding: '0 8px' }}>
-                {generating ? '...' : 'Générer Salaires'}
-              </button>
-              <button className="btn btn-sm btn-outline-primary" onClick={handleGenerateRecurring} disabled={generating} style={{ flex: 1, padding: '0 8px' }}>
-                {generating ? '...' : 'Générer Charges Fixes'}
               </button>
             </div>
 
@@ -953,6 +974,9 @@ export default function PrelevementPage() {
       )}
       {showRecurringModal && (
         <RecurringModal categories={categories} onClose={() => setShowRecurringModal(false)} />
+      )}
+      {showSettingsModal && (
+        <SettingsModal onClose={() => setShowSettingsModal(false)} />
       )}
       {editingExpense !== null && (
         <EditModal

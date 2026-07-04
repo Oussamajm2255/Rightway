@@ -10,6 +10,10 @@ const { randomUUID } = require('crypto');
 const { runMigrations } = require('./db/migrate');
 
 const app = express();
+// Start Cron Job
+const { startCron } = require('./cron');
+startCron();
+
 const PORT = process.env.PORT || 3001;
 const isProduction = process.env.NODE_ENV === 'production';
 

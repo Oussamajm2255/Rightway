@@ -27,6 +27,12 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS global_settings (
+  id SERIAL PRIMARY KEY,
+  salary_generation_day INTEGER DEFAULT 1 CHECK (salary_generation_day BETWEEN 1 AND 28),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ============================================================
 -- PRODUCTS
 -- ============================================================
