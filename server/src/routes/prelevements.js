@@ -19,6 +19,13 @@ const {
   updatePrelevement,
   deletePrelevement,
   getStats,
+  generateSalaries,
+  updatePrelevementStatus,
+  listRecurringPrelevements,
+  createRecurringPrelevement,
+  updateRecurringPrelevement,
+  deleteRecurringPrelevement,
+  generateRecurring,
 } = require('../controllers/prelevement');
 
 // All routes require SUPER_ADMIN
@@ -33,6 +40,17 @@ router.delete('/categories/:id', deleteCategory);
 
 // Stats (before /:id)
 router.get('/stats', getStats);
+
+// Recurring Expenses (Charges Fixes)
+router.get('/recurring', listRecurringPrelevements);
+router.post('/recurring', createRecurringPrelevement);
+router.put('/recurring/:id', updateRecurringPrelevement);
+router.delete('/recurring/:id', deleteRecurringPrelevement);
+router.post('/generate-recurring', generateRecurring);
+
+// Salary Auto-Generation
+router.post('/generate-salaries', generateSalaries);
+router.put('/:id/status', updatePrelevementStatus);
 
 // Expenses
 router.get('/', listPrelevements);

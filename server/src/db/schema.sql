@@ -203,6 +203,7 @@ CREATE TABLE IF NOT EXISTS prelevements (
   amount          NUMERIC(12,2) NOT NULL CHECK(amount > 0),
   description     TEXT,
   reference       VARCHAR(100),
+  status          VARCHAR(20) DEFAULT 'VALIDE' CHECK (status IN ('VALIDE', 'EN_ATTENTE', 'REJETE')),
   declared_by     UUID NOT NULL REFERENCES users(id),
   declared_at     TIMESTAMPTZ DEFAULT NOW(),
   expense_date    DATE NOT NULL DEFAULT CURRENT_DATE,

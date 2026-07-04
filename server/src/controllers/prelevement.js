@@ -254,6 +254,218 @@ async function getStats(_req, res) {
   }
 }
 
+async function generateSalaries(req, res) {
+  try {
+    const { rows: users } = await pool.query(`
+      SELECT id, full_name, salary_amount 
+      FROM users 
+      WHERE is_active = true 
+        AND role = 'COMMERCIAL'
+        AND remuneration_type = 'SALAIRE' 
+        AND salary_amount > 0
+    `);
+
+    if (users.length === 0) {
+      return res.status(400).json({ error: 'Aucun utilisateur avec un salaire valide trouvé.' });
+    }
+
+    let categoryId;
+    const { rows: catRows } = await pool.query(`
+      SELECT id FROM prelevement_categories WHERE name = 'Charges du personnel' LIMIT 1
+    `);
+    
+    if (catRows.length > 0) {
+      categoryId = catRows[0].id;
+    } else {
+      const { rows: newCatRows } = await pool.query(`
+        INSERT INTO prelevement_categories (name) VALUES ('Charges du personnel') RETURNING id
+      `);
+      categoryId = newCatRows[0].id;
+    }
+
+    const monthStr = new Date().toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
+    let createdCount = 0;
+
+    for (const u of users) {
+      // Check if a salary for this user and month already exists to avoid duplicates
+      const { rows: existingRows } = await pool.query(`
+        SELECT id FROM prelevements 
+        WHERE declared_by = $1 
+          AND category_id = $2 
+          AND description ILIKE $3
+          AND DATE_TRUNC('month', expense_date) = DATE_TRUNC('month', CURRENT_DATE)
+      `, [req.user.id, categoryId, `%Salaire%${monthStr}%`]);
+
+      if (existingRows.length > 0) continue;
+
+      await prelevementModel.createPrelevement({
+        category_id: categoryId,
+        amount: u.salary_amount,
+        description: `Salaire ${monthStr} - ${u.full_name}`,
+        reference: `SAL-${new Date().getFullYear()}${(new Date().getMonth()+1).toString().padStart(2, '0')}-${u.id.split('-')[0]}`,
+        expense_date: new Date().toISOString().split('T')[0],
+        declared_by: req.user.id,
+        status: 'EN_ATTENTE'
+      });
+      createdCount++;
+    }
+
+    res.json({ message: `${createdCount} proposition(s) de salaire générée(s) avec succès.`, count: createdCount });
+  } catch (err) {
+    console.error('generateSalaries error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+async function updatePrelevementStatus(req, res) {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    if (!['VALIDE', 'REJETE'].includes(status)) {
+      return res.status(400).json({ error: 'Statut invalide.' });
+    }
+
+    const existing = await prelevementModel.findPrelevementById(id);
+    if (!existing) {
+      return res.status(404).json({ error: 'Prélèvement introuvable.' });
+    }
+    
+    if (existing.status !== 'EN_ATTENTE') {
+      return res.status(400).json({ error: 'Ce prélèvement n\'est pas en attente.' });
+    }
+
+    await prelevementModel.updatePrelevement(id, { status });
+    const updated = await prelevementModel.findPrelevementById(id);
+    res.json({ message: 'Statut mis à jour.', prelevement: updated });
+  } catch (err) {
+    console.error('updatePrelevementStatus error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+// ═══════════════════════════════════════════════
+// RECURRING EXPENSES
+// ═══════════════════════════════════════════════
+
+async function listRecurringPrelevements(_req, res) {
+  try {
+    const data = await prelevementModel.findAllRecurringPrelevements();
+    res.json({ recurring: data });
+  } catch (err) {
+    console.error('listRecurringPrelevements error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+async function createRecurringPrelevement(req, res) {
+  try {
+    const { category_id, amount, description, is_active } = req.body;
+    
+    if (!category_id || !amount || amount <= 0) {
+      return res.status(400).json({ error: 'Catégorie et montant valides requis.' });
+    }
+
+    const cat = await prelevementModel.getCategoryById(category_id);
+    if (!cat) {
+      return res.status(400).json({ error: 'Catégorie introuvable.' });
+    }
+
+    const created = await prelevementModel.createRecurringPrelevement({
+      category_id,
+      amount,
+      description,
+      is_active,
+      created_by: req.user.id
+    });
+    
+    res.status(201).json({ recurring: created });
+  } catch (err) {
+    console.error('createRecurringPrelevement error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+async function updateRecurringPrelevement(req, res) {
+  try {
+    const { id } = req.params;
+    const { category_id, amount, description, is_active } = req.body;
+    
+    if (category_id) {
+      const cat = await prelevementModel.getCategoryById(category_id);
+      if (!cat) return res.status(400).json({ error: 'Catégorie introuvable.' });
+    }
+    
+    const fields = {};
+    if (category_id !== undefined) fields.category_id = category_id;
+    if (amount !== undefined) fields.amount = amount;
+    if (description !== undefined) fields.description = description;
+    if (is_active !== undefined) fields.is_active = is_active;
+    
+    await prelevementModel.updateRecurringPrelevement(id, fields);
+    const updated = await prelevementModel.findRecurringPrelevementById(id);
+    res.json({ recurring: updated });
+  } catch (err) {
+    console.error('updateRecurringPrelevement error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+async function deleteRecurringPrelevement(req, res) {
+  try {
+    const { id } = req.params;
+    await prelevementModel.deleteRecurringPrelevement(id);
+    res.json({ message: 'Modèle de prélèvement récurrent supprimé.' });
+  } catch (err) {
+    console.error('deleteRecurringPrelevement error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+async function generateRecurring(req, res) {
+  try {
+    const activeRecurring = await pool.query(`
+      SELECT * FROM recurring_prelevements WHERE is_active = true
+    `);
+    
+    if (activeRecurring.rows.length === 0) {
+      return res.status(400).json({ error: 'Aucune charge fixe active trouvée.' });
+    }
+
+    const monthStr = new Date().toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
+    let createdCount = 0;
+
+    for (const r of activeRecurring.rows) {
+      // Avoid duplicate for the current month based on same recurring entry logic
+      // Note: We use reference starting with 'REC-{id}'
+      const refPrefix = `REC-${r.id}-${new Date().getFullYear()}${(new Date().getMonth()+1).toString().padStart(2, '0')}`;
+      
+      const { rows: existingRows } = await pool.query(`
+        SELECT id FROM prelevements 
+        WHERE reference = $1
+      `, [refPrefix]);
+
+      if (existingRows.length > 0) continue;
+
+      await prelevementModel.createPrelevement({
+        category_id: r.category_id,
+        amount: r.amount,
+        description: r.description ? `${r.description} - ${monthStr}` : `Charge fixe - ${monthStr}`,
+        reference: refPrefix,
+        expense_date: new Date().toISOString().split('T')[0],
+        declared_by: req.user.id,
+        status: 'EN_ATTENTE'
+      });
+      createdCount++;
+    }
+
+    res.json({ message: `${createdCount} charge(s) fixe(s) générée(s) avec succès.`, count: createdCount });
+  } catch (err) {
+    console.error('generateRecurring error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
 module.exports = {
   listCategories,
   createCategory,
@@ -265,4 +477,11 @@ module.exports = {
   updatePrelevement,
   deletePrelevement,
   getStats,
+  generateSalaries,
+  updatePrelevementStatus,
+  listRecurringPrelevements,
+  createRecurringPrelevement,
+  updateRecurringPrelevement,
+  deleteRecurringPrelevement,
+  generateRecurring,
 };

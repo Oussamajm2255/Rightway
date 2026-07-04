@@ -43,6 +43,23 @@ const migrations = [
   `CREATE INDEX IF NOT EXISTS idx_prelevements_date ON prelevements(expense_date DESC)`,
   `CREATE INDEX IF NOT EXISTS idx_prelevements_declared_by ON prelevements(declared_by)`,
 
+  // Prelevements status (for salary auto-generation)
+  `ALTER TABLE prelevements ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'VALIDE'`,
+  `ALTER TABLE prelevements DROP CONSTRAINT IF EXISTS prelevements_status_check`,
+  `ALTER TABLE prelevements ADD CONSTRAINT prelevements_status_check CHECK (status IN ('VALIDE', 'EN_ATTENTE', 'REJETE'))`,
+
+  // Recurring Prelevements (Charges Fixes)
+  `CREATE TABLE IF NOT EXISTS recurring_prelevements (
+    id              SERIAL PRIMARY KEY,
+    category_id     INTEGER NOT NULL REFERENCES prelevement_categories(id),
+    amount          NUMERIC(12,2) NOT NULL CHECK(amount > 0),
+    description     TEXT,
+    is_active       BOOLEAN DEFAULT true,
+    created_by      UUID NOT NULL REFERENCES users(id),
+    created_at      TIMESTAMPTZ DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ DEFAULT NOW()
+  )`,
+
   // Livraison ecarts (discrepancy declarations)
   `CREATE TABLE IF NOT EXISTS livraison_ecarts (
     id            SERIAL PRIMARY KEY,

@@ -17,11 +17,10 @@ function UsersPage() {
   const [deleting, setDeleting] = useState(false);
   const [togglingRem, setTogglingRem] = useState(null); // id of user being toggled
 
-  async function handleToggleRemuneration(user) {
-    const newType = user.remuneration_type === 'SALAIRE' ? 'COMMISSION' : 'SALAIRE';
-    setTogglingRem(user.id);
+  async function handleChangeRemuneration(userId, newType) {
+    setTogglingRem(userId);
     try {
-      await apiPut(`/users/${user.id}`, { remuneration_type: newType });
+      await apiPut(`/users/${userId}`, { remuneration_type: newType });
       fetchUsers();
     } catch (err) {
       setError(err.message);
@@ -170,16 +169,23 @@ function UsersPage() {
                   <td>
                     {user.role === 'COMMERCIAL' ? (
                       <>
-                        <button
-                          className={`btn btn-sm ${user.remuneration_type === 'SALAIRE' ? 'btn-outline-warning' : 'btn-outline-success'}`}
-                          onClick={() => handleToggleRemuneration(user)}
+                        <select
+                          className="form-input form-input-sm"
+                          style={{ 
+                            padding: '2px 24px 2px 8px', 
+                            fontSize: '0.85rem', 
+                            height: 'auto',
+                            borderColor: user.remuneration_type === 'SALAIRE' ? 'var(--color-warning)' : 'var(--color-success)',
+                            color: user.remuneration_type === 'SALAIRE' ? 'var(--color-warning)' : 'var(--color-success)',
+                            backgroundColor: 'transparent'
+                          }}
+                          value={user.remuneration_type || 'COMMISSION'}
+                          onChange={(e) => handleChangeRemuneration(user.id, e.target.value)}
                           disabled={togglingRem === user.id}
-                          title={user.remuneration_type === 'SALAIRE' ? 'Passer en Commission' : 'Passer en Salaire'}
                         >
-                          {togglingRem === user.id ? '...' : (
-                            user.remuneration_type === 'SALAIRE' ? '💼 Salaire' : '💰 Commission'
-                          )}
-                        </button>
+                          <option value="COMMISSION">💰 Commission</option>
+                          <option value="SALAIRE">💼 Salaire</option>
+                        </select>
                         {user.remuneration_type === 'SALAIRE' && (
                           <div style={{ fontSize: '0.8rem', marginTop: '4px', fontWeight: 600, color: 'var(--color-warning)' }}>
                             {formatDT(user.salary_amount)}

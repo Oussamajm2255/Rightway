@@ -472,6 +472,112 @@ function AnalyseTab({ stats, categories }) {
   );
 }
 
+/* ===== Recurring Expenses Modal ===== */
+function RecurringModal({ categories, onClose }) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  
+  const [form, setForm] = useState({ category_id: '', amount: '', description: '' });
+  const mainCats = categories.filter(c => !c.parent_id);
+
+  const fetchItems = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await apiGet('/prelevements/recurring');
+      setItems(data.recurring || []);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchItems(); }, [fetchItems]);
+
+  async function handleAdd(e) {
+    e.preventDefault();
+    setError('');
+    try {
+      await apiPost('/prelevements/recurring', {
+        category_id: parseInt(form.category_id),
+        amount: parseFloat(form.amount),
+        description: form.description || undefined
+      });
+      setForm({ category_id: '', amount: '', description: '' });
+      fetchItems();
+    } catch (e) { setError(e.message); }
+  }
+
+  async function handleToggle(id, currentActive) {
+    try {
+      await apiPut(`/prelevements/recurring/${id}`, { is_active: !currentActive });
+      fetchItems();
+    } catch (e) { setError(e.message); }
+  }
+
+  async function handleDelete(id) {
+    if(!window.confirm("Supprimer cette charge fixe ?")) return;
+    try {
+      await apiDelete(`/prelevements/recurring/${id}`);
+      fetchItems();
+    } catch (e) { setError(e.message); }
+  }
+
+  return (
+    <div className="prel-cat-modal-overlay" onClick={onClose}>
+      <div className="prel-cat-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+        <h3>Gérer les charges fixes mensuelles</h3>
+        {error && <div className="prel-error">{error}</div>}
+        
+        <form onSubmit={handleAdd} className="prel-cat-add-row" style={{ flexDirection: 'column', gap: '8px', paddingBottom: '16px', borderBottom: '1px solid var(--color-border)' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <select className="prel-form-select" value={form.category_id} onChange={e => setForm({...form, category_id: e.target.value})} required style={{ flex: 1 }}>
+              <option value="">Catégorie</option>
+              {mainCats.map(m => (
+                <optgroup key={m.id} label={m.name}>
+                  <option value={m.id}>{m.name} (général)</option>
+                  {m.children?.map(ch => <option key={ch.id} value={ch.id}>&nbsp;&nbsp;{ch.name}</option>)}
+                </optgroup>
+              ))}
+            </select>
+            <input className="prel-form-input" type="number" step="0.01" min="0.01" placeholder="Montant" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} required style={{ width: '100px' }} />
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input className="prel-form-input" placeholder="Description (ex: Loyer, Internet...)" value={form.description} onChange={e => setForm({...form, description: e.target.value})} style={{ flex: 1 }} />
+            <button type="submit" className="btn btn-primary btn-sm"><IconPlus /> Ajouter</button>
+          </div>
+        </form>
+
+        <div style={{ maxHeight: '300px', overflowY: 'auto', marginTop: '16px' }}>
+          {loading ? <p>Chargement...</p> : items.length === 0 ? <p style={{ color: 'var(--color-text-tertiary)' }}>Aucune charge fixe.</p> : (
+            <ul className="prel-cat-tree">
+              {items.map(item => (
+                <li key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--color-border-light)' }}>
+                  <div>
+                    <div style={{ fontWeight: 500, opacity: item.is_active ? 1 : 0.5 }}>{item.description || 'Sans description'} - {formatMoney(item.amount)}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--color-text-tertiary)' }}>{item.parent_category_name ? `${item.parent_category_name} › ` : ''}{item.category_name}</div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button className="btn btn-ghost btn-sm" style={{ color: item.is_active ? 'var(--color-success)' : 'var(--color-text-tertiary)' }} onClick={() => handleToggle(item.id, item.is_active)}>
+                      {item.is_active ? 'Actif' : 'Inactif'}
+                    </button>
+                    <button className="prel-cat-icon-btn danger" onClick={() => handleDelete(item.id)} title="Supprimer"><IconTrash /></button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="prel-modal-actions" style={{marginTop:'var(--space-4)'}}>
+          <button className="btn btn-secondary" onClick={onClose}>Fermer</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════
    MAIN PAGE
    ═══════════════════════════════════════════ */
@@ -489,9 +595,11 @@ export default function PrelevementPage() {
 
   // Modals
   const [showCatModal, setShowCatModal] = useState(false);
+  const [showRecurringModal, setShowRecurringModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
   const [deletingExpense, setDeletingExpense] = useState(null);
   const [categoriesError, setCategoriesError] = useState(null);
+  const [generating, setGenerating] = useState(false);
 
   const LIMIT = 20;
 
@@ -567,6 +675,45 @@ export default function PrelevementPage() {
     fetchExpenses();
   }
 
+  async function handleGenerateSalaries() {
+    if (!window.confirm("Voulez-vous générer les propositions de salaires pour ce mois ?")) return;
+    setGenerating(true);
+    try {
+      const res = await apiPost('/prelevements/generate-salaries');
+      toast?.success?.(res.message || 'Salaires générés.');
+      fetchExpenses();
+    } catch (err) {
+      toast?.error?.(err.message || 'Erreur lors de la génération.');
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  async function handleGenerateRecurring() {
+    if (!window.confirm("Voulez-vous générer les charges fixes pour ce mois ?")) return;
+    setGenerating(true);
+    try {
+      const res = await apiPost('/prelevements/generate-recurring');
+      toast?.success?.(res.message || 'Charges fixes générées.');
+      fetchExpenses();
+    } catch (err) {
+      toast?.error?.(err.message || 'Erreur lors de la génération.');
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  async function handleUpdateStatus(id, newStatus) {
+    if (!window.confirm(`Voulez-vous vraiment ${newStatus === 'VALIDE' ? 'valider' : 'rejeter'} ce prélèvement ?`)) return;
+    try {
+      await apiPut(`/prelevements/${id}/status`, { status: newStatus });
+      toast?.success?.(`Le prélèvement a été ${newStatus === 'VALIDE' ? 'validé' : 'rejeté'}.`);
+      fetchExpenses();
+    } catch (err) {
+      toast?.error?.(err.message || 'Erreur lors de la mise à jour.');
+    }
+  }
+
   return (
     <div className="page-content">
       <div className="prel-tabs">
@@ -600,10 +747,24 @@ export default function PrelevementPage() {
               </div>
             )}
 
-            <button className="prel-cat-btn" onClick={() => setShowCatModal(true)}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-              Gérer les catégories
-            </button>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+              <button className="prel-cat-btn" onClick={() => setShowCatModal(true)} style={{ flex: 1 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                Gérer les catégories
+              </button>
+              <button className="prel-cat-btn" onClick={() => setShowRecurringModal(true)} style={{ flex: 1 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+                Gérer les charges fixes
+              </button>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+              <button className="btn btn-sm btn-outline-primary" onClick={handleGenerateSalaries} disabled={generating} style={{ flex: 1, padding: '0 8px' }}>
+                {generating ? '...' : 'Générer Salaires'}
+              </button>
+              <button className="btn btn-sm btn-outline-primary" onClick={handleGenerateRecurring} disabled={generating} style={{ flex: 1, padding: '0 8px' }}>
+                {generating ? '...' : 'Générer Charges Fixes'}
+              </button>
+            </div>
 
             <form onSubmit={async (e) => {
               e.preventDefault();
@@ -728,17 +889,38 @@ export default function PrelevementPage() {
                       </td>
                       <td>{exp.description || '—'}</td>
                       <td style={{color:'var(--color-text-tertiary)', fontSize:'0.82rem'}}>{exp.reference || '—'}</td>
-                      <td className="prel-amount">{formatMoney(exp.amount)}</td>
+                      <td className="prel-amount">
+                        {formatMoney(exp.amount)}
+                        {exp.status === 'EN_ATTENTE' && (
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-warning)', marginTop: '4px', fontWeight: 600 }}>EN ATTENTE</div>
+                        )}
+                        {exp.status === 'REJETE' && (
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-danger)', marginTop: '4px', fontWeight: 600 }}>REJETÉ</div>
+                        )}
+                      </td>
                       <td>
                         <div className="prel-row-actions">
-                          <button className="prel-cat-icon-btn"
-                            onClick={() => setEditingExpense(exp)} title="Modifier">
-                            <IconEdit />
-                          </button>
-                          <button className="prel-cat-icon-btn danger"
-                            onClick={() => setDeletingExpense(exp)} title="Supprimer">
-                            <IconTrash />
-                          </button>
+                          {exp.status === 'EN_ATTENTE' ? (
+                            <>
+                              <button className="prel-cat-icon-btn" style={{ color: 'var(--color-success)' }} onClick={() => handleUpdateStatus(exp.id, 'VALIDE')} title="Valider">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                              </button>
+                              <button className="prel-cat-icon-btn" style={{ color: 'var(--color-danger)' }} onClick={() => handleUpdateStatus(exp.id, 'REJETE')} title="Rejeter">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button className="prel-cat-icon-btn"
+                                onClick={() => setEditingExpense(exp)} title="Modifier">
+                                <IconEdit />
+                              </button>
+                              <button className="prel-cat-icon-btn danger"
+                                onClick={() => setDeletingExpense(exp)} title="Supprimer">
+                                <IconTrash />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -768,6 +950,9 @@ export default function PrelevementPage() {
       {showCatModal && (
         <CategoryModal categories={categories} onClose={() => setShowCatModal(false)}
           onRefresh={() => { fetchCategories(); }} />
+      )}
+      {showRecurringModal && (
+        <RecurringModal categories={categories} onClose={() => setShowRecurringModal(false)} />
       )}
       {editingExpense !== null && (
         <EditModal
