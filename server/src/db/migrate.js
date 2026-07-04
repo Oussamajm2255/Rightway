@@ -13,6 +13,7 @@ const migrations = [
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS remuneration_type VARCHAR(20) DEFAULT 'COMMISSION'`,
   `ALTER TABLE users DROP CONSTRAINT IF EXISTS users_remuneration_type_check`,
   `ALTER TABLE users ADD CONSTRAINT users_remuneration_type_check CHECK (remuneration_type IN ('COMMISSION', 'SALAIRE'))`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS salary_amount NUMERIC(10,3) DEFAULT 0`,
 
   // Prelevement (expense management — SUPER_ADMIN only)
   `CREATE TABLE IF NOT EXISTS prelevement_categories (

@@ -29,6 +29,13 @@ const createUserRules = [
     .optional({ values: 'falsy' })
     .trim()
     .isLength({ max: 30 }).withMessage('La plaque ne peut pas dépasser 30 caractères.'),
+  body('remuneration_type')
+    .optional()
+    .trim()
+    .isIn(['COMMISSION', 'SALAIRE']).withMessage('Type de rémunération invalide. Autorisé: COMMISSION, SALAIRE.'),
+  body('salary_amount')
+    .optional({ values: 'falsy' })
+    .isNumeric().withMessage('Le montant du salaire doit être un nombre valide.'),
 ];
 
 const updateUserRules = [
@@ -59,6 +66,9 @@ const updateUserRules = [
     .optional()
     .trim()
     .isIn(['COMMISSION', 'SALAIRE']).withMessage('Type de rémunération invalide. Autorisé: COMMISSION, SALAIRE.'),
+  body('salary_amount')
+    .optional({ values: 'falsy' })
+    .isNumeric().withMessage('Le montant du salaire doit être un nombre valide.'),
 ];
 
 module.exports = { createUserRules, updateUserRules };

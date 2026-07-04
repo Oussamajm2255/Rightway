@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiGet, apiPut, apiPost } from '../lib/api';
-import { formatDateTime } from '../lib/utils';
+import { formatDateTime, formatDT } from '../lib/utils';
 import './UsersPage.css';
 
 function UsersPage() {
@@ -179,6 +179,11 @@ function UsersPage() {
                           user.remuneration_type === 'SALAIRE' ? '💼 Salaire' : '💰 Commission'
                         )}
                       </button>
+                      {user.remuneration_type === 'SALAIRE' && (
+                        <div style={{ fontSize: '0.8rem', marginTop: '4px', fontWeight: 600, color: 'var(--color-warning)' }}>
+                          {formatDT(user.salary_amount)}
+                        </div>
+                      )}
                     ) : (
                       <span className="text-muted">—</span>
                     )}
@@ -286,6 +291,8 @@ function UserFormModal({ user, onClose, onSaved }) {
     phone: user?.phone || '',
     vehicle_name: user?.vehicle_name || '',
     vehicle_plate: user?.vehicle_plate || '',
+    remuneration_type: user?.remuneration_type || 'COMMISSION',
+    salary_amount: user?.salary_amount || '',
   });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -357,6 +364,25 @@ function UserFormModal({ user, onClose, onSaved }) {
               </select>
             </div>
           </div>
+          
+          {formData.role === 'COMMERCIAL' && (
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Rémunération</label>
+                <select name="remuneration_type" className="form-input" value={formData.remuneration_type} onChange={handleChange}>
+                  <option value="COMMISSION">Commission</option>
+                  <option value="SALAIRE">Salaire</option>
+                </select>
+              </div>
+              
+              {formData.remuneration_type === 'SALAIRE' && (
+                <div className="form-group">
+                  <label className="form-label">Montant du Salaire Mensuel (DT) *</label>
+                  <input name="salary_amount" type="number" step="0.001" min="0" className="form-input" value={formData.salary_amount} onChange={handleChange} placeholder="Ex: 1200.000" />
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="form-row">
             <div className="form-group">

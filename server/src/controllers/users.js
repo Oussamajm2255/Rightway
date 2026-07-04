@@ -45,7 +45,7 @@ async function createUser(req, res) {
       return res.status(400).json({ error: errors.array()[0].msg });
     }
 
-    const { full_name, email, password, role, phone, vehicle_name, vehicle_plate } = req.body;
+    const { full_name, email, password, role, phone, vehicle_name, vehicle_plate, remuneration_type, salary_amount } = req.body;
 
     // Check email uniqueness
     const existing = await userModel.findByEmail(email);
@@ -54,6 +54,18 @@ async function createUser(req, res) {
     }
 
     const password_hash = await hashPassword(password);
+    
+    let resolvedRemuneration = remuneration_type;
+    let resolvedSalary = salary_amount;
+    if (role !== 'COMMERCIAL') {
+      resolvedRemuneration = null;
+      resolvedSalary = 0;
+    } else {
+      resolvedRemuneration = remuneration_type || 'COMMISSION';
+      if (resolvedRemuneration === 'COMMISSION') {
+        resolvedSalary = 0;
+      }
+    }
 
     const user = await userModel.create({
       full_name,
@@ -63,6 +75,8 @@ async function createUser(req, res) {
       phone: phone || null,
       vehicle_name: vehicle_name || null,
       vehicle_plate: vehicle_plate || null,
+      remuneration_type: resolvedRemuneration,
+      salary_amount: resolvedSalary || 0
     });
 
     res.status(201).json({ user });
@@ -110,6 +124,15 @@ async function updateUser(req, res) {
     if (req.body.vehicle_plate !== undefined) fields.vehicle_plate = req.body.vehicle_plate;
     if (req.body.is_active !== undefined) fields.is_active = req.body.is_active;
     if (req.body.remuneration_type !== undefined) fields.remuneration_type = req.body.remuneration_type;
+    
+    if (req.body.salary_amount !== undefined) {
+      fields.salary_amount = req.body.salary_amount;
+    }
+    
+    // If the user is changed to COMMISSION, force salary_amount to 0
+    if (fields.remuneration_type === 'COMMISSION' || (!fields.remuneration_type && targetUser.remuneration_type === 'COMMISSION')) {
+      fields.salary_amount = 0;
+    }
 
     const updated = await userModel.update(id, fields);
     res.json({ user: updated });
