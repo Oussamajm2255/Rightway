@@ -256,393 +256,393 @@ function StockPage() {
       {activeTab === 'stock' && (
         <>
 
-      {successMsg && <div className="success-banner">{successMsg}</div>}
+          {successMsg && <div className="success-banner">{successMsg}</div>}
 
-      <div className="filters-bar">
-        <select
-          className="form-input"
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-        >
-          <option value="">Toutes les catégories</option>
-          {categories.map((cat) => (
-            <option key={cat} value={cat}>{cat}</option>
-          ))}
-        </select>
+          <div className="filters-bar">
+            <select
+              className="form-input"
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+            >
+              <option value="">Toutes les catégories</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
 
-        <label className="checkbox-label">
-          <input
-            type="checkbox"
-            checked={showOnlyAlerts}
-            onChange={(e) => setShowOnlyAlerts(e.target.checked)}
-          />
-          Stock faible uniquement (&lt; {alertThreshold})
-        </label>
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={showOnlyAlerts}
+                onChange={(e) => setShowOnlyAlerts(e.target.checked)}
+              />
+              Stock faible uniquement (&lt; {alertThreshold})
+            </label>
 
-        <div className="threshold-group">
-          <label className="threshold-label">Seuil d'alerte:</label>
-          <input
-            type="number"
-            className="form-input threshold-input"
-            value={alertThreshold}
-            onChange={(e) => setAlertThreshold(parseInt(e.target.value, 10) || 20)}
-            min="1"
-          />
-        </div>
-      </div>
-
-      {error && <div className="error-banner">{error}</div>}
-
-      <div className="stock-summary" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <span>{stock.length} produits</span>
-          <span className="summary-alert" style={{ marginLeft: '10px' }}>
-            {stock.filter((s) => isLowStock(s.quantity)).length} en alerte (&lt; {alertThreshold})
-          </span>
-        </div>
-        {user?.role === 'SUPER_ADMIN' && (
-          <button className="btn btn-primary btn-sm" onClick={handleMultiAdjustClick}>
-            <IconPlus /> Ajustement Multiple
-          </button>
-        )}
-      </div>
-
-      {loading ? (
-        <div className="loading-state">Chargement du stock...</div>
-      ) : stock.length === 0 ? (
-        <div className="empty-state"><p>Aucun produit en stock.</p></div>
-      ) : (
-        <div className="table-container">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Code</th>
-                <th>Code-barres</th>
-                <th>Produit</th>
-                <th>Catégorie</th>
-                <th>Prix vente TTC</th>
-                <th>Stock Dépôt</th>
-                <th>En Transit</th>
-                <th>Stock Virtuel</th>
-                <th>Statut</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(
-                stock.reduce((acc, item) => {
-                  const cat = item.category || 'Sans catégorie';
-                  (acc[cat] = acc[cat] || []).push(item);
-                  return acc;
-                }, {})
-              ).map(([cat, catItems]) => {
-                const catCol = catColors(cat);
-                return (
-                  <Fragment key={cat}>
-                    {catItems.map((item) => {
-                      const low = isLowStock(item.quantity);
-                      return (
-                        <tr key={item.id} className={low ? 'row-alert' : ''} style={{ background: catCol.bg, borderLeftColor: catCol.bar }}>
-                          <td className="td-code">{item.id}</td>
-                          <td>{item.barcode}</td>
-                          <td className="td-name">{item.name}</td>
-                          <td><span className="cat-pill" style={{ background: catCol.bg, color: catCol.text }}>{cat}</span></td>
-                          <td className="td-price">{formatDT(item.selling_price_ttc)}</td>
-                          <td className={`td-qty ${low ? 'qty-low' : ''}`}>
-                            {item.quantity}
-                          </td>
-                          <td className="td-qty" style={{ color: 'var(--color-text-secondary)' }}>
-                            {item.in_transit || 0}
-                          </td>
-                          <td className="td-qty" style={{ fontWeight: 600 }}>
-                            {item.virtual_stock || 0}
-                          </td>
-                          <td>
-                            {low ? (
-                              <span className="badge badge-alert">Stock faible</span>
-                            ) : item.quantity === 0 ? (
-                              <span className="badge badge-empty">Épuisé</span>
-                            ) : (
-                              <span className="badge badge-ok">OK</span>
-                            )}
-                          </td>
-                          <td>
-                            {user?.role === 'SUPER_ADMIN' && (
-                              <button
-                                className="btn btn-sm btn-outline"
-                                onClick={() => handleAdjustClick(item)}
-                              >
-                                Ajuster
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                    <tr className="cat-subtotal" style={{ background: catCol.bg, borderLeftColor: catCol.bar, borderTopColor: catCol.bar }}>
-                      <td colSpan="5" style={{ color: catCol.text, textAlign: 'center', fontWeight: 700 }}>
-                        Sous-total {cat}
-                      </td>
-                      <td className="td-qty" style={{ fontWeight: 700 }}>
-                        {catItems.reduce((s, i) => s + i.quantity, 0)}
-                      </td>
-                      <td className="td-qty" style={{ fontWeight: 700 }}>
-                        {catItems.reduce((s, i) => s + (i.in_transit || 0), 0)}
-                      </td>
-                      <td className="td-qty" style={{ fontWeight: 700 }}>
-                        {catItems.reduce((s, i) => s + (i.virtual_stock || 0), 0)}
-                      </td>
-                      <td colSpan="2"></td>
-                    </tr>
-                  </Fragment>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Adjust Modal */}
-      {showAdjustModal && (
-        <div className="modal-overlay" onClick={() => setShowAdjustModal(false)}>
-          <div className="modal-card modal-form modal-adjust" onClick={(e) => e.stopPropagation()}>
-            {adjustMode === 'multiple' ? (
-              <h3 className="modal-title">Ajustement Multiple du Stock</h3>
-            ) : (
-              <>
-                <h3 className="modal-title">Ajuster le stock</h3>
-                <div className="modal-summary">
-                  <p><strong>{adjustingItem?.id}</strong> — {adjustingItem?.name}</p>
-                  <p>Stock actuel : <strong>{adjustingItem?.quantity} unités</strong></p>
-                  <p>Prix vente TTC : {formatDT(adjustingItem?.selling_price_ttc)}</p>
-                </div>
-              </>
-            )}
-
-            {adjustError && <div className="login-error">{adjustError}</div>}
-
-            <form onSubmit={handleAdjustSubmit}>
-              {/* Add / Remove toggle */}
-              <div className="form-group">
-                <label className="form-label">Type d'opération</label>
-                <div className="toggle-group">
-                  <button
-                    type="button"
-                    className={`toggle-btn ${adjustDirection === 'add' ? 'toggle-btn-active toggle-btn-add' : ''}`}
-                    onClick={() => setAdjustDirection('add')}
-                  >
-                    <IconPlus />
-                    <span>Ajouter au stock</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`toggle-btn ${adjustDirection === 'remove' ? 'toggle-btn-active toggle-btn-remove' : ''}`}
-                    onClick={() => setAdjustDirection('remove')}
-                  >
-                    <IconMinus />
-                    <span>Retirer du stock</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Add / Remove toggle */}
-
-              {/* Single mode: quantity input */}
-              {adjustMode === 'single' && (
-                <div className="form-group">
-                  <label className="form-label">Quantité</label>
-                  <input
-                    type="number"
-                    className="form-input"
-                    placeholder={adjustDirection === 'add' ? 'Ex: 50' : 'Ex: 10'}
-                    value={adjustForm.quantity_change}
-                    onChange={(e) => setAdjustForm((p) => ({ ...p, quantity_change: e.target.value }))}
-                    min="1"
-                  />
-                </div>
-              )}
-
-              {/* Multiple mode: dynamic product table replaced by searchable grouped grid */}
-              {adjustMode === 'multiple' && (
-                <div className="form-group" style={{ marginTop: 'var(--space-3)' }}>
-                  <label className="form-label">Sélectionnez et ajustez les produits</label>
-                  
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="🔍 Rechercher un produit par nom ou code-barres..."
-                    value={multiSearchTerm}
-                    onChange={(e) => setMultiSearchTerm(e.target.value)}
-                    style={{ marginBottom: 'var(--space-3)' }}
-                  />
-
-                  <div style={{ maxHeight: '450px', overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-3)', background: 'var(--color-bg-tertiary)' }}>
-                    {(() => {
-                      const lowerSearch = multiSearchTerm.toLowerCase();
-                      const filteredStock = stock.filter(s => 
-                        s.name.toLowerCase().includes(lowerSearch) || 
-                        (s.barcode && s.barcode.toLowerCase().includes(lowerSearch)) ||
-                        s.id.toLowerCase().includes(lowerSearch)
-                      );
-
-                      if (filteredStock.length === 0) {
-                        return <p style={{ textAlign: 'center', color: 'var(--color-text-muted)' }}>Aucun produit trouvé.</p>;
-                      }
-
-                      const grouped = filteredStock.reduce((acc, p) => {
-                        const cat = p.category || 'Sans catégorie';
-                        (acc[cat] = acc[cat] || []).push(p);
-                        return acc;
-                      }, {});
-
-                      return Object.entries(grouped).map(([category, products]) => (
-                        <div key={category} className="category-section" style={{ marginBottom: 'var(--space-4)' }}>
-                          <div className="category-header" style={{ marginBottom: 'var(--space-2)' }}>
-                            <span className="category-header-icon"><IconBox /></span>
-                            <span className="category-header-name">{category}</span>
-                            <span className="category-header-count">{products.length} produit{products.length > 1 ? 's' : ''}</span>
-                          </div>
-                          
-                          <div className="products-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-3)' }}>
-                            {products.map((product) => {
-                              const qtyVal = multiItemsMap[product.id] || '';
-                              const isSelected = qtyVal > 0;
-                              return (
-                                <div key={product.id} className={`product-select-card ${isSelected ? 'selected' : ''}`} style={{ background: '#fff', border: isSelected ? '2px solid var(--color-primary)' : '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: 'var(--space-2)' }}>
-                                  <div className="ps-info" style={{ marginBottom: 'var(--space-2)' }}>
-                                    <div className="ps-name" style={{ fontWeight: 600 }}>{product.name}</div>
-                                    <div className="ps-details" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
-                                      <span>{product.id}</span>
-                                      <span className={product.quantity < 20 ? 'qty-low' : ''} style={{ fontWeight: 600 }}>
-                                        Stock: {product.quantity}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <div className="ps-qty" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-2)' }}>
-                                    <button
-                                      type="button"
-                                      className="qty-btn"
-                                      onClick={() => {
-                                        const current = parseInt(multiItemsMap[product.id] || '0', 10);
-                                        if (current > 0) {
-                                          setMultiItemsMap(prev => ({ ...prev, [product.id]: current - 1 }));
-                                        }
-                                      }}
-                                      disabled={!multiItemsMap[product.id] || parseInt(multiItemsMap[product.id]) <= 0}
-                                      style={{ padding: '4px 10px', background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', borderRadius: '4px', cursor: 'pointer' }}
-                                    >−</button>
-                                    <input
-                                      type="number"
-                                      className="qty-input form-input"
-                                      value={multiItemsMap[product.id] || ''}
-                                      onChange={(e) => {
-                                        let val = parseInt(e.target.value, 10);
-                                        if (isNaN(val) || val < 0) val = '';
-                                        if (adjustDirection === 'remove' && val > product.quantity) {
-                                          val = product.quantity;
-                                        }
-                                        setMultiItemsMap(prev => ({ ...prev, [product.id]: val }));
-                                      }}
-                                      placeholder="0"
-                                      min="0"
-                                      max={adjustDirection === 'remove' ? product.quantity : undefined}
-                                      style={{ width: '60px', textAlign: 'center', padding: '4px' }}
-                                    />
-                                    <button
-                                      type="button"
-                                      className="qty-btn"
-                                      onClick={() => {
-                                        const current = parseInt(multiItemsMap[product.id] || '0', 10);
-                                        if (adjustDirection === 'remove' && current >= product.quantity) return;
-                                        setMultiItemsMap(prev => ({ ...prev, [product.id]: current + 1 }));
-                                      }}
-                                      disabled={adjustDirection === 'remove' && parseInt(multiItemsMap[product.id] || '0', 10) >= product.quantity}
-                                      style={{ padding: '4px 10px', background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', borderRadius: '4px', cursor: 'pointer' }}
-                                    >+</button>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ));
-                    })()}
-                  </div>
-                  <div style={{ marginTop: 'var(--space-2)', textAlign: 'right', fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
-                    {Object.values(multiItemsMap).filter(v => parseInt(v, 10) > 0).length} produit(s) sélectionné(s)
-                  </div>
-                </div>
-              )}
-
-              {/* Conditional fields for Add */}
-              {adjustDirection === 'add' && (
-                <>
-                  <div className="form-group">
-                    <label className="form-label">Date du mouvement</label>
-                    <input
-                      type="date"
-                      className="form-input"
-                      value={adjustForm.movement_date}
-                      onChange={(e) => setAdjustForm((p) => ({ ...p, movement_date: e.target.value }))}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">N° de facture</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="Numéro de facture"
-                      value={adjustForm.invoice_number}
-                      onChange={(e) => setAdjustForm((p) => ({ ...p, invoice_number: e.target.value }))}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Société / Client</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="Nom de la société ou du client"
-                      value={adjustForm.company_name}
-                      onChange={(e) => setAdjustForm((p) => ({ ...p, company_name: e.target.value }))}
-                    />
-                  </div>
-                </>
-              )}
-
-              <div className="form-group">
-                <label className="form-label">Motif de l'ajustement *</label>
-                <textarea
-                  className="form-input"
-                  rows="2"
-                  placeholder="Ex: Inventaire physique, correction, produit endommagé..."
-                  value={adjustForm.reason}
-                  onChange={(e) => setAdjustForm((p) => ({ ...p, reason: e.target.value }))}
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Votre mot de passe *</label>
-                <input
-                  type="password"
-                  className="form-input"
-                  placeholder="Mot de passe pour confirmer"
-                  value={adjustForm.password}
-                  onChange={(e) => setAdjustForm((p) => ({ ...p, password: e.target.value }))}
-                />
-              </div>
-
-              <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowAdjustModal(false)}>
-                  Annuler
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={adjusting}>
-                  {adjusting ? 'Ajustement...' : 'Confirmer l\'ajustement'}
-                </button>
-              </div>
-            </form>
+            <div className="threshold-group">
+              <label className="threshold-label">Seuil d'alerte:</label>
+              <input
+                type="number"
+                className="form-input threshold-input"
+                value={alertThreshold}
+                onChange={(e) => setAlertThreshold(parseInt(e.target.value, 10) || 20)}
+                min="1"
+              />
+            </div>
           </div>
-        </div>
-      )}
+
+          {error && <div className="error-banner">{error}</div>}
+
+          <div className="stock-summary" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <span>{stock.length} produits</span>
+              <span className="summary-alert" style={{ marginLeft: '10px' }}>
+                {stock.filter((s) => isLowStock(s.quantity)).length} en alerte (&lt; {alertThreshold})
+              </span>
+            </div>
+            {user?.role === 'SUPER_ADMIN' && (
+              <button className="btn btn-primary btn-sm" onClick={handleMultiAdjustClick}>
+                <IconPlus /> Ajustement Multiple
+              </button>
+            )}
+          </div>
+
+          {loading ? (
+            <div className="loading-state">Chargement du stock...</div>
+          ) : stock.length === 0 ? (
+            <div className="empty-state"><p>Aucun produit en stock.</p></div>
+          ) : (
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Code</th>
+                    <th>Code-barres</th>
+                    <th>Produit</th>
+                    <th>Catégorie</th>
+                    <th>Prix vente TTC</th>
+                    <th>Stock Dépôt</th>
+                    <th>Stock Mobile</th>
+                    <th>Stock Virtuel</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(
+                    stock.reduce((acc, item) => {
+                      const cat = item.category || 'Sans catégorie';
+                      (acc[cat] = acc[cat] || []).push(item);
+                      return acc;
+                    }, {})
+                  ).map(([cat, catItems]) => {
+                    const catCol = catColors(cat);
+                    return (
+                      <Fragment key={cat}>
+                        {catItems.map((item) => {
+                          const low = isLowStock(item.quantity);
+                          return (
+                            <tr key={item.id} className={low ? 'row-alert' : ''} style={{ background: catCol.bg, borderLeftColor: catCol.bar }}>
+                              <td className="td-code">{item.id}</td>
+                              <td>{item.barcode}</td>
+                              <td className="td-name">{item.name}</td>
+                              <td><span className="cat-pill" style={{ background: catCol.bg, color: catCol.text }}>{cat}</span></td>
+                              <td className="td-price">{formatDT(item.selling_price_ttc)}</td>
+                              <td className={`td-qty ${low ? 'qty-low' : ''}`}>
+                                {item.quantity}
+                              </td>
+                              <td className="td-qty" style={{ color: 'var(--color-text-secondary)' }}>
+                                {item.in_transit || 0}
+                              </td>
+                              <td className="td-qty" style={{ fontWeight: 600 }}>
+                                {item.virtual_stock || 0}
+                              </td>
+                              <td>
+                                {low ? (
+                                  <span className="badge badge-alert">Stock faible</span>
+                                ) : item.quantity === 0 ? (
+                                  <span className="badge badge-empty">Épuisé</span>
+                                ) : (
+                                  <span className="badge badge-ok">OK</span>
+                                )}
+                              </td>
+                              <td>
+                                {user?.role === 'SUPER_ADMIN' && (
+                                  <button
+                                    className="btn btn-sm btn-outline"
+                                    onClick={() => handleAdjustClick(item)}
+                                  >
+                                    Ajuster
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                        <tr className="cat-subtotal" style={{ background: catCol.bg, borderLeftColor: catCol.bar, borderTopColor: catCol.bar }}>
+                          <td colSpan="5" style={{ color: catCol.text, textAlign: 'center', fontWeight: 700 }}>
+                            Sous-total {cat}
+                          </td>
+                          <td className="td-qty" style={{ fontWeight: 700 }}>
+                            {catItems.reduce((s, i) => s + i.quantity, 0)}
+                          </td>
+                          <td className="td-qty" style={{ fontWeight: 700 }}>
+                            {catItems.reduce((s, i) => s + (i.in_transit || 0), 0)}
+                          </td>
+                          <td className="td-qty" style={{ fontWeight: 700 }}>
+                            {catItems.reduce((s, i) => s + (i.virtual_stock || 0), 0)}
+                          </td>
+                          <td colSpan="2"></td>
+                        </tr>
+                      </Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Adjust Modal */}
+          {showAdjustModal && (
+            <div className="modal-overlay" onClick={() => setShowAdjustModal(false)}>
+              <div className="modal-card modal-form modal-adjust" onClick={(e) => e.stopPropagation()}>
+                {adjustMode === 'multiple' ? (
+                  <h3 className="modal-title">Ajustement Multiple du Stock</h3>
+                ) : (
+                  <>
+                    <h3 className="modal-title">Ajuster le stock</h3>
+                    <div className="modal-summary">
+                      <p><strong>{adjustingItem?.id}</strong> — {adjustingItem?.name}</p>
+                      <p>Stock actuel : <strong>{adjustingItem?.quantity} unités</strong></p>
+                      <p>Prix vente TTC : {formatDT(adjustingItem?.selling_price_ttc)}</p>
+                    </div>
+                  </>
+                )}
+
+                {adjustError && <div className="login-error">{adjustError}</div>}
+
+                <form onSubmit={handleAdjustSubmit}>
+                  {/* Add / Remove toggle */}
+                  <div className="form-group">
+                    <label className="form-label">Type d'opération</label>
+                    <div className="toggle-group">
+                      <button
+                        type="button"
+                        className={`toggle-btn ${adjustDirection === 'add' ? 'toggle-btn-active toggle-btn-add' : ''}`}
+                        onClick={() => setAdjustDirection('add')}
+                      >
+                        <IconPlus />
+                        <span>Ajouter au stock</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={`toggle-btn ${adjustDirection === 'remove' ? 'toggle-btn-active toggle-btn-remove' : ''}`}
+                        onClick={() => setAdjustDirection('remove')}
+                      >
+                        <IconMinus />
+                        <span>Retirer du stock</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Add / Remove toggle */}
+
+                  {/* Single mode: quantity input */}
+                  {adjustMode === 'single' && (
+                    <div className="form-group">
+                      <label className="form-label">Quantité</label>
+                      <input
+                        type="number"
+                        className="form-input"
+                        placeholder={adjustDirection === 'add' ? 'Ex: 50' : 'Ex: 10'}
+                        value={adjustForm.quantity_change}
+                        onChange={(e) => setAdjustForm((p) => ({ ...p, quantity_change: e.target.value }))}
+                        min="1"
+                      />
+                    </div>
+                  )}
+
+                  {/* Multiple mode: dynamic product table replaced by searchable grouped grid */}
+                  {adjustMode === 'multiple' && (
+                    <div className="form-group" style={{ marginTop: 'var(--space-3)' }}>
+                      <label className="form-label">Sélectionnez et ajustez les produits</label>
+
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="🔍 Rechercher un produit par nom ou code-barres..."
+                        value={multiSearchTerm}
+                        onChange={(e) => setMultiSearchTerm(e.target.value)}
+                        style={{ marginBottom: 'var(--space-3)' }}
+                      />
+
+                      <div style={{ maxHeight: '450px', overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-3)', background: 'var(--color-bg-tertiary)' }}>
+                        {(() => {
+                          const lowerSearch = multiSearchTerm.toLowerCase();
+                          const filteredStock = stock.filter(s =>
+                            s.name.toLowerCase().includes(lowerSearch) ||
+                            (s.barcode && s.barcode.toLowerCase().includes(lowerSearch)) ||
+                            s.id.toLowerCase().includes(lowerSearch)
+                          );
+
+                          if (filteredStock.length === 0) {
+                            return <p style={{ textAlign: 'center', color: 'var(--color-text-muted)' }}>Aucun produit trouvé.</p>;
+                          }
+
+                          const grouped = filteredStock.reduce((acc, p) => {
+                            const cat = p.category || 'Sans catégorie';
+                            (acc[cat] = acc[cat] || []).push(p);
+                            return acc;
+                          }, {});
+
+                          return Object.entries(grouped).map(([category, products]) => (
+                            <div key={category} className="category-section" style={{ marginBottom: 'var(--space-4)' }}>
+                              <div className="category-header" style={{ marginBottom: 'var(--space-2)' }}>
+                                <span className="category-header-icon"><IconBox /></span>
+                                <span className="category-header-name">{category}</span>
+                                <span className="category-header-count">{products.length} produit{products.length > 1 ? 's' : ''}</span>
+                              </div>
+
+                              <div className="products-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-3)' }}>
+                                {products.map((product) => {
+                                  const qtyVal = multiItemsMap[product.id] || '';
+                                  const isSelected = qtyVal > 0;
+                                  return (
+                                    <div key={product.id} className={`product-select-card ${isSelected ? 'selected' : ''}`} style={{ background: '#fff', border: isSelected ? '2px solid var(--color-primary)' : '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: 'var(--space-2)' }}>
+                                      <div className="ps-info" style={{ marginBottom: 'var(--space-2)' }}>
+                                        <div className="ps-name" style={{ fontWeight: 600 }}>{product.name}</div>
+                                        <div className="ps-details" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
+                                          <span>{product.id}</span>
+                                          <span className={product.quantity < 20 ? 'qty-low' : ''} style={{ fontWeight: 600 }}>
+                                            Stock: {product.quantity}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div className="ps-qty" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-2)' }}>
+                                        <button
+                                          type="button"
+                                          className="qty-btn"
+                                          onClick={() => {
+                                            const current = parseInt(multiItemsMap[product.id] || '0', 10);
+                                            if (current > 0) {
+                                              setMultiItemsMap(prev => ({ ...prev, [product.id]: current - 1 }));
+                                            }
+                                          }}
+                                          disabled={!multiItemsMap[product.id] || parseInt(multiItemsMap[product.id]) <= 0}
+                                          style={{ padding: '4px 10px', background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', borderRadius: '4px', cursor: 'pointer' }}
+                                        >−</button>
+                                        <input
+                                          type="number"
+                                          className="qty-input form-input"
+                                          value={multiItemsMap[product.id] || ''}
+                                          onChange={(e) => {
+                                            let val = parseInt(e.target.value, 10);
+                                            if (isNaN(val) || val < 0) val = '';
+                                            if (adjustDirection === 'remove' && val > product.quantity) {
+                                              val = product.quantity;
+                                            }
+                                            setMultiItemsMap(prev => ({ ...prev, [product.id]: val }));
+                                          }}
+                                          placeholder="0"
+                                          min="0"
+                                          max={adjustDirection === 'remove' ? product.quantity : undefined}
+                                          style={{ width: '60px', textAlign: 'center', padding: '4px' }}
+                                        />
+                                        <button
+                                          type="button"
+                                          className="qty-btn"
+                                          onClick={() => {
+                                            const current = parseInt(multiItemsMap[product.id] || '0', 10);
+                                            if (adjustDirection === 'remove' && current >= product.quantity) return;
+                                            setMultiItemsMap(prev => ({ ...prev, [product.id]: current + 1 }));
+                                          }}
+                                          disabled={adjustDirection === 'remove' && parseInt(multiItemsMap[product.id] || '0', 10) >= product.quantity}
+                                          style={{ padding: '4px 10px', background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', borderRadius: '4px', cursor: 'pointer' }}
+                                        >+</button>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                      <div style={{ marginTop: 'var(--space-2)', textAlign: 'right', fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
+                        {Object.values(multiItemsMap).filter(v => parseInt(v, 10) > 0).length} produit(s) sélectionné(s)
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Conditional fields for Add */}
+                  {adjustDirection === 'add' && (
+                    <>
+                      <div className="form-group">
+                        <label className="form-label">Date du mouvement</label>
+                        <input
+                          type="date"
+                          className="form-input"
+                          value={adjustForm.movement_date}
+                          onChange={(e) => setAdjustForm((p) => ({ ...p, movement_date: e.target.value }))}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">N° de facture</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="Numéro de facture"
+                          value={adjustForm.invoice_number}
+                          onChange={(e) => setAdjustForm((p) => ({ ...p, invoice_number: e.target.value }))}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Société / Client</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="Nom de la société ou du client"
+                          value={adjustForm.company_name}
+                          onChange={(e) => setAdjustForm((p) => ({ ...p, company_name: e.target.value }))}
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  <div className="form-group">
+                    <label className="form-label">Motif de l'ajustement *</label>
+                    <textarea
+                      className="form-input"
+                      rows="2"
+                      placeholder="Ex: Inventaire physique, correction, produit endommagé..."
+                      value={adjustForm.reason}
+                      onChange={(e) => setAdjustForm((p) => ({ ...p, reason: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Votre mot de passe *</label>
+                    <input
+                      type="password"
+                      className="form-input"
+                      placeholder="Mot de passe pour confirmer"
+                      value={adjustForm.password}
+                      onChange={(e) => setAdjustForm((p) => ({ ...p, password: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="modal-actions">
+                    <button type="button" className="btn btn-secondary" onClick={() => setShowAdjustModal(false)}>
+                      Annuler
+                    </button>
+                    <button type="submit" className="btn btn-primary" disabled={adjusting}>
+                      {adjusting ? 'Ajustement...' : 'Confirmer l\'ajustement'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
 
         </>
       )}
