@@ -67,12 +67,20 @@ function AppRoutes() {
   );
 }
 
+function HomeRoute() {
+  const { user } = useAuth();
+  if (user?.role === 'COMMERCIAL') {
+    return <Navigate to="/livraisons" replace />;
+  }
+  return <DashboardPage />;
+}
+
 function AppRoutesInner() {
   return (
     <Routes>
       <Route
         path="/"
-        element={<DashboardPage />}
+        element={<HomeRoute />}
       />
       <Route
         path="/users"

@@ -219,7 +219,6 @@ function AppLayout({ children }) {
     navItems.push({ to: '/commercials', label: 'Commerciaux', icon: 'commercials' });
     navItems.push({ to: '/historique', label: 'Historique', icon: 'historique' });
   } else if (role === 'COMMERCIAL') {
-    navItems.push({ to: '/', label: 'Tableau de bord', icon: 'dashboard' });
     navItems.push({ to: '/livraisons', label: 'Mes livraisons', icon: 'livraisons' });
     navItems.push({ to: '/historique', label: 'Historique', icon: 'historique' });
   }
