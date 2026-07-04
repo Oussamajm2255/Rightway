@@ -61,6 +61,7 @@ async function confirmSortie(req, res) {
     if (!await verifyPassword(password, userRows[0].password_hash)) return res.status(401).json({ error: 'Mot de passe incorrect.' });
     const result = await livraisonModel.confirmSortie(req.params.id, req.user.id);
     if (result.error) return res.status(400).json({ error: result.error });
+    await notificationModel.resolveActionable(req.user.id, result.livraison.id, 'en attente de votre confirmation', `Vous avez confirmé le bon de sortie ${result.livraison.reference}.`);
     await notificationModel.create(result.livraison.admin_id, `Bon de sortie ${result.livraison.reference} confirmé par ${req.user.full_name}.`, result.livraison.id);
     res.json({ livraison: result.livraison, message: 'Bon de sortie confirmé.' });
   } catch (err) { console.error('confirmSortie error:', err); res.status(500).json({ error: 'Erreur interne du serveur' }); }
@@ -134,8 +135,16 @@ async function confirmerRetour(req, res) {
     const result = await livraisonModel.confirmerRetour(req.params.id, req.user.id, req.user.role);
     if (result.error) return res.status(400).json({ error: result.error });
     const { livraison, bothConfirmed, ca_total, commission, net_a_reverser } = result;
-    if (req.user.role === 'ADMIN' || req.user.role === 'SUPER_ADMIN') await notificationModel.create(livraison.commercial_id, `L'Admin a confirmé le bon de retour ${livraison.reference}.`, livraison.id);
-    else await notificationModel.create(livraison.admin_id, `Le Commercial ${req.user.full_name} a confirmé le bon de retour ${livraison.reference}.`, livraison.id);
+    
+    if (req.user.role === 'ADMIN' || req.user.role === 'SUPER_ADMIN') {
+      await notificationModel.resolveActionable(req.user.id, livraison.id, 'Retour en cours', `Vous avez confirmé le bon de retour ${livraison.reference}.`);
+      await notificationModel.resolveActionable(req.user.id, livraison.id, 'a confirmé le bon de retour', `Vous avez confirmé le bon de retour ${livraison.reference}.`);
+      await notificationModel.create(livraison.commercial_id, `L'Admin a confirmé le bon de retour ${livraison.reference}.`, livraison.id);
+    } else {
+      await notificationModel.resolveActionable(req.user.id, livraison.id, 'a confirmé le bon de retour', `Vous avez confirmé le bon de retour ${livraison.reference}.`);
+      await notificationModel.create(livraison.admin_id, `Le Commercial ${req.user.full_name} a confirmé le bon de retour ${livraison.reference}.`, livraison.id);
+    }
+    
     if (bothConfirmed) { await notificationModel.create(livraison.admin_id, `Livraison ${livraison.reference} clôturée.`, livraison.id); await notificationModel.create(livraison.commercial_id, `Livraison ${livraison.reference} clôturée.`, livraison.id); }
     res.json({ livraison, bothConfirmed, ca_total, commission, net_a_reverser, message: bothConfirmed ? 'Clôturée.' : 'Confirmation enregistrée. En attente de l\'autre partie.' });
   } catch (err) { console.error('confirmerRetour error:', err); res.status(500).json({ error: 'Erreur interne du serveur' }); }
@@ -241,6 +250,7 @@ async function confirmerAnnulation(req, res) {
     const result = await livraisonModel.confirmerAnnulation(req.params.id, req.user.id);
     if (result.error) return res.status(400).json({ error: result.error });
 
+    await notificationModel.resolveActionable(req.user.id, result.livraison.id, 'demande l\'annulation', `Vous avez confirmé l'annulation de la livraison ${result.livraison.reference}.`);
     await notificationModel.create(result.livraison.commercial_id, `L'admin ${req.user.full_name} a confirmé l'annulation de la livraison ${result.livraison.reference}.`, result.livraison.id);
     res.json({ livraison: result.livraison, message: 'Livraison annulée. Stock restauré.' });
   } catch (err) { console.error('confirmerAnnulation error:', err); res.status(500).json({ error: 'Erreur interne du serveur' }); }
@@ -286,6 +296,7 @@ async function confirmerReouverture(req, res) {
     if (result.error) return res.status(400).json({ error: result.error });
 
     const livraison = await livraisonModel.findById(req.params.id);
+    await notificationModel.resolveActionable(req.user.id, livraison.id, 'demande la réouverture', `Vous avez confirmé la réouverture de la livraison ${livraison.reference}.`);
     await notificationModel.create(
       livraison.commercial_id,
       `L'admin ${req.user.full_name} a confirmé la réouverture de la livraison ${livraison.reference}.`,
@@ -344,6 +355,7 @@ async function confirmerRetourCreation(req, res) {
     if (result.error) return res.status(400).json({ error: result.error });
 
     const livraison = await livraisonModel.findById(req.params.id);
+    await notificationModel.resolveActionable(req.user.id, livraison.id, 'demande le retour à la création', `Vous avez confirmé le retour à la création de la livraison ${livraison.reference}.`);
     await notificationModel.create(
       livraison.commercial_id,
       `L'admin ${req.user.full_name} a confirmé le retour à la création de la livraison ${livraison.reference}.`,
@@ -516,6 +528,7 @@ async function confirmerEcart(req, res) {
     const confirmed = await ecartModel.confirm(req.params.ecartId, req.user.id);
     if (!confirmed) return res.status(400).json({ error: 'Impossible de confirmer cet ecart.' });
 
+    await notificationModel.resolveActionable(req.user.id, ecart.livraison_id, 'Veuillez le confirmer', `Vous avez confirmé l'écart de ${Number(ecart.amount).toFixed(3)} DT.`);
     res.json({ ecart: confirmed, message: 'Ecart confirme avec succes.' });
   } catch (err) {
     console.error('confirmerEcart error:', err);
@@ -563,6 +576,8 @@ async function confirmPaymentEcart(req, res) {
     const updated = await ecartModel.confirmPayment(req.params.ecartId, req.user.id);
     if (!updated) return res.status(400).json({ error: 'Impossible de confirmer le paiement de cet ecart.' });
 
+    await notificationModel.resolveActionable(req.user.id, ecart.livraison_id, 'Veuillez confirmer la reception', `Vous avez confirmé la réception du paiement de l'écart de ${Number(ecart.amount).toFixed(3)} DT.`);
+    
     // Notify the commercial
     await notificationModel.create(
       livraison.commercial_id,

@@ -59,4 +59,16 @@ async function countUnread(user_id) {
   return parseInt(rows[0].count, 10);
 }
 
-module.exports = { create, findByUser, markRead, markAllRead, countUnread };
+async function resolveActionable(user_id, livraison_id, keyword, new_message) {
+  // Finds the notification that matches keyword, updates its text, and marks it as read.
+  await pool.query(
+    `UPDATE notifications 
+     SET message = $1, is_read = true 
+     WHERE user_id = $2 
+       AND livraison_id = $3 
+       AND message ILIKE $4`,
+    [new_message, user_id, livraison_id, `%${keyword}%`]
+  );
+}
+
+module.exports = { create, findByUser, markRead, markAllRead, countUnread, resolveActionable };
