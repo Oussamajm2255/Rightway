@@ -169,21 +169,23 @@ function UsersPage() {
                   <td>{getRoleBadge(user.role)}</td>
                   <td>
                     {user.role === 'COMMERCIAL' ? (
-                      <button
-                        className={`btn btn-sm ${user.remuneration_type === 'SALAIRE' ? 'btn-outline-warning' : 'btn-outline-success'}`}
-                        onClick={() => handleToggleRemuneration(user)}
-                        disabled={togglingRem === user.id}
-                        title={user.remuneration_type === 'SALAIRE' ? 'Passer en Commission' : 'Passer en Salaire'}
-                      >
-                        {togglingRem === user.id ? '...' : (
-                          user.remuneration_type === 'SALAIRE' ? '💼 Salaire' : '💰 Commission'
+                      <>
+                        <button
+                          className={`btn btn-sm ${user.remuneration_type === 'SALAIRE' ? 'btn-outline-warning' : 'btn-outline-success'}`}
+                          onClick={() => handleToggleRemuneration(user)}
+                          disabled={togglingRem === user.id}
+                          title={user.remuneration_type === 'SALAIRE' ? 'Passer en Commission' : 'Passer en Salaire'}
+                        >
+                          {togglingRem === user.id ? '...' : (
+                            user.remuneration_type === 'SALAIRE' ? '💼 Salaire' : '💰 Commission'
+                          )}
+                        </button>
+                        {user.remuneration_type === 'SALAIRE' && (
+                          <div style={{ fontSize: '0.8rem', marginTop: '4px', fontWeight: 600, color: 'var(--color-warning)' }}>
+                            {formatDT(user.salary_amount)}
+                          </div>
                         )}
-                      </button>
-                      {user.remuneration_type === 'SALAIRE' && (
-                        <div style={{ fontSize: '0.8rem', marginTop: '4px', fontWeight: 600, color: 'var(--color-warning)' }}>
-                          {formatDT(user.salary_amount)}
-                        </div>
-                      )}
+                      </>
                     ) : (
                       <span className="text-muted">—</span>
                     )}
