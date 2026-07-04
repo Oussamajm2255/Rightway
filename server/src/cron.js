@@ -1,5 +1,5 @@
 const cron = require('node-cron');
-const pool = require('./db/index');
+const pool = require('./db/pool');
 const prelevementModel = require('./models/prelevement');
 
 // We need a dummy "system user" or just pick the first SUPER_ADMIN to attribute the generation to
