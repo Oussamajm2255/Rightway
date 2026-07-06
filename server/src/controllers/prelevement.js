@@ -358,13 +358,49 @@ async function listRecurringPrelevements(_req, res) {
   }
 }
 
+const RECURRING_FREQUENCIES = ['WEEKLY', 'MONTHLY', 'YEARLY'];
+
+// Validates the cycle-specific fields for a given frequency.
+// MONTHLY/YEARLY reuse generation_day (1-28) as "day of month" —
+// capped at 28 so the schedule never skips a month on short Februaries.
+function validateCycleFields(frequency, { generation_day, generation_weekday, generation_month }) {
+  if (!RECURRING_FREQUENCIES.includes(frequency)) {
+    return 'Cycle invalide. Choisissez Hebdomadaire, Mensuel ou Annuel.';
+  }
+  if (frequency === 'WEEKLY') {
+    const wd = parseInt(generation_weekday, 10);
+    if (!wd || wd < 1 || wd > 7) {
+      return 'Le jour de la semaine est requis pour un cycle hebdomadaire.';
+    }
+  } else if (frequency === 'MONTHLY') {
+    const day = parseInt(generation_day, 10);
+    if (!day || day < 1 || day > 28) {
+      return 'Le jour du mois (1-28) est requis pour un cycle mensuel.';
+    }
+  } else if (frequency === 'YEARLY') {
+    const month = parseInt(generation_month, 10);
+    const day = parseInt(generation_day, 10);
+    if (!month || month < 1 || month > 12) {
+      return 'Le mois est requis pour un cycle annuel.';
+    }
+    if (!day || day < 1 || day > 28) {
+      return 'Le jour du mois (1-28) est requis pour un cycle annuel.';
+    }
+  }
+  return null;
+}
+
 async function createRecurringPrelevement(req, res) {
   try {
     const { category_id, amount, description, is_active } = req.body;
-    
+    const frequency = req.body.frequency || 'MONTHLY';
+
     if (!category_id || !amount || amount <= 0) {
       return res.status(400).json({ error: 'Catégorie et montant valides requis.' });
     }
+
+    const cycleError = validateCycleFields(frequency, req.body);
+    if (cycleError) return res.status(400).json({ error: cycleError });
 
     const cat = await prelevementModel.getCategoryById(category_id);
     if (!cat) {
@@ -376,9 +412,13 @@ async function createRecurringPrelevement(req, res) {
       amount,
       description,
       is_active,
-      created_by: req.user.id
+      created_by: req.user.id,
+      frequency,
+      generation_day: frequency !== 'WEEKLY' ? parseInt(req.body.generation_day, 10) : null,
+      generation_weekday: frequency === 'WEEKLY' ? parseInt(req.body.generation_weekday, 10) : null,
+      generation_month: frequency === 'YEARLY' ? parseInt(req.body.generation_month, 10) : null,
     });
-    
+
     res.status(201).json({ recurring: created });
   } catch (err) {
     console.error('createRecurringPrelevement error:', err);
@@ -389,19 +429,46 @@ async function createRecurringPrelevement(req, res) {
 async function updateRecurringPrelevement(req, res) {
   try {
     const { id } = req.params;
+    const existing = await prelevementModel.findRecurringPrelevementById(id);
+    if (!existing) return res.status(404).json({ error: 'Charge fixe introuvable.' });
+
     const { category_id, amount, description, is_active } = req.body;
-    
+
     if (category_id) {
       const cat = await prelevementModel.getCategoryById(category_id);
       if (!cat) return res.status(400).json({ error: 'Catégorie introuvable.' });
     }
-    
+    if (amount !== undefined && amount <= 0) {
+      return res.status(400).json({ error: 'Le montant doit être supérieur à 0.' });
+    }
+
     const fields = {};
     if (category_id !== undefined) fields.category_id = category_id;
     if (amount !== undefined) fields.amount = amount;
     if (description !== undefined) fields.description = description;
     if (is_active !== undefined) fields.is_active = is_active;
-    
+
+    // Cycle fields are validated together (frequency + its matching day/weekday/month),
+    // falling back to the existing row's values for anything not sent in this request.
+    const touchesCycle = ['frequency', 'generation_day', 'generation_weekday', 'generation_month']
+      .some((key) => req.body[key] !== undefined);
+
+    if (touchesCycle) {
+      const frequency = req.body.frequency !== undefined ? req.body.frequency : existing.frequency;
+      const merged = {
+        generation_day: req.body.generation_day !== undefined ? req.body.generation_day : existing.generation_day,
+        generation_weekday: req.body.generation_weekday !== undefined ? req.body.generation_weekday : existing.generation_weekday,
+        generation_month: req.body.generation_month !== undefined ? req.body.generation_month : existing.generation_month,
+      };
+      const cycleError = validateCycleFields(frequency, merged);
+      if (cycleError) return res.status(400).json({ error: cycleError });
+
+      fields.frequency = frequency;
+      fields.generation_day = frequency !== 'WEEKLY' ? parseInt(merged.generation_day, 10) : null;
+      fields.generation_weekday = frequency === 'WEEKLY' ? parseInt(merged.generation_weekday, 10) : null;
+      fields.generation_month = frequency === 'YEARLY' ? parseInt(merged.generation_month, 10) : null;
+    }
+
     await prelevementModel.updateRecurringPrelevement(id, fields);
     const updated = await prelevementModel.findRecurringPrelevementById(id);
     res.json({ recurring: updated });

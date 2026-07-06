@@ -62,6 +62,14 @@ const migrations = [
   )`,
   `ALTER TABLE recurring_prelevements ADD COLUMN IF NOT EXISTS generation_day INTEGER DEFAULT 1 CHECK (generation_day BETWEEN 1 AND 28)`,
 
+  // Recurring Prelevements — dynamic cycle (WEEKLY / MONTHLY / YEARLY)
+  // instead of a fixed monthly-only schedule.
+  `ALTER TABLE recurring_prelevements ADD COLUMN IF NOT EXISTS frequency VARCHAR(20) DEFAULT 'MONTHLY'`,
+  `ALTER TABLE recurring_prelevements DROP CONSTRAINT IF EXISTS recurring_prelevements_frequency_check`,
+  `ALTER TABLE recurring_prelevements ADD CONSTRAINT recurring_prelevements_frequency_check CHECK (frequency IN ('WEEKLY', 'MONTHLY', 'YEARLY'))`,
+  `ALTER TABLE recurring_prelevements ADD COLUMN IF NOT EXISTS generation_weekday INTEGER CHECK (generation_weekday BETWEEN 1 AND 7)`,
+  `ALTER TABLE recurring_prelevements ADD COLUMN IF NOT EXISTS generation_month INTEGER CHECK (generation_month BETWEEN 1 AND 12)`,
+
   // Global Settings
   `CREATE TABLE IF NOT EXISTS global_settings (
     id SERIAL PRIMARY KEY,

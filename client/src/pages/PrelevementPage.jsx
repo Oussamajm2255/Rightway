@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { apiGet, apiPost, apiPut } from '../lib/api';
+import { apiGet, apiPost, apiPut, apiDelete } from '../lib/api';
 import { formatDT, formatDate, formatDateTime } from '../lib/utils';
 import './PrelevementPage.css';
 
@@ -473,12 +473,47 @@ function AnalyseTab({ stats, categories }) {
 }
 
 /* ===== Recurring Expenses Modal ===== */
+const WEEKDAYS = [
+  { value: 1, label: 'Lundi' }, { value: 2, label: 'Mardi' }, { value: 3, label: 'Mercredi' },
+  { value: 4, label: 'Jeudi' }, { value: 5, label: 'Vendredi' }, { value: 6, label: 'Samedi' },
+  { value: 7, label: 'Dimanche' },
+];
+const MONTHS = [
+  { value: 1, label: 'Janvier' }, { value: 2, label: 'Février' }, { value: 3, label: 'Mars' },
+  { value: 4, label: 'Avril' }, { value: 5, label: 'Mai' }, { value: 6, label: 'Juin' },
+  { value: 7, label: 'Juillet' }, { value: 8, label: 'Août' }, { value: 9, label: 'Septembre' },
+  { value: 10, label: 'Octobre' }, { value: 11, label: 'Novembre' }, { value: 12, label: 'Décembre' },
+];
+const FREQUENCY_META = {
+  WEEKLY: { label: 'Hebdomadaire', bg: '#EFF6FF', color: '#1D4ED8' },
+  MONTHLY: { label: 'Mensuel', bg: '#ECFDF5', color: '#047857' },
+  YEARLY: { label: 'Annuel', bg: '#F5F3FF', color: '#6D28D9' },
+};
+
+const EMPTY_RECURRING_FORM = {
+  category_id: '', amount: '', description: '',
+  frequency: 'MONTHLY', generation_day: 1, generation_weekday: 1, generation_month: 1,
+};
+
+function cycleLabel(item) {
+  if (item.frequency === 'WEEKLY') {
+    const wd = WEEKDAYS.find(w => w.value === item.generation_weekday);
+    return `Chaque ${wd ? wd.label.toLowerCase() : '—'}`;
+  }
+  if (item.frequency === 'YEARLY') {
+    const m = MONTHS.find(m => m.value === item.generation_month);
+    return `Le ${item.generation_day} ${m ? m.label.toLowerCase() : '—'} (chaque année)`;
+  }
+  return `Le ${item.generation_day} du mois`;
+}
+
 function RecurringModal({ categories, onClose }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
-  const [form, setForm] = useState({ category_id: '', amount: '', description: '', generation_day: 1 });
+
+  const [form, setForm] = useState(EMPTY_RECURRING_FORM);
+  const [editingId, setEditingId] = useState(null);
   const mainCats = categories.filter(c => !c.parent_id);
 
   const fetchItems = useCallback(async () => {
@@ -495,19 +530,56 @@ function RecurringModal({ categories, onClose }) {
 
   useEffect(() => { fetchItems(); }, [fetchItems]);
 
-  async function handleAdd(e) {
+  function buildPayload() {
+    const payload = {
+      category_id: parseInt(form.category_id),
+      amount: parseFloat(form.amount),
+      description: form.description || undefined,
+      frequency: form.frequency,
+    };
+    if (form.frequency === 'WEEKLY') {
+      payload.generation_weekday = parseInt(form.generation_weekday) || 1;
+    } else if (form.frequency === 'YEARLY') {
+      payload.generation_month = parseInt(form.generation_month) || 1;
+      payload.generation_day = parseInt(form.generation_day) || 1;
+    } else {
+      payload.generation_day = parseInt(form.generation_day) || 1;
+    }
+    return payload;
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault();
     setError('');
     try {
-      await apiPost('/prelevements/recurring', {
-        category_id: parseInt(form.category_id),
-        amount: parseFloat(form.amount),
-        description: form.description || undefined,
-        generation_day: parseInt(form.generation_day) || 1
-      });
-      setForm({ category_id: '', amount: '', description: '', generation_day: 1 });
+      if (editingId) {
+        await apiPut(`/prelevements/recurring/${editingId}`, buildPayload());
+      } else {
+        await apiPost('/prelevements/recurring', buildPayload());
+      }
+      setForm(EMPTY_RECURRING_FORM);
+      setEditingId(null);
       fetchItems();
     } catch (e) { setError(e.message); }
+  }
+
+  function handleEdit(item) {
+    setEditingId(item.id);
+    setForm({
+      category_id: String(item.category_id),
+      amount: String(item.amount),
+      description: item.description || '',
+      frequency: item.frequency || 'MONTHLY',
+      generation_day: item.generation_day || 1,
+      generation_weekday: item.generation_weekday || 1,
+      generation_month: item.generation_month || 1,
+    });
+  }
+
+  function handleCancelEdit() {
+    setEditingId(null);
+    setForm(EMPTY_RECURRING_FORM);
+    setError('');
   }
 
   async function handleToggle(id, currentActive) {
@@ -521,17 +593,24 @@ function RecurringModal({ categories, onClose }) {
     if(!window.confirm("Supprimer cette charge fixe ?")) return;
     try {
       await apiDelete(`/prelevements/recurring/${id}`);
+      if (editingId === id) handleCancelEdit();
       fetchItems();
     } catch (e) { setError(e.message); }
   }
 
   return (
     <div className="prel-cat-modal-overlay" onClick={onClose}>
-      <div className="prel-cat-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
-        <h3>Gérer les charges fixes mensuelles</h3>
+      <div className="prel-cat-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '640px' }}>
+        <h3>Gérer les charges fixes</h3>
         {error && <div className="prel-error">{error}</div>}
-        
-        <form onSubmit={handleAdd} className="prel-cat-add-row" style={{ flexDirection: 'column', gap: '8px', paddingBottom: '16px', borderBottom: '1px solid var(--color-border)' }}>
+
+        <form onSubmit={handleSubmit} className="prel-cat-add-row" style={{ flexDirection: 'column', gap: '8px', paddingBottom: '16px', borderBottom: '1px solid var(--color-border)' }}>
+          {editingId && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', color: 'var(--color-primary)', fontWeight: 600 }}>
+              <span>Modification de la charge fixe #{editingId}</span>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={handleCancelEdit}>Annuler la modification</button>
+            </div>
+          )}
           <div style={{ display: 'flex', gap: '8px' }}>
             <select className="prel-form-select" value={form.category_id} onChange={e => setForm({...form, category_id: e.target.value})} required style={{ flex: 1 }}>
               <option value="">Catégorie</option>
@@ -542,34 +621,101 @@ function RecurringModal({ categories, onClose }) {
                 </optgroup>
               ))}
             </select>
-            <input className="prel-form-input" type="number" step="0.01" min="0.01" placeholder="Montant" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} required style={{ width: '100px' }} />
+            <input className="prel-form-input" type="number" step="0.01" min="0.01" placeholder="Montant" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} required style={{ width: '110px' }} />
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <input className="prel-form-input" placeholder="Description (ex: Loyer, Internet...)" value={form.description} onChange={e => setForm({...form, description: e.target.value})} style={{ flex: 1 }} />
-            <input className="prel-form-input" type="number" min="1" max="28" placeholder="Jour (1-28)" value={form.generation_day} onChange={e => setForm({...form, generation_day: e.target.value})} title="Jour du mois" style={{ width: '90px' }} required />
-            <button type="submit" className="btn btn-primary btn-sm"><IconPlus /> Ajouter</button>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <select
+              className="prel-form-select"
+              value={form.frequency}
+              onChange={e => setForm({...form, frequency: e.target.value})}
+              title="Cycle de génération"
+              style={{ width: '150px' }}
+            >
+              <option value="WEEKLY">Hebdomadaire</option>
+              <option value="MONTHLY">Mensuel</option>
+              <option value="YEARLY">Annuel</option>
+            </select>
+
+            {form.frequency === 'WEEKLY' && (
+              <select
+                className="prel-form-select"
+                value={form.generation_weekday}
+                onChange={e => setForm({...form, generation_weekday: e.target.value})}
+                title="Jour de la semaine"
+                style={{ flex: 1 }}
+              >
+                {WEEKDAYS.map(w => <option key={w.value} value={w.value}>{w.label}</option>)}
+              </select>
+            )}
+
+            {form.frequency === 'MONTHLY' && (
+              <input
+                className="prel-form-input" type="number" min="1" max="28"
+                placeholder="Jour (1-28)" value={form.generation_day}
+                onChange={e => setForm({...form, generation_day: e.target.value})}
+                title="Jour du mois" style={{ width: '110px' }} required
+              />
+            )}
+
+            {form.frequency === 'YEARLY' && (
+              <>
+                <select
+                  className="prel-form-select"
+                  value={form.generation_month}
+                  onChange={e => setForm({...form, generation_month: e.target.value})}
+                  title="Mois"
+                  style={{ flex: 1 }}
+                >
+                  {MONTHS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                </select>
+                <input
+                  className="prel-form-input" type="number" min="1" max="28"
+                  placeholder="Jour (1-28)" value={form.generation_day}
+                  onChange={e => setForm({...form, generation_day: e.target.value})}
+                  title="Jour du mois" style={{ width: '110px' }} required
+                />
+              </>
+            )}
+
+            <button type="submit" className="btn btn-primary btn-sm">
+              {editingId ? 'Enregistrer' : <><IconPlus /> Ajouter</>}
+            </button>
           </div>
         </form>
 
         <div style={{ maxHeight: '300px', overflowY: 'auto', marginTop: '16px' }}>
           {loading ? <p>Chargement...</p> : items.length === 0 ? <p style={{ color: 'var(--color-text-tertiary)' }}>Aucune charge fixe.</p> : (
             <ul className="prel-cat-tree">
-              {items.map(item => (
-                <li key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--color-border-light)' }}>
-                  <div>
-                    <div style={{ fontWeight: 500, opacity: item.is_active ? 1 : 0.5 }}>{item.description || 'Sans description'} - {formatMoney(item.amount)}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--color-text-tertiary)' }}>
-                      {item.parent_category_name ? `${item.parent_category_name} › ` : ''}{item.category_name} &bull; Généré le <strong>{item.generation_day}</strong> du mois
+              {items.map(item => {
+                const freq = FREQUENCY_META[item.frequency] || FREQUENCY_META.MONTHLY;
+                return (
+                  <li key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--color-border-light)' }}>
+                    <div>
+                      <div style={{ fontWeight: 500, opacity: item.is_active ? 1 : 0.5 }}>{item.description || 'Sans description'} - {formatMoney(item.amount)}</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--color-text-tertiary)', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                        <span>{item.parent_category_name ? `${item.parent_category_name} › ` : ''}{item.category_name}</span>
+                        <span>&bull;</span>
+                        <span
+                          style={{ background: freq.bg, color: freq.color, borderRadius: '999px', padding: '1px 8px', fontWeight: 600, fontSize: '0.72rem' }}
+                        >
+                          {freq.label}
+                        </span>
+                        <span>{cycleLabel(item)}</span>
+                      </div>
                     </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button className="btn btn-ghost btn-sm" style={{ color: item.is_active ? 'var(--color-success)' : 'var(--color-text-tertiary)' }} onClick={() => handleToggle(item.id, item.is_active)}>
-                      {item.is_active ? 'Actif' : 'Inactif'}
-                    </button>
-                    <button className="prel-cat-icon-btn danger" onClick={() => handleDelete(item.id)} title="Supprimer"><IconTrash /></button>
-                  </div>
-                </li>
-              ))}
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button className="btn btn-ghost btn-sm" style={{ color: item.is_active ? 'var(--color-success)' : 'var(--color-text-tertiary)' }} onClick={() => handleToggle(item.id, item.is_active)}>
+                        {item.is_active ? 'Actif' : 'Inactif'}
+                      </button>
+                      <button className="prel-cat-icon-btn" onClick={() => handleEdit(item)} title="Modifier"><IconEdit /></button>
+                      <button className="prel-cat-icon-btn danger" onClick={() => handleDelete(item.id)} title="Supprimer"><IconTrash /></button>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

@@ -65,24 +65,59 @@ async function checkAndGenerateSalaries(today) {
   console.log(`Cron: Generated salaries for ${eligibleUsers.length} users.`);
 }
 
-// Check and generate recurring expenses
+// ISO weekday: 1=Monday..7=Sunday (JS getDay() is 0=Sunday..6=Saturday)
+function isoWeekday(date) {
+  const day = date.getDay();
+  return day === 0 ? 7 : day;
+}
+
+// ISO week number — used to dedupe weekly-cycle generation so a charge
+// fixe fires exactly once per calendar week, not once per matching weekday.
+function isoWeekNumber(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+// Check and generate recurring expenses — each row picks its own cycle
+// (WEEKLY / MONTHLY / YEARLY) instead of everything being monthly-only.
 async function checkAndGenerateRecurring(today) {
+  const dayOfMonth = today.getDate();
+  const weekday = isoWeekday(today);
+  const month = today.getMonth() + 1;
+
   const { rows: recurring } = await pool.query(`
-    SELECT * FROM recurring_prelevements 
-    WHERE is_active = true AND generation_day = $1
-  `, [today.getDate()]);
+    SELECT * FROM recurring_prelevements
+    WHERE is_active = true
+      AND (
+        (frequency = 'MONTHLY' AND generation_day = $1)
+        OR (frequency = 'WEEKLY' AND generation_weekday = $2)
+        OR (frequency = 'YEARLY' AND generation_month = $3 AND generation_day = $1)
+      )
+  `, [dayOfMonth, weekday, month]);
 
   if (recurring.length === 0) return;
 
   const systemUserId = await getSystemUserId();
   if (!systemUserId) return;
 
-  const monthStr = today.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
-  
   let createdCount = 0;
   for (const r of recurring) {
-    const refPrefix = `REC-${r.id}-${today.getFullYear()}${(today.getMonth()+1).toString().padStart(2, '0')}`;
-    
+    let refPrefix, periodLabel;
+    if (r.frequency === 'WEEKLY') {
+      const week = isoWeekNumber(today);
+      refPrefix = `REC-${r.id}-${today.getFullYear()}-W${String(week).padStart(2, '0')}`;
+      periodLabel = `Semaine ${week}/${today.getFullYear()}`;
+    } else if (r.frequency === 'YEARLY') {
+      refPrefix = `REC-${r.id}-${today.getFullYear()}`;
+      periodLabel = String(today.getFullYear());
+    } else {
+      refPrefix = `REC-${r.id}-${today.getFullYear()}${(today.getMonth()+1).toString().padStart(2, '0')}`;
+      periodLabel = today.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
+    }
+
     const { rows: existingRows } = await pool.query(`
       SELECT id FROM prelevements WHERE reference = $1
     `, [refPrefix]);
@@ -92,7 +127,7 @@ async function checkAndGenerateRecurring(today) {
     await prelevementModel.createPrelevement({
       category_id: r.category_id,
       amount: r.amount,
-      description: r.description ? `${r.description} - ${monthStr}` : `Charge fixe - ${monthStr}`,
+      description: r.description ? `${r.description} - ${periodLabel}` : `Charge fixe - ${periodLabel}`,
       reference: refPrefix,
       expense_date: today.toISOString().split('T')[0],
       declared_by: systemUserId,

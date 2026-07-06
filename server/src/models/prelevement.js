@@ -270,18 +270,22 @@ async function findRecurringPrelevementById(id) {
   return rows[0] || null;
 }
 
-async function createRecurringPrelevement({ category_id, amount, description, is_active = true, created_by }) {
+async function createRecurringPrelevement({
+  category_id, amount, description, is_active = true, created_by,
+  frequency = 'MONTHLY', generation_day = null, generation_weekday = null, generation_month = null,
+}) {
   const { rows } = await pool.query(
-    `INSERT INTO recurring_prelevements (category_id, amount, description, is_active, created_by)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO recurring_prelevements
+       (category_id, amount, description, is_active, created_by, frequency, generation_day, generation_weekday, generation_month)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      RETURNING *`,
-    [category_id, amount, description || null, is_active, created_by]
+    [category_id, amount, description || null, is_active, created_by, frequency, generation_day, generation_weekday, generation_month]
   );
   return rows[0];
 }
 
 async function updateRecurringPrelevement(id, fields) {
-  const allowed = ['category_id', 'amount', 'description', 'is_active'];
+  const allowed = ['category_id', 'amount', 'description', 'is_active', 'frequency', 'generation_day', 'generation_weekday', 'generation_month'];
   const sets = [];
   const params = [id];
   let idx = 2;
