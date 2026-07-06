@@ -47,6 +47,91 @@ function formatDT(value) {
   return Number(value).toFixed(3) + ' DT';
 }
 
+// Before/after preview shown between the product-selection step and the
+// actual API call for a multi-product stock adjustment. Lets the super
+// admin visually double-check every line before committing the chargement.
+function MultiAdjustConfirm({ items, direction, form }) {
+  const isAdd = direction === 'add';
+  const totalCurrent = items.reduce((s, it) => s + (it.product?.quantity ?? 0), 0);
+  const totalDelta = items.reduce((s, it) => s + it.quantity_change, 0);
+  const totalAfter = totalCurrent + totalDelta;
+
+  return (
+    <div className="multi-confirm">
+      <div className={`confirm-direction-banner ${isAdd ? 'confirm-direction-add' : 'confirm-direction-remove'}`}>
+        {isAdd ? <IconPlus /> : <IconMinus />}
+        <span>{isAdd ? 'Chargement — Ajout au stock' : 'Retrait du stock'}</span>
+        <span className="confirm-count-pill">{items.length} produit{items.length > 1 ? 's' : ''}</span>
+      </div>
+
+      <div className="confirm-table-wrap">
+        <table className="confirm-table">
+          <thead>
+            <tr>
+              <th>Produit</th>
+              <th>Stock actuel</th>
+              <th aria-hidden="true"></th>
+              <th>Variation</th>
+              <th aria-hidden="true"></th>
+              <th>Nouveau stock</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map(({ product_id, quantity_change, product }) => {
+              const current = product?.quantity ?? 0;
+              const after = current + quantity_change;
+              const catCol = catColors(product?.category || 'Sans catégorie');
+              return (
+                <tr key={product_id}>
+                  <td>
+                    <div className="confirm-product-name">{product?.name || product_id}</div>
+                    <div className="confirm-product-meta">
+                      <span className="cat-pill" style={{ background: catCol.bg, color: catCol.text }}>
+                        {product?.category || 'Sans catégorie'}
+                      </span>
+                      <span className="confirm-product-code">{product_id}</span>
+                    </div>
+                  </td>
+                  <td className="confirm-num">{current}</td>
+                  <td className="confirm-op" aria-hidden="true">→</td>
+                  <td className={`confirm-delta ${quantity_change > 0 ? 'confirm-delta-add' : 'confirm-delta-remove'}`}>
+                    {quantity_change > 0 ? '+' : ''}{quantity_change}
+                  </td>
+                  <td className="confirm-op" aria-hidden="true">=</td>
+                  <td className={`confirm-num confirm-num-after ${after < 0 ? 'confirm-num-negative' : ''}`}>{after}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Total</td>
+              <td className="confirm-num">{totalCurrent}</td>
+              <td aria-hidden="true"></td>
+              <td className={`confirm-delta ${totalDelta > 0 ? 'confirm-delta-add' : 'confirm-delta-remove'}`}>
+                {totalDelta > 0 ? '+' : ''}{totalDelta}
+              </td>
+              <td aria-hidden="true"></td>
+              <td className="confirm-num confirm-num-after">{totalAfter}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div className="confirm-meta-recap">
+        <div><span>Motif</span><strong>{form.reason || '—'}</strong></div>
+        {isAdd && form.movement_date && <div><span>Date</span><strong>{formatDate(form.movement_date)}</strong></div>}
+        {isAdd && form.invoice_number && <div><span>N° Facture</span><strong>{form.invoice_number}</strong></div>}
+        {isAdd && form.company_name && <div><span>Société</span><strong>{form.company_name}</strong></div>}
+      </div>
+
+      <p className="confirm-warning">
+        Vérifiez attentivement les quantités ci-dessus avant de valider. Cette action met à jour le stock du dépôt immédiatement et sera enregistrée dans le journal des ajustements.
+      </p>
+    </div>
+  );
+}
+
 function StockPage() {
   const { user } = useAuth();
   const [stock, setStock] = useState([]);
@@ -68,6 +153,7 @@ function StockPage() {
   const [multiItems, setMultiItems] = useState([{ product_id: '', quantity: '' }]);
   const [multiItemsMap, setMultiItemsMap] = useState({});
   const [multiSearchTerm, setMultiSearchTerm] = useState('');
+  const [multiConfirmStep, setMultiConfirmStep] = useState(false);
   const [adjustError, setAdjustError] = useState('');
   const [adjusting, setAdjusting] = useState(false);
 
@@ -136,6 +222,7 @@ function StockPage() {
       quantity_change: '', reason: '', password: '',
       movement_date: '', invoice_number: '', company_name: '',
     });
+    setMultiConfirmStep(false);
     setAdjustError('');
     setShowAdjustModal(true);
   }
@@ -150,8 +237,45 @@ function StockPage() {
     });
     setMultiItemsMap({});
     setMultiSearchTerm('');
+    setMultiConfirmStep(false);
     setAdjustError('');
     setShowAdjustModal(true);
+  }
+
+  function closeAdjustModal() {
+    setShowAdjustModal(false);
+    setMultiConfirmStep(false);
+  }
+
+  // Selected products with signed delta + the live stock row they refer to —
+  // shared by the review-step preview and the final submit payload.
+  function getValidMultiItems() {
+    const items = [];
+    for (const [productId, qtyStr] of Object.entries(multiItemsMap)) {
+      const qty = parseInt(qtyStr, 10);
+      if (qty > 0) {
+        const signedQty = adjustDirection === 'add' ? qty : -qty;
+        items.push({ product_id: productId, quantity_change: signedQty, product: stock.find((s) => s.id === productId) });
+      }
+    }
+    return items;
+  }
+
+  async function submitAdjustment(body) {
+    setAdjusting(true);
+    try {
+      const data = await apiPut('/stock/adjust', body);
+      setSuccessMsg(data.message);
+      setShowAdjustModal(false);
+      setAdjustingItem(null);
+      setMultiConfirmStep(false);
+      fetchStock();
+      setTimeout(() => setSuccessMsg(''), 4000);
+    } catch (err) {
+      setAdjustError(err.message);
+    } finally {
+      setAdjusting(false);
+    }
   }
 
   async function handleAdjustSubmit(e) {
@@ -167,57 +291,51 @@ function StockPage() {
       return;
     }
 
-    setAdjusting(true);
-    try {
-      const body = {
-        reason: adjustForm.reason,
-        password: adjustForm.password,
-      };
-      if (adjustDirection === 'add') {
-        if (adjustForm.movement_date) body.movement_date = adjustForm.movement_date;
-        if (adjustForm.invoice_number.trim()) body.invoice_number = adjustForm.invoice_number.trim();
-        if (adjustForm.company_name.trim()) body.company_name = adjustForm.company_name.trim();
+    if (adjustMode === 'multiple') {
+      // Never submit multiple adjustments directly — always show the
+      // before/after confirmation screen first so mistakes are caught.
+      if (getValidMultiItems().length === 0) {
+        setAdjustError('Veuillez saisir une quantité pour au moins un produit.');
+        return;
       }
-
-      if (adjustMode === 'multiple') {
-        // Validate multi items
-        const validItems = [];
-        for (const [productId, qtyStr] of Object.entries(multiItemsMap)) {
-          const qty = parseInt(qtyStr, 10);
-          if (qty > 0) {
-            const signedQty = adjustDirection === 'add' ? qty : -qty;
-            validItems.push({ product_id: productId, quantity_change: signedQty });
-          }
-        }
-        if (validItems.length === 0) {
-          setAdjustError('Veuillez saisir une quantité pour au moins un produit.');
-          setAdjusting(false);
-          return;
-        }
-        body.items = validItems;
-      } else {
-        const absQty = parseInt(adjustForm.quantity_change, 10);
-        if (isNaN(absQty) || absQty <= 0) {
-          setAdjustError('Veuillez saisir une quantité valide supérieure à 0.');
-          setAdjusting(false);
-          return;
-        }
-        const qty = adjustDirection === 'add' ? absQty : -absQty;
-        body.product_id = adjustingItem.id;
-        body.quantity_change = qty;
-      }
-
-      const data = await apiPut('/stock/adjust', body);
-      setSuccessMsg(data.message);
-      setShowAdjustModal(false);
-      setAdjustingItem(null);
-      fetchStock();
-      setTimeout(() => setSuccessMsg(''), 4000);
-    } catch (err) {
-      setAdjustError(err.message);
-    } finally {
-      setAdjusting(false);
+      setMultiConfirmStep(true);
+      return;
     }
+
+    const absQty = parseInt(adjustForm.quantity_change, 10);
+    if (isNaN(absQty) || absQty <= 0) {
+      setAdjustError('Veuillez saisir une quantité valide supérieure à 0.');
+      return;
+    }
+
+    const body = {
+      reason: adjustForm.reason,
+      password: adjustForm.password,
+      product_id: adjustingItem.id,
+      quantity_change: adjustDirection === 'add' ? absQty : -absQty,
+    };
+    if (adjustDirection === 'add') {
+      if (adjustForm.movement_date) body.movement_date = adjustForm.movement_date;
+      if (adjustForm.invoice_number.trim()) body.invoice_number = adjustForm.invoice_number.trim();
+      if (adjustForm.company_name.trim()) body.company_name = adjustForm.company_name.trim();
+    }
+
+    await submitAdjustment(body);
+  }
+
+  async function handleConfirmedMultiSubmit() {
+    setAdjustError('');
+    const body = {
+      reason: adjustForm.reason,
+      password: adjustForm.password,
+      items: getValidMultiItems().map(({ product_id, quantity_change }) => ({ product_id, quantity_change })),
+    };
+    if (adjustDirection === 'add') {
+      if (adjustForm.movement_date) body.movement_date = adjustForm.movement_date;
+      if (adjustForm.invoice_number.trim()) body.invoice_number = adjustForm.invoice_number.trim();
+      if (adjustForm.company_name.trim()) body.company_name = adjustForm.company_name.trim();
+    }
+    await submitAdjustment(body);
   }
 
   function isLowStock(qty) {
@@ -404,10 +522,21 @@ function StockPage() {
 
           {/* Adjust Modal */}
           {showAdjustModal && (
-            <div className="modal-overlay" onClick={() => setShowAdjustModal(false)}>
-              <div className="modal-card modal-form modal-adjust" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-overlay" onClick={closeAdjustModal}>
+              <div className={`modal-card modal-form modal-adjust ${adjustMode === 'multiple' ? 'modal-adjust-multi' : ''}`} onClick={(e) => e.stopPropagation()}>
                 {adjustMode === 'multiple' ? (
-                  <h3 className="modal-title">Ajustement Multiple du Stock</h3>
+                  <>
+                    <h3 className="modal-title">
+                      {multiConfirmStep ? 'Confirmez le chargement' : 'Ajustement Multiple du Stock'}
+                    </h3>
+                    <div className="step-indicator">
+                      <div className={`step-dot ${multiConfirmStep ? 'step-dot-done' : 'step-dot-active'}`}>{multiConfirmStep ? '✓' : '1'}</div>
+                      <span className={`step-label ${!multiConfirmStep ? 'step-label-active' : ''}`}>Sélection</span>
+                      <div className={`step-line ${multiConfirmStep ? 'step-line-done' : ''}`} />
+                      <div className={`step-dot ${multiConfirmStep ? 'step-dot-active' : ''}`}>2</div>
+                      <span className={`step-label ${multiConfirmStep ? 'step-label-active' : ''}`}>Confirmation</span>
+                    </div>
+                  </>
                 ) : (
                   <>
                     <h3 className="modal-title">Ajuster le stock</h3>
@@ -422,6 +551,14 @@ function StockPage() {
                 {adjustError && <div className="login-error">{adjustError}</div>}
 
                 <form onSubmit={handleAdjustSubmit}>
+                  {adjustMode === 'multiple' && multiConfirmStep ? (
+                    <MultiAdjustConfirm
+                      items={getValidMultiItems()}
+                      direction={adjustDirection}
+                      form={adjustForm}
+                    />
+                  ) : (
+                  <>
                   {/* Add / Remove toggle */}
                   <div className="form-group">
                     <label className="form-label">Type d'opération</label>
@@ -630,14 +767,31 @@ function StockPage() {
                       onChange={(e) => setAdjustForm((p) => ({ ...p, password: e.target.value }))}
                     />
                   </div>
+                  </>
+                  )}
 
                   <div className="modal-actions">
-                    <button type="button" className="btn btn-secondary" onClick={() => setShowAdjustModal(false)}>
-                      Annuler
-                    </button>
-                    <button type="submit" className="btn btn-primary" disabled={adjusting}>
-                      {adjusting ? 'Ajustement...' : 'Confirmer l\'ajustement'}
-                    </button>
+                    {adjustMode === 'multiple' && multiConfirmStep ? (
+                      <>
+                        <button type="button" className="btn btn-secondary" onClick={() => setMultiConfirmStep(false)}>
+                          ← Modifier
+                        </button>
+                        <button type="button" className="btn btn-primary" disabled={adjusting} onClick={handleConfirmedMultiSubmit}>
+                          {adjusting ? 'Validation...' : 'Confirmer le chargement'}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button type="button" className="btn btn-secondary" onClick={closeAdjustModal}>
+                          Annuler
+                        </button>
+                        <button type="submit" className="btn btn-primary" disabled={adjusting}>
+                          {adjusting
+                            ? 'Ajustement...'
+                            : adjustMode === 'multiple' ? 'Vérifier et confirmer' : 'Confirmer l\'ajustement'}
+                        </button>
+                      </>
+                    )}
                   </div>
                 </form>
               </div>
