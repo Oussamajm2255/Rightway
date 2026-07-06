@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, Fragment } from 'react';
 import { apiGet, apiPut } from '../lib/api';
 import { formatDate } from '../lib/utils';
-import { catColors } from '../lib/categoryPalette';
+import { useCategoryPalette } from '../context/CategoryPaletteContext';
 import { useAuth } from '../context/AuthContext';
 import './StockPage.css';
 
@@ -51,6 +51,7 @@ function formatDT(value) {
 // actual API call for a multi-product stock adjustment. Lets the super
 // admin visually double-check every line before committing the chargement.
 function MultiAdjustConfirm({ items, direction, form }) {
+  const { getColor } = useCategoryPalette();
   const isAdd = direction === 'add';
   const totalCurrent = items.reduce((s, it) => s + (it.product?.quantity ?? 0), 0);
   const totalDelta = items.reduce((s, it) => s + it.quantity_change, 0);
@@ -80,7 +81,7 @@ function MultiAdjustConfirm({ items, direction, form }) {
             {items.map(({ product_id, quantity_change, product }) => {
               const current = product?.quantity ?? 0;
               const after = current + quantity_change;
-              const catCol = catColors(product?.category || 'Sans catégorie');
+              const catCol = getColor(product?.category);
               return (
                 <tr key={product_id}>
                   <td>
@@ -134,6 +135,7 @@ function MultiAdjustConfirm({ items, direction, form }) {
 
 function StockPage() {
   const { user } = useAuth();
+  const { getColor } = useCategoryPalette();
   const [stock, setStock] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -454,7 +456,7 @@ function StockPage() {
                       return acc;
                     }, {})
                   ).map(([cat, catItems]) => {
-                    const catCol = catColors(cat);
+                    const catCol = getColor(cat);
                     return (
                       <Fragment key={cat}>
                         {catItems.map((item) => {
@@ -879,14 +881,14 @@ function StockPage() {
                 </thead>
                 <tbody>
                   {movements.map((m) => (
-                    <tr key={m.id} style={{ background: catColors(m.product_category || 'Sans catégorie').bg, borderLeftColor: catColors(m.product_category || 'Sans catégorie').bar }}>
+                    <tr key={m.id} style={{ background: getColor(m.product_category).bg, borderLeftColor: getColor(m.product_category).bar }}>
                       <td className="td-date">
                         {m.movement_date
                           ? formatDate(m.movement_date)
                           : formatDate(m.created_at)}
                       </td>
                       <td className="td-name">{m.product_name}</td>
-                      <td><span className="cat-pill" style={{ background: catColors(m.product_category || 'Sans catégorie').bg, color: catColors(m.product_category || 'Sans catégorie').text }}>{m.product_category || 'Sans catégorie'}</span></td>
+                      <td><span className="cat-pill" style={{ background: getColor(m.product_category).bg, color: getColor(m.product_category).text }}>{m.product_category || 'Sans catégorie'}</span></td>
                       <td>
                         <span className={`movement-badge ${m.quantity > 0 ? 'movement-add' : 'movement-remove'}`}>
                           {m.quantity > 0 ? 'Ajout' : 'Retrait'}

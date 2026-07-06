@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiGet, apiPost } from '../lib/api';
-import { catColors } from '../lib/categoryPalette';
+import { useCategoryPalette } from '../context/CategoryPaletteContext';
 import './SalesPage.css';
 
 /* ─── Inline SVG Icons ─── */
@@ -52,6 +52,7 @@ function fmtShort(v) {
 function SalesPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { getColor } = useCategoryPalette();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -333,7 +334,7 @@ function SalesPage() {
           </div>
         ) : (
           grouped.map(([category, catItems]) => {
-            const { bg: catBg, text: catText } = catColors(category);
+            const { bg: catBg, text: catText } = getColor(category);
             const isCollapsed = collapsedCats[category];
 
             // Per-category summary stats (units, not products)
@@ -380,7 +381,7 @@ function SalesPage() {
                       const ratio = item.qte_chargee > 0 ? sold / item.qte_chargee : 0;
                       const soldValue = sold * Number(item.prix_ttc);
                       const hasPending = pendingChanges[item.product_id] !== undefined;
-                      const { bar: catBar } = catColors(category);
+                      const { bar: catBar } = getColor(category);
                       const qtyChanged = changedQtys[item.product_id];
                       const isSaving = validating.has(item.product_id);
 
@@ -499,7 +500,7 @@ function SalesPage() {
           <span className="sales-chip-count">{items.length}</span>
         </button>
         {allCategories.map((cat) => {
-          const { bg, text } = catColors(cat);
+          const { bg, text } = getColor(cat);
           const count = items.filter((p) => (p.category || 'Sans catégorie') === cat).length;
           const isActive = search && grouped.some(([c]) => c === cat);
           return (

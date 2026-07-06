@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { apiGet, apiPost, apiPut, openPdf } from '../lib/api';
 import { formatDate, formatDateTime } from '../lib/utils';
-import { catColors } from '../lib/categoryPalette';
+import { useCategoryPalette } from '../context/CategoryPaletteContext';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
@@ -17,6 +17,7 @@ function LivraisonDetailPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { getColor } = useCategoryPalette();
   const [livraison, setLivraison] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -954,7 +955,7 @@ function LivraisonDetailPage() {
                     return acc;
                   }, {})
                 ).map(([cat, catItems]) => {
-                  const catCol = catColors(cat);
+                  const catCol = getColor(cat);
                   return (
                   <Fragment key={cat}>
                     {catItems.map((item) => {
@@ -1152,7 +1153,7 @@ function LivraisonDetailPage() {
                   return acc;
                 }, {})
               ).map(([cat, catItems]) => {
-                const catCol = catColors(cat);
+                const catCol = getColor(cat);
                 return (
                 <Fragment key={cat}>
                   {catItems.map((item) => (
@@ -1251,7 +1252,7 @@ function LivraisonDetailPage() {
                       return acc;
                     }, {})
                   ).map(([cat, catItems]) => {
-                    const catCol = catColors(cat);
+                    const catCol = getColor(cat);
                     return (
                       <Fragment key={cat}>
                         {catItems.map((item) => (
@@ -1392,7 +1393,7 @@ function LivraisonDetailPage() {
                   {terminerSummary.summary.map((s) => {
                       const cat = s.category || 'Sans catégorie';
                       return (
-                    <tr key={s.product_id} style={{ background: catColors(cat).bg, borderLeftColor: catColors(cat).bar }}>
+                    <tr key={s.product_id} style={{ background: getColor(cat).bg, borderLeftColor: getColor(cat).bar }}>
                       <td>{s.product_name}</td>
                       <td className="td-qty">{s.qte_chargee}</td>
                       <td className="td-qty">{s.qte_vendue}</td>

@@ -1,41 +1,85 @@
-// ─── Curated category colour map ───
-// 7 categories, each drawn from a non-overlapping region of the colour wheel.
-// bg = T200 visibly-tinted pastel (~20-35% saturation), text = T900 near-black, bar = T500 vivid.
-// No two colours can be confused — hues span 0deg→270deg with ~45deg gaps.
-export const CAT_PALETTE = {
-  'Confiserie':        { bg: '#FECACA', text: '#7F1D1D', bar: '#EF4444' },  // Red
-  'Nettoyage':         { bg: '#FED7AA', text: '#7C2D12', bar: '#F97316' },  // Orange
-  'Épicerie':          { bg: '#FDE68A', text: '#78350F', bar: '#F59E0B' },  // Amber
-  'Produits Laitiers': { bg: '#A7F3D0', text: '#064E3B', bar: '#10B981' },  // Green
-  'Boissons':          { bg: '#A5F3FC', text: '#164E63', bar: '#06B6D4' },  // Teal
-  'Hygiène':           { bg: '#BFDBFE', text: '#1E3A8A', bar: '#3B82F6' },  // Blue
-  'Conserves':         { bg: '#DDD6FE', text: '#4C1D95', bar: '#8B5CF6' },  // Violet
-};
+// ─── Golden-angle category color engine ───
+//
+// Problem this replaces: assigning a color to a category by hashing its
+// name in isolation. Two unrelated category names can hash close together
+// by pure chance, so two categories shown in the same table could end up
+// looking almost identical — exactly the bug reported in Stock/Products/
+// Sales tables.
+//
+// Fix: never color a category in isolation. Take the FULL, real list of
+// categories at once, sort it into a stable order, and place each one on
+// the color wheel using the golden angle (≈137.508°) — the same irrational
+// rotation sunflowers use to pack seeds with maximal spacing. For any
+// number of categories N, this is the most evenly spread arrangement
+// possible: no two categories can ever land close together, and adding a
+// new category later doesn't reshuffle anyone else's color.
+const GOLDEN_ANGLE = 137.50776405003785;
 
-// ─── Auto-generated colours for categories not in the curated list ───
-// Golden-ratio hue spacing — every category gets a unique, maximally-
-// separated hue.  No two categories can land on visually similar tones.
+// A second differentiation channel: alternating saturation/lightness bands.
+// Once there are enough categories that hue alone gets tight (20+), two
+// neighbouring hues still read as different shades, not just different hues.
+const BANDS = [
+  { s: 72, lBg: 88, lText: 20, lBar: 46 },
+  { s: 58, lBg: 84, lText: 24, lBar: 52 },
+  { s: 82, lBg: 91, lText: 17, lBar: 40 },
+];
 
-const GOLDEN_RATIO_CONJUGATE = 0.618033988749895; // (√5 − 1) / 2
-
-function autoPalette(cat) {
-  let hash = 0;
-  for (let i = 0; i < cat.length; i++) hash = (hash * 31 + cat.charCodeAt(i)) | 0;
-
-  // Golden ratio ensures maximum hue spread — adjacent categories in
-  // hash-space are ~222° apart, so they never look similar.
-  const h = Math.round((Math.abs(hash) * GOLDEN_RATIO_CONJUGATE * 360) % 360);
-  const s = 60 + (Math.abs(hash >> 2) % 16); // 60–75 % saturation
-
+function hslTriplet(hue, bandIndex) {
+  const b = BANDS[bandIndex % BANDS.length];
+  const h = Math.round(hue * 10) / 10;
   return {
-    bg:  `hsl(${h},${s}%,88%)`,
-    text: `hsl(${h},${s}%,18%)`,
-    bar:  `hsl(${h},${s}%,50%)`,
+    bg: `hsl(${h}, ${b.s}%, ${b.lBg}%)`,
+    text: `hsl(${h}, ${b.s}%, ${b.lText}%)`,
+    bar: `hsl(${h}, ${b.s}%, ${b.lBar}%)`,
+    // Semi-transparent variant of `bar` — for chart fills, where a soft
+    // fill + crisp solid border reads better than a flat solid block.
+    barSoft: `hsl(${h} ${b.s}% ${b.lBar}% / 0.75)`,
   };
 }
 
+// "Sans catégorie" / unknown — deliberately neutral gray, never part of the
+// hue rotation, so it reads as "unclassified" rather than competing for a slot.
+export const NEUTRAL_COLORS = { bg: '#F1F5F9', text: '#475569', bar: '#94A3B8', barSoft: '#94A3B8bf' };
+
 /**
- * Return { bg, text, bar } for a category.
- * Uses the curated palette when a match exists; otherwise auto-generates.
+ * Builds a stable name → {bg, text, bar} map for a full set of category
+ * names. Sorting alphabetically first means the same set of categories
+ * always produces the same colors (consistent across every table in the
+ * app), and each category's hue comes from its index in that sorted list
+ * via the golden angle — guaranteeing maximal separation across the WHOLE
+ * set at once, not just a hash-based coin flip per name.
  */
-export function catColors(cat) { return CAT_PALETTE[cat] || autoPalette(cat); }
+export function buildCategoryPalette(categoryNames) {
+  const unique = [...new Set((categoryNames || []).filter(Boolean))]
+    .filter((name) => name !== 'Sans catégorie')
+    .sort((a, b) => a.localeCompare(b, 'fr'));
+
+  const map = {};
+  unique.forEach((name, i) => {
+    const hue = (i * GOLDEN_ANGLE) % 360;
+    map[name] = hslTriplet(hue, i);
+  });
+  return map;
+}
+
+// Single-name fallback — only used transiently before the app-wide category
+// registry (see CategoryPaletteContext) has finished loading. Not collision-
+// proof on its own; buildCategoryPalette is the real guarantee.
+function fallbackColorForName(cat) {
+  let hash = 0;
+  for (let i = 0; i < cat.length; i++) hash = (hash * 31 + cat.charCodeAt(i)) | 0;
+  const hue = Math.abs(hash) % 360;
+  return hslTriplet(hue, 0);
+}
+
+/**
+ * Look up a category's color. Prefer useCategoryPalette()'s `getColor`
+ * from a component so colors come from the full app-wide registry; this
+ * function is the standalone fallback for the brief window before that
+ * registry has loaded, or for non-component call sites.
+ */
+export function catColors(cat, palette) {
+  if (!cat || cat === 'Sans catégorie') return NEUTRAL_COLORS;
+  if (palette && palette[cat]) return palette[cat];
+  return fallbackColorForName(cat);
+}

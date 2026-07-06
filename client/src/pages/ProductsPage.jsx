@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, Fragment } from 'react';
 import { apiGet, apiPut, apiPost, apiDelete } from '../lib/api';
-import { catColors } from '../lib/categoryPalette';
+import { useCategoryPalette } from '../context/CategoryPaletteContext';
 import './ProductsPage.css';
 
 function formatDT(value) {
@@ -9,6 +9,7 @@ function formatDT(value) {
 }
 
 function ProductsPage() {
+  const { getColor } = useCategoryPalette();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -148,7 +149,7 @@ function ProductsPage() {
                   return acc;
                 }, {})
               ).map(([cat, catItems]) => {
-                const catCol = catColors(cat);
+                const catCol = getColor(cat);
                 return (
                   <Fragment key={cat}>
                     {catItems.map((product) => (

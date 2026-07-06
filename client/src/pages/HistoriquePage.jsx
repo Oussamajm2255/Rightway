@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, Fragment } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { apiGet, openPdf } from '../lib/api';
 import { formatDate as fmtDate, formatDateTime } from '../lib/utils';
-import { catColors } from '../lib/categoryPalette';
+import { useCategoryPalette } from '../context/CategoryPaletteContext';
 import './HistoriquePage.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
@@ -22,6 +22,7 @@ const STATUS_CLASS = { EN_ATTENTE_COMMERCIAL: 'badge-status-pending', EN_COURS: 
 
 function HistoriquePage() {
   const { user } = useAuth();
+  const { getColor } = useCategoryPalette();
   const [livraisons, setLivraisons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -144,7 +145,7 @@ function HistoriquePage() {
                     return acc;
                   }, {})
                 ).map(([cat, catItems]) => {
-                  const catCol = catColors(cat);
+                  const catCol = getColor(cat);
                   return (
                   <Fragment key={cat}>
                     {catItems.map((item) => (
@@ -198,7 +199,7 @@ function HistoriquePage() {
                     return acc;
                   }, {})
                 ).map(([cat, catItems]) => {
-                  const catCol = catColors(cat);
+                  const catCol = getColor(cat);
                   return (
                   <Fragment key={cat}>
                     {catItems.map((item) => {

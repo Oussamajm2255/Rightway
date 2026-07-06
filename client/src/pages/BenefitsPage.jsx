@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { apiGet } from '../lib/api';
 import { formatDate } from '../lib/utils';
-import { catColors, CAT_PALETTE } from '../lib/categoryPalette';
+import { useCategoryPalette } from '../context/CategoryPaletteContext';
 import { Chart } from 'chart.js/auto';
 import './BenefitsPage.css';
 
@@ -43,6 +43,7 @@ function marginClass(pct) {
 
 export default function BenefitsPage() {
   const { user } = useAuth();
+  const { getColor } = useCategoryPalette();
   const chartRef = useRef(null);
 
   // Data
@@ -121,11 +122,8 @@ export default function BenefitsPage() {
       const top = [...products].sort((a, b) => b.benefit - a.benefit).slice(0, take);
       const labels = top.map((p) => p.name.length > maxLabel ? p.name.substring(0, maxLabel - 2) + '\u2026' : p.name);
       const values = top.map((p) => p.benefit);
-      const colors = top.map((p) => {
-        const { bar } = catColors(p.category);
-        return bar + 'cc'; // 80% opacity hex
-      });
-      const borderColors = top.map((p) => catColors(p.category).bar);
+      const colors = top.map((p) => getColor(p.category).barSoft);
+      const borderColors = top.map((p) => getColor(p.category).bar);
 
       const chartH = Math.max(w <= 420 ? 200 : w <= 768 ? 260 : 320, top.length * perBar);
       ctx.parentElement.style.minHeight = chartH + 'px';
@@ -170,7 +168,7 @@ export default function BenefitsPage() {
       clearTimeout(resizeTimer);
       if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; }
     };
-  }, [products]);
+  }, [products, getColor]);
 
   // ─── Handlers ───
   function handleSort(col) {
@@ -378,7 +376,7 @@ export default function BenefitsPage() {
                       const benefitClass = p.benefit > 0 ? 'val-positive' : p.benefit < 0 ? 'val-negative' : 'val-neutral';
                       const mClass = marginClass(p.margin_pct);
                       const marginFillW = Math.min(Math.abs(p.margin_pct), 100);
-                      const cColors = catColors(p.category);
+                      const cColors = getColor(p.category);
                       return (
                         <tr key={p.id} style={{ '--cat-bg': cColors.bg }}>
                           <td className="val-mono muted">{p.id}</td>

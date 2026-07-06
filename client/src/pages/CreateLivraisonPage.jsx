@@ -1,7 +1,7 @@
 import { useState, useEffect, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet, apiPost } from '../lib/api';
-import { catColors } from '../lib/categoryPalette';
+import { useCategoryPalette } from '../context/CategoryPaletteContext';
 import './CreateLivraisonPage.css';
 
 function IconCarton() {
@@ -22,6 +22,7 @@ function formatDT(value) {
 
 function CreateLivraisonPage() {
   const navigate = useNavigate();
+  const { getColor } = useCategoryPalette();
   const [step, setStep] = useState(1);
   const [commercials, setCommercials] = useState([]);
   const [stock, setStock] = useState([]);
@@ -321,7 +322,7 @@ function CreateLivraisonPage() {
                     return acc;
                   }, {})
                 ).map(([cat, catItems]) => {
-                  const catCol = catColors(cat);
+                  const catCol = getColor(cat);
                   return (
                     <Fragment key={cat}>
                       {catItems.map((p) => (

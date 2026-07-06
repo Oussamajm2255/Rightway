@@ -8,6 +8,7 @@ import AppLayout from './components/AppLayout';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ToastProvider } from './context/ToastContext';
 import { PushProvider } from './context/PushContext';
+import { CategoryPaletteProvider } from './context/CategoryPaletteContext';
 
 // Eager — critical path, always loaded
 import LoginPage from './pages/LoginPage';
@@ -205,8 +206,10 @@ function App() {
       <AuthProvider>
         <ToastProvider>
           <PushProvider>
-            <AppRoutes />
-            <SessionExpiryModal />
+            <CategoryPaletteProvider>
+              <AppRoutes />
+              <SessionExpiryModal />
+            </CategoryPaletteProvider>
           </PushProvider>
         </ToastProvider>
       </AuthProvider>
