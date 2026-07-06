@@ -49,6 +49,9 @@ const createPrelevementRules = [
       }
       return true;
     }),
+  body('commercial_id')
+    .optional({ values: 'falsy' })
+    .isUUID().withMessage('Commercial invalide.'),
 ];
 
 const updatePrelevementRules = [
@@ -83,6 +86,9 @@ const updatePrelevementRules = [
       }
       return true;
     }),
+  body('commercial_id')
+    .optional({ values: 'falsy' })
+    .isUUID().withMessage('Commercial invalide.'),
 ];
 
 const deletePrelevementRules = [

@@ -31,10 +31,10 @@ async function checkAndGenerateSalaries(today) {
   if (users.length > 0) return; // already generated this month
 
   const { rows: eligibleUsers } = await pool.query(`
-    SELECT id, first_name, last_name, salary_amount 
-    FROM users 
-    WHERE is_active = true 
-    AND remuneration_type = 'SALAIRE' 
+    SELECT id, full_name, role, salary_amount
+    FROM users
+    WHERE is_active = true
+    AND remuneration_type = 'SALAIRE'
     AND salary_amount > 0
   `);
 
@@ -55,11 +55,14 @@ async function checkAndGenerateSalaries(today) {
     await prelevementModel.createPrelevement({
       category_id: catId,
       amount: u.salary_amount,
-      description: `Salaire ${u.first_name} ${u.last_name} - ${monthStr}`,
+      description: `Salaire ${u.full_name} - ${monthStr}`,
       reference: refPrefix,
       expense_date: today.toISOString().split('T')[0],
       declared_by: systemUserId,
-      status: 'EN_ATTENTE'
+      status: 'EN_ATTENTE',
+      // Attributes the charge back to the commercial for Performances
+      // Commerciaux — only when the salaried user actually is one.
+      commercial_id: u.role === 'COMMERCIAL' ? u.id : null,
     });
   }
   console.log(`Cron: Generated salaries for ${eligibleUsers.length} users.`);
@@ -131,7 +134,8 @@ async function checkAndGenerateRecurring(today) {
       reference: refPrefix,
       expense_date: today.toISOString().split('T')[0],
       declared_by: systemUserId,
-      status: 'EN_ATTENTE'
+      status: 'EN_ATTENTE',
+      commercial_id: r.commercial_id || null,
     });
     createdCount++;
   }

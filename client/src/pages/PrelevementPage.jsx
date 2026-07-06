@@ -157,13 +157,14 @@ function CategoryModal({ categories, onClose, onRefresh }) {
 }
 
 /* ===== Edit Expense Modal ===== */
-function EditModal({ expense, categories, onClose, onSaved }) {
+function EditModal({ expense, categories, commercials, onClose, onSaved }) {
   const [form, setForm] = useState({
     category_id: expense?.category_id || '',
     amount: expense?.amount || '',
     description: expense?.description || '',
     reference: expense?.reference || '',
     expense_date: expense?.expense_date?.slice(0, 10) || new Date().toISOString().slice(0, 10),
+    commercial_id: expense?.commercial_id || '',
   });
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -183,6 +184,7 @@ function EditModal({ expense, categories, onClose, onSaved }) {
         description: form.description || undefined,
         reference: form.reference || undefined,
         expense_date: form.expense_date,
+        commercial_id: form.commercial_id || null,
       };
       if (expense) {
         await apiPut(`/prelevements/${expense.id}`, body);
@@ -239,6 +241,16 @@ function EditModal({ expense, categories, onClose, onSaved }) {
             <input className="prel-form-input" value={form.reference}
               onChange={e => setForm(f => ({...f, reference: e.target.value}))}
               placeholder="N° facture, reçu..." />
+          </div>
+          <div className="prel-form-group">
+            <label className="prel-form-label">Commercial concerné (optionnel)</label>
+            <select className="prel-form-select" value={form.commercial_id}
+              onChange={e => setForm(f => ({...f, commercial_id: e.target.value}))}>
+              <option value="">Général (aucun commercial)</option>
+              {commercials.map(com => (
+                <option key={com.id} value={com.id}>{com.full_name}</option>
+              ))}
+            </select>
           </div>
           <div className="prel-modal-actions">
             <button type="button" className="btn btn-secondary" onClick={onClose}>Annuler</button>
@@ -493,6 +505,7 @@ const FREQUENCY_META = {
 const EMPTY_RECURRING_FORM = {
   category_id: '', amount: '', description: '',
   frequency: 'MONTHLY', generation_day: 1, generation_weekday: 1, generation_month: 1,
+  commercial_id: '',
 };
 
 function cycleLabel(item) {
@@ -507,7 +520,7 @@ function cycleLabel(item) {
   return `Le ${item.generation_day} du mois`;
 }
 
-function RecurringModal({ categories, onClose }) {
+function RecurringModal({ categories, commercials, onClose }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -536,6 +549,7 @@ function RecurringModal({ categories, onClose }) {
       amount: parseFloat(form.amount),
       description: form.description || undefined,
       frequency: form.frequency,
+      commercial_id: form.commercial_id || null,
     };
     if (form.frequency === 'WEEKLY') {
       payload.generation_weekday = parseInt(form.generation_weekday) || 1;
@@ -573,6 +587,7 @@ function RecurringModal({ categories, onClose }) {
       generation_day: item.generation_day || 1,
       generation_weekday: item.generation_weekday || 1,
       generation_month: item.generation_month || 1,
+      commercial_id: item.commercial_id || '',
     });
   }
 
@@ -625,6 +640,20 @@ function RecurringModal({ categories, onClose }) {
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <input className="prel-form-input" placeholder="Description (ex: Loyer, Internet...)" value={form.description} onChange={e => setForm({...form, description: e.target.value})} style={{ flex: 1 }} />
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <select
+              className="prel-form-select"
+              value={form.commercial_id}
+              onChange={e => setForm({...form, commercial_id: e.target.value})}
+              title="Commercial concerné"
+              style={{ flex: 1 }}
+            >
+              <option value="">Général (aucun commercial)</option>
+              {commercials.map(com => (
+                <option key={com.id} value={com.id}>{com.full_name}</option>
+              ))}
+            </select>
           </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <select
@@ -704,6 +733,9 @@ function RecurringModal({ categories, onClose }) {
                           {freq.label}
                         </span>
                         <span>{cycleLabel(item)}</span>
+                        {item.commercial_name && (
+                          <span className="prel-commercial-badge">{item.commercial_name}</span>
+                        )}
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
@@ -790,10 +822,11 @@ export default function PrelevementPage() {
 
   const [tab, setTab] = useState('declaration');
   const [categories, setCategories] = useState([]);
+  const [commercials, setCommercials] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [filters, setFilters] = useState({ category_id: '', date_from: '', date_to: '', search: '' });
+  const [filters, setFilters] = useState({ category_id: '', commercial_id: '', date_from: '', date_to: '', search: '' });
   const [stats, setStats] = useState(null);
 
   // Modals
@@ -821,12 +854,22 @@ export default function PrelevementPage() {
     }
   }, []);
 
+  const fetchCommercials = useCallback(async () => {
+    try {
+      const data = await apiGet('/users/commercials');
+      setCommercials(data.users || []);
+    } catch (err) {
+      console.error('[Prelevement] fetchCommercials error:', err.message);
+    }
+  }, []);
+
   const fetchExpenses = useCallback(async (p = page) => {
     try {
       const params = new URLSearchParams();
       params.set('page', p);
       params.set('limit', LIMIT);
       if (filters.category_id) params.set('category_id', filters.category_id);
+      if (filters.commercial_id) params.set('commercial_id', filters.commercial_id);
       if (filters.date_from) params.set('date_from', filters.date_from);
       if (filters.date_to) params.set('date_to', filters.date_to);
       if (filters.search) params.set('search', filters.search);
@@ -848,6 +891,7 @@ export default function PrelevementPage() {
   }, []);
 
   useEffect(() => { fetchCategories(); }, [fetchCategories]);
+  useEffect(() => { fetchCommercials(); }, [fetchCommercials]);
 
   useEffect(() => {
     if (tab === 'declaration') fetchExpenses();
@@ -943,6 +987,7 @@ export default function PrelevementPage() {
                   description: fd.get('description') || undefined,
                   reference: fd.get('reference') || undefined,
                   expense_date: fd.get('expense_date'),
+                  commercial_id: fd.get('commercial_id') || undefined,
                 });
                 e.target.reset();
                 fetchExpenses();
@@ -986,6 +1031,16 @@ export default function PrelevementPage() {
                 <label className="prel-form-label">Référence (optionnel)</label>
                 <input className="prel-form-input" name="reference" placeholder="N° facture, reçu..." />
               </div>
+              <div className="prel-form-group">
+                <label className="prel-form-label">Commercial concerné (optionnel)</label>
+                <select className="prel-form-select" name="commercial_id" defaultValue="">
+                  <option value="">Général (aucun commercial)</option>
+                  {commercials.map(com => (
+                    <option key={com.id} value={com.id}>{com.full_name}</option>
+                  ))}
+                </select>
+                <span className="prel-form-hint">Attribue cette dépense à un commercial — visible dans Performances Commerciaux.</span>
+              </div>
               <div className="prel-form-actions">
                 <button type="submit" className="btn btn-primary">Déclarer</button>
               </div>
@@ -1011,6 +1066,13 @@ export default function PrelevementPage() {
                     </optgroup>
                   ))}
                 </select>
+                <select className="prel-filter-select" value={filters.commercial_id}
+                  onChange={e => handleFilterChange('commercial_id', e.target.value)}>
+                  <option value="">Tous commerciaux</option>
+                  {commercials.map(com => (
+                    <option key={com.id} value={com.id}>{com.full_name}</option>
+                  ))}
+                </select>
                 <input className="prel-filter-select" type="date" value={filters.date_from}
                   onChange={e => handleFilterChange('date_from', e.target.value)} title="Du" />
                 <input className="prel-filter-select" type="date" value={filters.date_to}
@@ -1026,6 +1088,7 @@ export default function PrelevementPage() {
                     <th>Catégorie</th>
                     <th>Description</th>
                     <th>Référence</th>
+                    <th>Commercial</th>
                     <th style={{textAlign:'right'}}>Montant</th>
                     <th style={{width:70}}></th>
                   </tr>
@@ -1033,7 +1096,7 @@ export default function PrelevementPage() {
                 <tbody>
                   {expenses.length === 0 ? (
                     <tr>
-                      <td colSpan={6}>
+                      <td colSpan={7}>
                         <div className="prel-empty">
                           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                             <rect x="2" y="3" width="20" height="18" rx="2"/>
@@ -1056,6 +1119,11 @@ export default function PrelevementPage() {
                       </td>
                       <td>{exp.description || '—'}</td>
                       <td style={{color:'var(--color-text-tertiary)', fontSize:'0.82rem'}}>{exp.reference || '—'}</td>
+                      <td>
+                        {exp.commercial_name
+                          ? <span className="prel-commercial-badge">{exp.commercial_name}</span>
+                          : <span style={{color:'var(--color-text-tertiary)', fontSize:'0.82rem'}}>Général</span>}
+                      </td>
                       <td className="prel-amount">
                         {formatMoney(exp.amount)}
                         {exp.status === 'EN_ATTENTE' && (
@@ -1119,7 +1187,7 @@ export default function PrelevementPage() {
           onRefresh={() => { fetchCategories(); }} />
       )}
       {showRecurringModal && (
-        <RecurringModal categories={categories} onClose={() => setShowRecurringModal(false)} />
+        <RecurringModal categories={categories} commercials={commercials} onClose={() => setShowRecurringModal(false)} />
       )}
       {showSettingsModal && (
         <SettingsModal onClose={() => setShowSettingsModal(false)} />
@@ -1128,6 +1196,7 @@ export default function PrelevementPage() {
         <EditModal
           expense={editingExpense && typeof editingExpense === 'object' && editingExpense.id ? editingExpense : null}
           categories={categories}
+          commercials={commercials}
           onClose={() => setEditingExpense(null)}
           onSaved={handleSaved}
         />

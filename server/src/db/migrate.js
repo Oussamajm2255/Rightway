@@ -70,6 +70,13 @@ const migrations = [
   `ALTER TABLE recurring_prelevements ADD COLUMN IF NOT EXISTS generation_weekday INTEGER CHECK (generation_weekday BETWEEN 1 AND 7)`,
   `ALTER TABLE recurring_prelevements ADD COLUMN IF NOT EXISTS generation_month INTEGER CHECK (generation_month BETWEEN 1 AND 12)`,
 
+  // Prelevements attributable to a specific commercial (vehicle repair,
+  // fuel bonus, salary, etc.) — nullable, so "no commercial" (a general
+  // company charge) stays the default for every existing row.
+  `ALTER TABLE prelevements ADD COLUMN IF NOT EXISTS commercial_id UUID REFERENCES users(id)`,
+  `CREATE INDEX IF NOT EXISTS idx_prelevements_commercial ON prelevements(commercial_id)`,
+  `ALTER TABLE recurring_prelevements ADD COLUMN IF NOT EXISTS commercial_id UUID REFERENCES users(id)`,
+
   // Global Settings
   `CREATE TABLE IF NOT EXISTS global_settings (
     id SERIAL PRIMARY KEY,

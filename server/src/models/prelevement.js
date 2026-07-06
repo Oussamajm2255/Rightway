@@ -72,14 +72,15 @@ async function deleteCategory(id) {
 // EXPENSES
 // ═══════════════════════════════════════════════
 
-async function findAllPrelevements({ page = 1, limit = 20, category_id, date_from, date_to, search } = {}) {
+async function findAllPrelevements({ page = 1, limit = 20, category_id, commercial_id, date_from, date_to, search } = {}) {
   let query = `
     SELECT p.*, c.name AS category_name, pc.name AS parent_category_name,
-           u.full_name AS declared_by_name
+           u.full_name AS declared_by_name, uc.full_name AS commercial_name
     FROM prelevements p
     JOIN prelevement_categories c ON p.category_id = c.id
     LEFT JOIN prelevement_categories pc ON c.parent_id = pc.id
     JOIN users u ON p.declared_by = u.id
+    LEFT JOIN users uc ON p.commercial_id = uc.id
     WHERE 1=1`;
   const params = [];
   let idx = 1;
@@ -88,6 +89,10 @@ async function findAllPrelevements({ page = 1, limit = 20, category_id, date_fro
     // Include children of the selected category
     query += ` AND (p.category_id = $${idx++} OR c.parent_id = $${idx - 1})`;
     params.push(category_id);
+  }
+  if (commercial_id) {
+    query += ` AND p.commercial_id = $${idx++}`;
+    params.push(commercial_id);
   }
   if (date_from) {
     query += ` AND p.expense_date >= $${idx++}`;
@@ -103,9 +108,11 @@ async function findAllPrelevements({ page = 1, limit = 20, category_id, date_fro
     idx++;
   }
 
-  // Count
+  // Count — non-greedy + dotAll so this matches across the multi-line
+  // SELECT clause above (a plain `.*` here never crosses a newline,
+  // which silently left `total` stuck at 0 for every request).
   const countQuery = query.replace(
-    /SELECT .* FROM/,
+    /SELECT[\s\S]*?FROM/,
     'SELECT COUNT(*)::int AS total FROM'
   );
   const { rows: countRows } = await pool.query(countQuery, params);
@@ -123,29 +130,30 @@ async function findAllPrelevements({ page = 1, limit = 20, category_id, date_fro
 async function findPrelevementById(id) {
   const { rows } = await pool.query(
     `SELECT p.*, c.name AS category_name, pc.name AS parent_category_name,
-            u.full_name AS declared_by_name
+            u.full_name AS declared_by_name, uc.full_name AS commercial_name
      FROM prelevements p
      JOIN prelevement_categories c ON p.category_id = c.id
      LEFT JOIN prelevement_categories pc ON c.parent_id = pc.id
      JOIN users u ON p.declared_by = u.id
+     LEFT JOIN users uc ON p.commercial_id = uc.id
      WHERE p.id = $1`,
     [id]
   );
   return rows[0] || null;
 }
 
-async function createPrelevement({ category_id, amount, description, reference, expense_date, declared_by, status = 'VALIDE' }) {
+async function createPrelevement({ category_id, amount, description, reference, expense_date, declared_by, status = 'VALIDE', commercial_id = null }) {
   const { rows } = await pool.query(
-    `INSERT INTO prelevements (category_id, amount, description, reference, expense_date, declared_by, status)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `INSERT INTO prelevements (category_id, amount, description, reference, expense_date, declared_by, status, commercial_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
      RETURNING *`,
-    [category_id, amount, description || null, reference || null, expense_date, declared_by, status]
+    [category_id, amount, description || null, reference || null, expense_date, declared_by, status, commercial_id]
   );
   return rows[0];
 }
 
 async function updatePrelevement(id, fields) {
-  const allowed = ['category_id', 'amount', 'description', 'reference', 'expense_date', 'status'];
+  const allowed = ['category_id', 'amount', 'description', 'reference', 'expense_date', 'status', 'commercial_id'];
   const sets = [];
   const params = [id];
   let idx = 2;
@@ -253,10 +261,11 @@ async function getStats() {
 
 async function findAllRecurringPrelevements() {
   const { rows } = await pool.query(`
-    SELECT r.*, c.name AS category_name, pc.name AS parent_category_name
+    SELECT r.*, c.name AS category_name, pc.name AS parent_category_name, uc.full_name AS commercial_name
     FROM recurring_prelevements r
     JOIN prelevement_categories c ON r.category_id = c.id
     LEFT JOIN prelevement_categories pc ON c.parent_id = pc.id
+    LEFT JOIN users uc ON r.commercial_id = uc.id
     ORDER BY r.created_at DESC
   `);
   return rows;
@@ -273,19 +282,20 @@ async function findRecurringPrelevementById(id) {
 async function createRecurringPrelevement({
   category_id, amount, description, is_active = true, created_by,
   frequency = 'MONTHLY', generation_day = null, generation_weekday = null, generation_month = null,
+  commercial_id = null,
 }) {
   const { rows } = await pool.query(
     `INSERT INTO recurring_prelevements
-       (category_id, amount, description, is_active, created_by, frequency, generation_day, generation_weekday, generation_month)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       (category_id, amount, description, is_active, created_by, frequency, generation_day, generation_weekday, generation_month, commercial_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
      RETURNING *`,
-    [category_id, amount, description || null, is_active, created_by, frequency, generation_day, generation_weekday, generation_month]
+    [category_id, amount, description || null, is_active, created_by, frequency, generation_day, generation_weekday, generation_month, commercial_id]
   );
   return rows[0];
 }
 
 async function updateRecurringPrelevement(id, fields) {
-  const allowed = ['category_id', 'amount', 'description', 'is_active', 'frequency', 'generation_day', 'generation_weekday', 'generation_month'];
+  const allowed = ['category_id', 'amount', 'description', 'is_active', 'frequency', 'generation_day', 'generation_weekday', 'generation_month', 'commercial_id'];
   const sets = [];
   const params = [id];
   let idx = 2;

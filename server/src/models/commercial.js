@@ -36,6 +36,14 @@ async function getAllWithStats() {
       WHERE la.status = 'ACCEPTE'
       GROUP BY la.commercial_id
     ),
+    commercial_prelevements AS (
+      SELECT
+        p.commercial_id,
+        COALESCE(SUM(p.amount), 0)::NUMERIC(12,3) AS prelevements_total
+      FROM prelevements p
+      WHERE p.commercial_id IS NOT NULL AND p.status = 'VALIDE'
+      GROUP BY p.commercial_id
+    ),
     commercial_ecoulement AS (
       SELECT
         l.commercial_id,
@@ -63,11 +71,13 @@ async function getAllWithStats() {
       COALESCE(cs.en_retour, 0)::INT AS livraisons_en_retour,
       COALESCE(cca.ca_total, 0)::NUMERIC(12,3) AS ca_total,
       COALESCE(cav.avances_total, 0)::NUMERIC(12,3) AS avances_total,
+      COALESCE(cp.prelevements_total, 0)::NUMERIC(12,3) AS prelevements_total,
       COALESCE(ef.ecoulement, 0)::INT AS ecoulement
     FROM users u
     LEFT JOIN commercial_stats cs ON cs.commercial_id = u.id
     LEFT JOIN commercial_ca cca ON cca.commercial_id = u.id
     LEFT JOIN commercial_avances cav ON cav.commercial_id = u.id
+    LEFT JOIN commercial_prelevements cp ON cp.commercial_id = u.id
     LEFT JOIN ecoulement_final ef ON ef.commercial_id = u.id
     WHERE u.role = 'COMMERCIAL'
     ORDER BY ca_total DESC

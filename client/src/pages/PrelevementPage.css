@@ -100,6 +100,25 @@
   box-shadow: 0 0 0 3px var(--color-primary-subtle);
 }
 
+.prel-commercial-badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+.prel-form-hint {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-1);
+  line-height: 1.4;
+}
+
 .prel-form-textarea {
   resize: vertical;
   min-height: 60px;

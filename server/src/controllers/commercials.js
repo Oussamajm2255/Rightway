@@ -56,6 +56,7 @@ async function getAllCommercials(req, res) {
         livraisons_en_retour: c.livraisons_en_retour,
         ca_total: ca,
         avances_total: avances,
+        prelevements_total: Number(c.prelevements_total),
         ecoulement: c.ecoulement,
         commission,
         net_a_reverser: net,

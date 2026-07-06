@@ -544,6 +544,9 @@ export default function CommercialsPage() {
                   <div>
                     <div className="cc-ca" style={{ color: c.color }}>{fmtDTShort(c.ca_total)}</div>
                     <div className="cc-rate-lbl">Net: {fmtDTShort(Math.max(0, c.net_a_reverser))}</div>
+                    {c.prelevements_total > 0 && (
+                      <div className="cc-rate-lbl" style={{ color: '#c2410c' }}>Prélèvements: {fmtDTShort(c.prelevements_total)}</div>
+                    )}
                   </div>
                   <button className="cc-detail-btn" style={{ color: c.color, borderColor: hexAlpha(c.color, 0.3) }} onClick={() => viewHistorique(c.id)}>
                     <SvgEye /> Détail
@@ -567,6 +570,7 @@ export default function CommercialsPage() {
                     <th>Commission</th>
                     <th className="comm-sortable" onClick={() => setSortBy('completion')}><div className="comm-th-inner">Complétion <svg width="11" height="11" viewBox="0 0 20 20" fill="none"><path d="M7 3v14M3 7l4-4 4 4M13 17V3m4 4-4-4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></div></th>
                     <th>Avances</th>
+                    <th>Prélèvements</th>
                     <th>Net à reverser</th>
                     <th>Statut</th>
                   </tr>
@@ -592,12 +596,13 @@ export default function CommercialsPage() {
                         </div>
                       </td>
                       <td className="comm-mono">{c.avances_total > 0 ? fmtDTShort(c.avances_total) : '—'}</td>
+                      <td className="comm-mono" style={{ color: c.prelevements_total > 0 ? '#c2410c' : undefined }}>{c.prelevements_total > 0 ? fmtDTShort(c.prelevements_total) : '—'}</td>
                       <td className="comm-mono" style={{ color: PALETTE[0], fontWeight: 600 }}>{fmtDTShort(Math.max(0, c.net_a_reverser))}</td>
                       <td><span className={`comm-badge ${statusBadgeClass(c.status)}`}>{statusLabel(c.status)}</span></td>
                     </tr>
                   ))}
                   {sortedCommercials.length === 0 && (
-                    <tr><td colSpan="10" style={{ textAlign: 'center', padding: '30px', color: 'var(--color-text-tertiary)' }}>Aucun commercial trouvé</td></tr>
+                    <tr><td colSpan="11" style={{ textAlign: 'center', padding: '30px', color: 'var(--color-text-tertiary)' }}>Aucun commercial trouvé</td></tr>
                   )}
                 </tbody>
               </table>
@@ -730,6 +735,7 @@ export default function CommercialsPage() {
                           { label: 'Taux complétion', fn: c => fmtPct(c.completion) },
                           { label: "Taux d'écoulement", fn: c => fmtPct(c.ecoulement) },
                           { label: 'Avances', fn: c => c.avances_total > 0 ? fmtDTShort(c.avances_total) : '—' },
+                          { label: 'Prélèvements', fn: c => c.prelevements_total > 0 ? fmtDTShort(c.prelevements_total) : '—' },
                           { label: 'Net à reverser', fn: c => fmtDTShort(Math.max(0, c.net_a_reverser)) },
                         ].map((m, i) => (
                           <tr key={m.label}>

@@ -103,13 +103,26 @@ async function deleteCategory(req, res) {
 // EXPENSES
 // ═══════════════════════════════════════════════
 
+// A prelevement's commercial_id is optional ("Général" = no commercial),
+// but when present it must point to an actual COMMERCIAL user — this is
+// what lets Performances Commerciaux attribute the charge back to them.
+async function assertValidCommercialId(commercial_id) {
+  if (!commercial_id) return null;
+  const { rows } = await pool.query(
+    `SELECT id FROM users WHERE id = $1 AND role = 'COMMERCIAL'`,
+    [commercial_id]
+  );
+  return rows.length > 0 ? null : 'Commercial introuvable.';
+}
+
 async function listPrelevements(req, res) {
   try {
-    const { page, limit, category_id, date_from, date_to, search } = req.query;
+    const { page, limit, category_id, commercial_id, date_from, date_to, search } = req.query;
     const result = await prelevementModel.findAllPrelevements({
       page: parseInt(page) || 1,
       limit: Math.min(parseInt(limit) || 20, 100),
       category_id: category_id ? parseInt(category_id) : undefined,
+      commercial_id: commercial_id || undefined,
       date_from,
       date_to,
       search,
@@ -141,12 +154,17 @@ async function createPrelevement(req, res) {
       return res.status(400).json({ error: errors.array()[0].msg });
     }
 
-    const { category_id, amount, description, reference, expense_date } = req.body;
+    const { category_id, amount, description, reference, expense_date, commercial_id } = req.body;
 
     // Verify category exists
     const cat = await prelevementModel.getCategoryById(category_id);
     if (!cat) {
       return res.status(400).json({ error: 'Catégorie introuvable.' });
+    }
+
+    const commercialError = await assertValidCommercialId(commercial_id);
+    if (commercialError) {
+      return res.status(400).json({ error: commercialError });
     }
 
     const prelevement = await prelevementModel.createPrelevement({
@@ -156,6 +174,7 @@ async function createPrelevement(req, res) {
       reference,
       expense_date,
       declared_by: req.user.id,
+      commercial_id: commercial_id || null,
     });
 
     // Fetch full record with joins
@@ -188,12 +207,22 @@ async function updatePrelevement(req, res) {
       }
     }
 
+    // commercial_id may be explicitly set to null/'' to clear it back to
+    // "Général" — only reject it when a truthy value fails validation.
+    if (req.body.commercial_id) {
+      const commercialError = await assertValidCommercialId(req.body.commercial_id);
+      if (commercialError) {
+        return res.status(400).json({ error: commercialError });
+      }
+    }
+
     const fields = {};
     if (req.body.category_id !== undefined) fields.category_id = req.body.category_id;
     if (req.body.amount !== undefined) fields.amount = req.body.amount;
     if (req.body.description !== undefined) fields.description = req.body.description;
     if (req.body.reference !== undefined) fields.reference = req.body.reference;
     if (req.body.expense_date !== undefined) fields.expense_date = req.body.expense_date;
+    if (req.body.commercial_id !== undefined) fields.commercial_id = req.body.commercial_id || null;
 
     await prelevementModel.updatePrelevement(id, fields);
     const updated = await prelevementModel.findPrelevementById(id);
@@ -407,6 +436,11 @@ async function createRecurringPrelevement(req, res) {
       return res.status(400).json({ error: 'Catégorie introuvable.' });
     }
 
+    const commercialError = await assertValidCommercialId(req.body.commercial_id);
+    if (commercialError) {
+      return res.status(400).json({ error: commercialError });
+    }
+
     const created = await prelevementModel.createRecurringPrelevement({
       category_id,
       amount,
@@ -417,6 +451,7 @@ async function createRecurringPrelevement(req, res) {
       generation_day: frequency !== 'WEEKLY' ? parseInt(req.body.generation_day, 10) : null,
       generation_weekday: frequency === 'WEEKLY' ? parseInt(req.body.generation_weekday, 10) : null,
       generation_month: frequency === 'YEARLY' ? parseInt(req.body.generation_month, 10) : null,
+      commercial_id: req.body.commercial_id || null,
     });
 
     res.status(201).json({ recurring: created });
@@ -441,12 +476,17 @@ async function updateRecurringPrelevement(req, res) {
     if (amount !== undefined && amount <= 0) {
       return res.status(400).json({ error: 'Le montant doit être supérieur à 0.' });
     }
+    if (req.body.commercial_id) {
+      const commercialError = await assertValidCommercialId(req.body.commercial_id);
+      if (commercialError) return res.status(400).json({ error: commercialError });
+    }
 
     const fields = {};
     if (category_id !== undefined) fields.category_id = category_id;
     if (amount !== undefined) fields.amount = amount;
     if (description !== undefined) fields.description = description;
     if (is_active !== undefined) fields.is_active = is_active;
+    if (req.body.commercial_id !== undefined) fields.commercial_id = req.body.commercial_id || null;
 
     // Cycle fields are validated together (frequency + its matching day/weekday/month),
     // falling back to the existing row's values for anything not sent in this request.
