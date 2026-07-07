@@ -146,28 +146,29 @@ function generateBonDeSortie(livraison) {
 // ============================================================
 // FINANCIAL SUMMARY STACK — shared by Bon de Retour + Dossier Complet
 // ============================================================
-// hideCommission is set for a COMMERCIAL viewer: they see only the net
-// amount owed, never the gross CA or the commission breakdown that
-// produced it. Previously the isSalaire branch also silently dropped
-// "Net à reverser" and any avances/reste-à-payer lines entirely — fixed
-// here so salaried commercials' PDFs actually show what they're owed.
+// hideCommission is set for a COMMERCIAL viewer: they see only the gross
+// CA (their sales total) — never the commission, Net à reverser, or Reste
+// à payer (net − avances would reveal the commission by subtraction).
 function buildFinancialStack({ isSalaire, hideCommission, ca, commission, net, totalAvances, resteAPayer }, cellStyle) {
   const style = cellStyle ? { style: cellStyle } : {};
-  const stack = [];
+  const stack = [
+    { text: [{ text: 'Total CA: ', bold: true }, formatDT(ca)], ...style, margin: [0, 2] },
+  ];
 
   if (!hideCommission) {
-    stack.push({ text: [{ text: 'Total CA: ', bold: true }, formatDT(ca)], ...style, margin: [0, 2] });
     if (isSalaire) {
       stack.push({ text: [{ text: 'Salaire mensuel — pas de commission', italics: true }], ...style, margin: [0, 2], color: '#6c757d' });
     } else {
       stack.push({ text: [{ text: `Commission (${Math.round(COMMISSION_RATE * 100)}%): ` }, formatDT(commission)], ...style, margin: [0, 2] });
     }
+    stack.push({ text: [{ text: 'Net à reverser: ', bold: true }, formatDT(net)], ...style, margin: [0, 2] });
   }
 
-  stack.push({ text: [{ text: 'Net à reverser: ', bold: true }, formatDT(net)], ...style, margin: [0, 2] });
   if (totalAvances > 0) {
     stack.push({ text: [{ text: 'Avances acceptées: ' }, formatDT(totalAvances)], ...style, margin: [4, 2, 0, 2], color: '#1a3c34' });
-    stack.push({ text: [{ text: 'Reste à payer: ', bold: true }, formatDT(resteAPayer)], ...style, margin: [0, 2] });
+    if (!hideCommission) {
+      stack.push({ text: [{ text: 'Reste à payer: ', bold: true }, formatDT(resteAPayer)], ...style, margin: [0, 2] });
+    }
   }
   return stack;
 }

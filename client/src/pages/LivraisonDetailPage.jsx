@@ -988,12 +988,13 @@ function LivraisonDetailPage() {
                 })}
               </tbody>
               <tfoot>
-                {!isCommercial && (
+                {/* Commercial sees only the gross CA — never commission,
+                    Net à reverser, or Reste à payer (net − avances would
+                    reveal the commission by simple subtraction). */}
                 <tr>
                   <td colSpan="7" style={{ textAlign: 'right' }}><strong>Total CA</strong></td>
                   <td className="td-price"><strong>{formatDT(ca)}</strong></td>
                 </tr>
-                )}
                 {!isCommercial && !isSalaire && (
                 <tr>
                   <td colSpan="7" style={{ textAlign: 'right' }}>Commission Commerciale (10%)</td>
@@ -1006,20 +1007,24 @@ function LivraisonDetailPage() {
                   <td className="td-price" style={{ color: 'var(--color-text-tertiary)' }}>—</td>
                 </tr>
                 )}
+                {!isCommercial && (
                 <tr>
                   <td colSpan="7" style={{ textAlign: 'right' }}><strong>Net à reverser au dépôt</strong></td>
                   <td className="td-price"><strong>{formatDT(net_a_reverser)}</strong></td>
                 </tr>
+                )}
                 {totalAvances > 0 && (
                   <>
                     <tr>
                       <td colSpan="7" style={{ textAlign: 'right', color: 'var(--color-primary)' }}>Avances acceptées</td>
                       <td className="td-price" style={{ color: 'var(--color-primary)' }}>{formatDT(totalAvances)}</td>
                     </tr>
+                    {!isCommercial && (
                     <tr>
                       <td colSpan="7" style={{ textAlign: 'right' }}><strong>Reste à payer</strong></td>
                       <td className="td-price"><strong>{formatDT(resteAPayer)}</strong></td>
                     </tr>
+                    )}
                   </>
                 )}
               </tfoot>
@@ -1093,14 +1098,14 @@ function LivraisonDetailPage() {
             </button>
           )}
           <div className="detail-grid">
-            {!isCommercial && <div className="detail-card"><h3>CA Total</h3><p className="detail-value">{formatDT(ca)}</p></div>}
+            <div className="detail-card"><h3>CA Total</h3><p className="detail-value">{formatDT(ca)}</p></div>
             {!isCommercial && !isSalaire && <div className="detail-card"><h3>Commission (10%)</h3><p className="detail-value">{formatDT(commission)}</p></div>}
             {isSalaire && !isCommercial && <div className="detail-card"><h3>Salaire</h3><p className="detail-value" style={{ color: 'var(--color-text-tertiary)', fontStyle: 'italic', fontSize: '0.85rem' }}>Mensuel fixe</p></div>}
-            <div className="detail-card"><h3>Net à reverser</h3><p className="detail-value">{formatDT(net_a_reverser)}</p></div>
+            {!isCommercial && <div className="detail-card"><h3>Net à reverser</h3><p className="detail-value">{formatDT(net_a_reverser)}</p></div>}
             {totalAvances > 0 && (
               <>
                 <div className="detail-card"><h3>Avances acceptées</h3><p className="detail-value" style={{ color: 'var(--color-primary)' }}>{formatDT(totalAvances)}</p></div>
-                <div className="detail-card"><h3>Reste à payer</h3><p className="detail-value">{formatDT(resteAPayer)}</p></div>
+                {!isCommercial && <div className="detail-card"><h3>Reste à payer</h3><p className="detail-value">{formatDT(resteAPayer)}</p></div>}
               </>
             )}
           </div>
@@ -1287,14 +1292,14 @@ function LivraisonDetailPage() {
 
             {/* Financial summary */}
             <div className="detail-grid" style={{ marginBottom: 'var(--space-4)' }}>
-              {!isCommercial && <div className="detail-card"><h3>CA Total</h3><p className="detail-value">{formatDT(ca)}</p></div>}
+              <div className="detail-card"><h3>CA Total</h3><p className="detail-value">{formatDT(ca)}</p></div>
               {!isCommercial && !isSalaire && <div className="detail-card"><h3>Commission (10%)</h3><p className="detail-value">{formatDT(commission)}</p></div>}
               {isSalaire && !isCommercial && <div className="detail-card"><h3>Salaire</h3><p className="detail-value" style={{ color: 'var(--color-text-tertiary)', fontStyle: 'italic', fontSize: '0.85rem' }}>Mensuel fixe</p></div>}
-              <div className="detail-card"><h3>Net à reverser</h3><p className="detail-value">{formatDT(net_a_reverser)}</p></div>
+              {!isCommercial && <div className="detail-card"><h3>Net à reverser</h3><p className="detail-value">{formatDT(net_a_reverser)}</p></div>}
               {totalAvances > 0 && (
                 <>
                   <div className="detail-card"><h3>Avances acceptées</h3><p className="detail-value" style={{ color: 'var(--color-primary)' }}>{formatDT(totalAvances)}</p></div>
-                  <div className="detail-card"><h3>Reste à payer</h3><p className="detail-value">{formatDT(resteAPayer)}</p></div>
+                  {!isCommercial && <div className="detail-card"><h3>Reste à payer</h3><p className="detail-value">{formatDT(resteAPayer)}</p></div>}
                 </>
               )}
             </div>
@@ -1333,7 +1338,7 @@ function LivraisonDetailPage() {
             <h3 className="modal-title">Confirmer la clôture</h3>
             <div className="modal-summary">
               <p>Vous allez terminer définitivement : <strong>{livraison.reference}</strong></p>
-              <p>{isCommercial ? `Net à reverser: ${formatDT(net_a_reverser)}` : `CA: ${formatDT(ca)} | Net à reverser: ${formatDT(net_a_reverser)}`}</p>
+              <p>{isCommercial ? `CA: ${formatDT(ca)}` : `CA: ${formatDT(ca)} | Net à reverser: ${formatDT(net_a_reverser)}`}</p>
             </div>
             {actionError && <div className="login-error">{actionError}</div>}
             <form onSubmit={handleTerminer}>
@@ -1358,7 +1363,7 @@ function LivraisonDetailPage() {
             <div className="modal-summary">
               <p><strong>{livraison.reference}</strong></p>
               {isCommercial
-                ? <p>Net: {formatDT(net_a_reverser)}</p>
+                ? <p>CA: {formatDT(ca)}</p>
                 : <p>CA: {formatDT(ca)} | Commission: {formatDT(commission)} | Net: {formatDT(net_a_reverser)}</p>}
               {isCloture && <p>Cette action clôturera définitivement la livraison.</p>}
             </div>
@@ -1409,10 +1414,10 @@ function LivraisonDetailPage() {
                 </tbody>
               </table>
             </div>
-            {!isCommercial && <p><strong>CA Total:</strong> {formatDT(terminerSummary.ca_total)}</p>}
+            <p><strong>CA Total:</strong> {formatDT(terminerSummary.ca_total)}</p>
             {!isCommercial && !isSalaire && <p><strong>Commission (10%):</strong> {formatDT(terminerSummary.commission)}</p>}
             {isSalaire && !isCommercial && <p style={{ fontStyle: 'italic', color: 'var(--color-text-tertiary)' }}>Salaire mensuel — pas de commission</p>}
-            <p><strong>Net à reverser:</strong> {formatDT(terminerSummary.net_a_reverser)}</p>
+            {!isCommercial && <p><strong>Net à reverser:</strong> {formatDT(terminerSummary.net_a_reverser)}</p>}
             <div className="modal-actions" style={{ marginTop: 'var(--space-4)' }}>
               <button className="btn btn-primary" onClick={() => setTerminerSummary(null)}>Fermer</button>
             </div>
