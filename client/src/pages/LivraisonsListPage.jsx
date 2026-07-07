@@ -186,41 +186,6 @@ function LivraisonsListPage() {
     );
   }
 
-  function renderCard(l) {
-    const accent = STATUS_ACCENT[l.status] || 'closed';
-    const avatar = getAvatar(l.commercial_name);
-    return (
-      <div
-        key={l.id}
-        className={`livr-card livr-row-accent-${accent}`}
-        onClick={() => navigate(`/livraisons/${l.id}`)}
-      >
-        <div className="livr-card-header">
-          <span className="td-code">{l.reference}</span>
-          {getStatusBadge(l.status)}
-        </div>
-        <div className="livr-card-body">
-          <div className="livr-commercial-cell">
-            <span className="livr-avatar" style={{ background: avatar.bg }}>{avatar.initials}</span>
-            <div>
-              <div>{l.commercial_name}</div>
-              <div className="livr-card-sub">
-                {l.vehicle_name}{l.vehicle_plate ? ` · ${l.vehicle_plate}` : ''}
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="livr-card-footer">
-          <span className="td-date">{formatDateTime(l.created_at)}</span>
-          <div style={{ display: 'flex', gap: '6px' }}>
-            {renderAvanceChip(l)}
-            {renderEcartChip(l)}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="livraisons-page">
       <div className="page-header">
@@ -268,37 +233,30 @@ function LivraisonsListPage() {
       {error && <div className="error-banner">{error}</div>}
 
       {loading ? (
-        <>
-          <div className="table-container livr-desktop-only">
-            <table className="data-table">
-              <tbody>
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <tr key={i}>
-                    <td><span className="skeleton skeleton-text" style={{ width: '70px' }} /></td>
-                    <td>
-                      <div className="livr-commercial-cell">
-                        <span className="skeleton skeleton-avatar" style={{ width: '26px', height: '26px' }} />
-                        <span className="skeleton skeleton-text" style={{ width: '110px' }} />
-                      </div>
-                    </td>
-                    <td><span className="skeleton skeleton-text" style={{ width: '90px' }} /></td>
-                    <td><span className="skeleton skeleton-text" style={{ width: '60px' }} /></td>
-                    <td><span className="skeleton skeleton-text" style={{ width: '40px', margin: '0 auto' }} /></td>
-                    <td><span className="skeleton skeleton-text" style={{ width: '40px', margin: '0 auto' }} /></td>
-                    <td><span className="skeleton skeleton-text" style={{ width: '80px' }} /></td>
-                    <td><span className="skeleton skeleton-text" style={{ width: '100px' }} /></td>
-                    <td><span className="skeleton skeleton-text" style={{ width: '100px' }} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="livr-card-list livr-mobile-only">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="skeleton skeleton-card" />
-            ))}
-          </div>
-        </>
+        <div className="table-container">
+          <table className="data-table">
+            <tbody>
+              {Array.from({ length: 6 }).map((_, i) => (
+                <tr key={i}>
+                  <td><span className="skeleton skeleton-text" style={{ width: '70px' }} /></td>
+                  <td>
+                    <div className="livr-commercial-cell">
+                      <span className="skeleton skeleton-avatar" style={{ width: '26px', height: '26px' }} />
+                      <span className="skeleton skeleton-text" style={{ width: '110px' }} />
+                    </div>
+                  </td>
+                  <td><span className="skeleton skeleton-text" style={{ width: '90px' }} /></td>
+                  <td><span className="skeleton skeleton-text" style={{ width: '60px' }} /></td>
+                  <td><span className="skeleton skeleton-text" style={{ width: '40px', margin: '0 auto' }} /></td>
+                  <td><span className="skeleton skeleton-text" style={{ width: '40px', margin: '0 auto' }} /></td>
+                  <td><span className="skeleton skeleton-text" style={{ width: '80px' }} /></td>
+                  <td><span className="skeleton skeleton-text" style={{ width: '100px' }} /></td>
+                  <td><span className="skeleton skeleton-text" style={{ width: '100px' }} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : filtered.length === 0 ? (
         <div className="empty-state">
           {livraisons.length === 0 ? (
@@ -314,31 +272,26 @@ function LivraisonsListPage() {
           )}
         </div>
       ) : (
-        <>
-          <div className="table-container livr-desktop-only livr-fade-in">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Référence</th>
-                  <th>Commercial</th>
-                  <th>Véhicule</th>
-                  <th>Statut</th>
-                  <th style={{ textAlign: 'center' }}>Avance</th>
-                  <th style={{ textAlign: 'center' }}>Écart</th>
-                  <th>Créé par</th>
-                  <th>Date</th>
-                  <th>Clôturé</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(renderRow)}
-              </tbody>
-            </table>
-          </div>
-          <div className="livr-card-list livr-mobile-only livr-fade-in">
-            {filtered.map(renderCard)}
-          </div>
-        </>
+        <div className="table-container livr-fade-in">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Référence</th>
+                <th>Commercial</th>
+                <th>Véhicule</th>
+                <th>Statut</th>
+                <th style={{ textAlign: 'center' }}>Avance</th>
+                <th style={{ textAlign: 'center' }}>Écart</th>
+                <th>Créé par</th>
+                <th>Date</th>
+                <th>Clôturé</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map(renderRow)}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

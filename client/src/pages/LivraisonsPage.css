@@ -320,66 +320,12 @@
   font-size: var(--text-xs);
 }
 
-/* ===== List page: desktop table / mobile card toggle ===== */
-.livr-mobile-only {
-  display: none;
-}
-
 .livr-fade-in {
   animation: livr-fadeIn var(--transition-slow) ease;
 }
 @keyframes livr-fadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-.livr-card-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.livr-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-4);
-  cursor: pointer;
-  transition: box-shadow var(--transition-base), border-color var(--transition-base);
-}
-
-.livr-card:hover {
-  box-shadow: var(--shadow-sm);
-  border-color: var(--color-border-strong);
-}
-
-.livr-card:active {
-  transform: scale(0.99);
-}
-
-.livr-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-3);
-}
-
-.livr-card-body {
-  margin-bottom: var(--space-3);
-}
-
-.livr-card-sub {
-  font-size: var(--text-xs);
-  color: var(--color-text-tertiary);
-  margin-top: 2px;
-}
-
-.livr-card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--color-border);
 }
 
 /* ===== Responsive ===== */
@@ -396,14 +342,5 @@
 
   .timeline-line {
     width: 16px;
-  }
-}
-
-@media (max-width: 640px) {
-  .livr-desktop-only {
-    display: none;
-  }
-  .livr-mobile-only {
-    display: block;
   }
 }
