@@ -165,7 +165,7 @@ async function downloadBonRetourPDF(req, res) {
   try {
     const livraison = await livraisonModel.findById(req.params.id);
     if (!livraison) return res.status(404).json({ error: 'Livraison introuvable.' });
-    const doc = pdfGenerator.generateBonDeRetour(livraison);
+    const doc = pdfGenerator.generateBonDeRetour(livraison, { hideCommission: req.user.role === 'COMMERCIAL' });
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="BonDeRetour_${livraison.reference}.pdf"`);
     doc.pipe(res); doc.end();
@@ -180,7 +180,7 @@ async function downloadDossierPDF(req, res) {
       `SELECT ls.*, p.name AS product_name FROM livraison_sales_log ls JOIN products p ON ls.product_id = p.id WHERE ls.livraison_id = $1 ORDER BY ls.logged_at`,
       [req.params.id]
     );
-    const doc = pdfGenerator.generateDossierComplet(livraison, salesLog);
+    const doc = pdfGenerator.generateDossierComplet(livraison, salesLog, { hideCommission: req.user.role === 'COMMERCIAL' });
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="Dossier_${livraison.reference}.pdf"`);
     doc.pipe(res); doc.end();
