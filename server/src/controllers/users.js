@@ -55,9 +55,12 @@ async function createUser(req, res) {
 
     const password_hash = await hashPassword(password);
     
+    // Remuneration (commission vs salary) applies to personnel roles —
+    // COMMERCIAL and MAGASINIER. DIRECTEUR_COMMERCIAL and SUPER_ADMIN carry none.
+    const isPersonnel = role === 'COMMERCIAL' || role === 'MAGASINIER';
     let resolvedRemuneration = remuneration_type;
     let resolvedSalary = salary_amount;
-    if (role !== 'COMMERCIAL') {
+    if (!isPersonnel) {
       resolvedRemuneration = null;
       resolvedSalary = 0;
     } else {

@@ -17,7 +17,7 @@ const createUserRules = [
   body('role')
     .trim()
     .notEmpty().withMessage('Le rôle est requis.')
-    .isIn(['ADMIN', 'COMMERCIAL']).withMessage('Rôle invalide. Les rôles autorisés sont: ADMIN, COMMERCIAL.'),
+    .isIn(['DIRECTEUR_COMMERCIAL', 'MAGASINIER', 'COMMERCIAL']).withMessage('Rôle invalide. Rôles autorisés : DIRECTEUR_COMMERCIAL, MAGASINIER, COMMERCIAL.'),
   body('phone')
     .optional({ values: 'falsy' })
     .trim(),

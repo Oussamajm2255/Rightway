@@ -24,7 +24,7 @@ async function seed() {
       INSERT INTO users (id, full_name, email, password_hash, role, phone, vehicle_name, vehicle_plate)
       VALUES
         (gen_random_uuid(), 'Super Admin', 'superadmin@rightway.tn', $1, 'SUPER_ADMIN', NULL, NULL, NULL),
-        (gen_random_uuid(), 'Responsable Dépôt', 'admin@rightway.tn', $2, 'ADMIN', NULL, NULL, NULL),
+        (gen_random_uuid(), 'Directeur Commercial', 'admin@rightway.tn', $2, 'DIRECTEUR_COMMERCIAL', NULL, NULL, NULL),
         (gen_random_uuid(), 'Smir', 'smir@rightway.tn', $3, 'COMMERCIAL', '+216 22 111 222', 'Isuzu NPR', '215 TUN 1234'),
         (gen_random_uuid(), 'Haithem', 'haithem@rightway.tn', $3, 'COMMERCIAL', '+216 55 333 444', 'Renault Master', '216 TUN 5678'),
         (gen_random_uuid(), 'Naoufel', 'naoufel@rightway.tn', $3, 'COMMERCIAL', '+216 98 555 666', 'Peugeot Boxer', '217 TUN 9012'),

@@ -696,9 +696,22 @@ function RecurringModal({ categories, commercials, onClose }) {
             )}
 
             {form.frequency === 'MONTHLY' && (
-              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', alignSelf: 'center' }}>
-                {form.generation_days.length} jour{form.generation_days.length > 1 ? 's' : ''} sélectionné{form.generation_days.length > 1 ? 's' : ''}
-              </span>
+              <div className="prel-day-grid">
+                {Array.from({ length: 31 }, (_, i) => i + 1).map(day => {
+                  const selected = form.generation_days.includes(day);
+                  return (
+                    <button
+                      key={day}
+                      type="button"
+                      className={`prel-day-btn${selected ? ' selected' : ''}`}
+                      onClick={() => toggleMonthlyDay(day)}
+                      title={`Jour ${day}`}
+                    >
+                      {day}
+                    </button>
+                  );
+                })}
+              </div>
             )}
 
             {form.frequency === 'YEARLY' && (
@@ -1207,6 +1220,32 @@ export default function PrelevementPage() {
                 min={statsRange.date_from || undefined}
                 onChange={e => setStatsRange(r => ({ ...r, date_to: e.target.value }))} />
             </label>
+            <div className="prel-stats-presets">
+              <button type="button" className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  const now = new Date();
+                  const first = new Date(now.getFullYear(), now.getMonth(), 1);
+                  setStatsRange({ date_from: first.toISOString().slice(0, 10), date_to: '' });
+                }}>
+                Ce mois
+              </button>
+              <button type="button" className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  const now = new Date();
+                  const threeAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+                  setStatsRange({ date_from: threeAgo.toISOString().slice(0, 10), date_to: '' });
+                }}>
+                3 derniers mois
+              </button>
+              <button type="button" className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  const now = new Date();
+                  const first = new Date(now.getFullYear(), 0, 1);
+                  setStatsRange({ date_from: first.toISOString().slice(0, 10), date_to: '' });
+                }}>
+                Cette année
+              </button>
+            </div>
             {(statsRange.date_from || statsRange.date_to) && (
               <button className="btn btn-ghost btn-sm" onClick={() => setStatsRange({ date_from: '', date_to: '' })}>
                 Réinitialiser

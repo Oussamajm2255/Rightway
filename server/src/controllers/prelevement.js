@@ -287,11 +287,11 @@ async function getStats(req, res) {
 async function generateSalaries(req, res) {
   try {
     const { rows: users } = await pool.query(`
-      SELECT id, full_name, salary_amount 
-      FROM users 
-      WHERE is_active = true 
-        AND role = 'COMMERCIAL'
-        AND remuneration_type = 'SALAIRE' 
+      SELECT id, full_name, salary_amount
+      FROM users
+      WHERE is_active = true
+        AND role IN ('COMMERCIAL', 'MAGASINIER')
+        AND remuneration_type = 'SALAIRE'
         AND salary_amount > 0
     `);
 

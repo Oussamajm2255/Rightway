@@ -37,9 +37,11 @@ async function listLivraisons(req, res) {
     const { status, commercial_id, date_from, date_to, include_archived } = req.query;
     const filters = { status, date_from, date_to };
     if (include_archived === 'true') filters.include_archived = true;
-    // ADMIN sees every livraison, including ones created by SUPER_ADMIN —
-    // only COMMERCIAL is scoped to their own deliveries.
+    // SUPER_ADMIN + DIRECTEUR_COMMERCIAL see every livraison.
+    // COMMERCIAL is scoped to their own deliveries.
+    // MAGASINIER sees only unfinished livraisons from the last 5 days (no history).
     if (req.user.role === 'COMMERCIAL') filters.commercial_id = req.user.id;
+    if (req.user.role === 'MAGASINIER') filters.magasinier_scope = true;
     if (req.user.role !== 'COMMERCIAL' && commercial_id) filters.commercial_id = commercial_id;
     res.json({ livraisons: await livraisonModel.findAll(filters) });
   } catch (err) { console.error('listLivraisons error:', err); res.status(500).json({ error: 'Erreur interne du serveur' }); }
@@ -137,7 +139,7 @@ async function confirmerRetour(req, res) {
     if (result.error) return res.status(400).json({ error: result.error });
     const { livraison, bothConfirmed, ca_total, commission, net_a_reverser } = result;
     
-    if (req.user.role === 'ADMIN' || req.user.role === 'SUPER_ADMIN') {
+    if (req.user.role === 'DIRECTEUR_COMMERCIAL' || req.user.role === 'SUPER_ADMIN') {
       await notificationModel.resolveActionable(req.user.id, livraison.id, 'Retour en cours', `Vous avez confirmé le bon de retour ${livraison.reference}.`);
       await notificationModel.resolveActionable(req.user.id, livraison.id, 'a confirmé le bon de retour', `Vous avez confirmé le bon de retour ${livraison.reference}.`);
       await notificationModel.create(livraison.commercial_id, `L'Admin a confirmé le bon de retour ${livraison.reference}.`, livraison.id);

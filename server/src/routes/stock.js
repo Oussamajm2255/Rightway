@@ -6,11 +6,11 @@ const { listStock, getAlerts, adjustStock, listMovements } = require('../control
 // All routes require authentication
 router.use(authenticate);
 
-// GET /api/stock (Admin + Super Admin)
-router.get('/', authorize('SUPER_ADMIN', 'ADMIN'), listStock);
+// GET /api/stock (Super Admin, Directeur Commercial, Magasinier)
+router.get('/', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL', 'MAGASINIER'), listStock);
 
-// GET /api/stock/alerts (Admin + Super Admin)
-router.get('/alerts', authorize('SUPER_ADMIN', 'ADMIN'), getAlerts);
+// GET /api/stock/alerts
+router.get('/alerts', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL', 'MAGASINIER'), getAlerts);
 
 // PUT /api/stock/adjust (Super Admin only)
 router.put('/adjust', authorize('SUPER_ADMIN'), adjustStock);

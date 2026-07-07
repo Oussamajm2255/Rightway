@@ -9,11 +9,21 @@ const migrations = [
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER DEFAULT 0`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ`,
 
-  // Salaire vs Commission: commercial remuneration type
+  // Salaire vs Commission: personnel remuneration type
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS remuneration_type VARCHAR(20) DEFAULT 'COMMISSION'`,
   `ALTER TABLE users DROP CONSTRAINT IF EXISTS users_remuneration_type_check`,
   `ALTER TABLE users ADD CONSTRAINT users_remuneration_type_check CHECK (remuneration_type IN ('COMMISSION', 'SALAIRE'))`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS salary_amount NUMERIC(10,3) DEFAULT 0`,
+
+  // Role model overhaul: the old ADMIN role is split into
+  //  - DIRECTEUR_COMMERCIAL: full access (the former ADMIN)
+  //  - MAGASINIER: restricted warehouse role (personnel, salary/commission)
+  // Existing ADMIN rows become DIRECTEUR_COMMERCIAL. The constraint is
+  // widened (drop) BEFORE the backfill so the UPDATE validates, then a new
+  // constraint with the final four roles is added. Idempotent on re-run.
+  `ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check`,
+  `UPDATE users SET role = 'DIRECTEUR_COMMERCIAL' WHERE role = 'ADMIN'`,
+  `ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL', 'MAGASINIER', 'COMMERCIAL'))`,
 
   // Prelevement (expense management — SUPER_ADMIN only)
   `CREATE TABLE IF NOT EXISTS prelevement_categories (

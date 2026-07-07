@@ -131,7 +131,8 @@ function UsersPage() {
         >
           <option value="">Tous les rôles</option>
           <option value="SUPER_ADMIN">Super Admin</option>
-          <option value="ADMIN">Admin</option>
+          <option value="DIRECTEUR_COMMERCIAL">Directeur Commercial</option>
+          <option value="MAGASINIER">Magasinier</option>
           <option value="COMMERCIAL">Commercial</option>
         </select>
       </div>
@@ -367,13 +368,14 @@ function UserFormModal({ user, onClose, onSaved }) {
             <div className="form-group">
               <label className="form-label">Rôle *</label>
               <select name="role" className="form-input" value={formData.role} onChange={handleChange} disabled={isEdit && user.role === 'SUPER_ADMIN'}>
-                <option value="ADMIN">Admin (Gestionnaire Dépôt)</option>
+                <option value="DIRECTEUR_COMMERCIAL">Directeur Commercial</option>
+                <option value="MAGASINIER">Magasinier</option>
                 <option value="COMMERCIAL">Commercial</option>
               </select>
             </div>
           </div>
           
-          {formData.role === 'COMMERCIAL' && (
+          {(formData.role === 'COMMERCIAL' || formData.role === 'MAGASINIER') && (
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Rémunération</label>

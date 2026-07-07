@@ -212,11 +212,14 @@ function AppLayout({ children }) {
     navItems.push({ to: '/benefits', label: 'Bénéfices', icon: 'benefits' });
     navItems.push({ to: '/prelevements', label: 'Prélèvements', icon: 'prelevement' });
     navItems.push({ to: '/historique', label: 'Historique', icon: 'historique' });
-  } else if (role === 'ADMIN') {
+  } else if (role === 'DIRECTEUR_COMMERCIAL') {
     navItems.push({ to: '/stock', label: 'Stock', icon: 'stock' });
     navItems.push({ to: '/livraisons', label: 'Livraisons', icon: 'livraisons' });
     navItems.push({ to: '/commercials', label: 'Commerciaux', icon: 'commercials' });
     navItems.push({ to: '/historique', label: 'Historique', icon: 'historique' });
+  } else if (role === 'MAGASINIER') {
+    navItems.push({ to: '/stock', label: 'Stock', icon: 'stock' });
+    navItems.push({ to: '/livraisons', label: 'Livraisons', icon: 'livraisons' });
   } else if (role === 'COMMERCIAL') {
     navItems.push({ to: '/livraisons', label: 'Mes livraisons', icon: 'livraisons' });
     navItems.push({ to: '/historique', label: 'Historique', icon: 'historique' });
@@ -228,7 +231,7 @@ function AppLayout({ children }) {
   }
 
   function getRoleLabel(role) {
-    const map = { SUPER_ADMIN: 'Super Admin', ADMIN: 'Admin', COMMERCIAL: 'Commercial' };
+    const map = { SUPER_ADMIN: 'Super Admin', DIRECTEUR_COMMERCIAL: 'Directeur Commercial', MAGASINIER: 'Magasinier', COMMERCIAL: 'Commercial' };
     return map[role] || role;
   }
 

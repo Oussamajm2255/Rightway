@@ -47,68 +47,76 @@ function ensureDownloadTokenScope(req, res, next) {
   next();
 }
 
-// Ownership guard: COMMERCIAL users may only access their own livraisons.
-// Download tokens are their own auth mechanism (scope-checked by ensureDownloadTokenScope).
-// SUPER_ADMIN and ADMIN retain unrestricted access.
+// Ownership guard: restricts per-livraison access by role.
+//  - Download tokens are their own auth mechanism (scope-checked separately)
+//  - SUPER_ADMIN and DIRECTEUR_COMMERCIAL: unrestricted
+//  - COMMERCIAL: only their own livraisons
+//  - MAGASINIER: only unfinished livraisons from the last 5 days
 async function requireLivraisonOwnership(req, res, next) {
-  // Download tokens are purpose-bound — scope checked separately
   if (req.downloadTokenLivraisonId) return next();
-  // SUPER_ADMIN and ADMIN have unrestricted access
-  if (req.user.role !== 'COMMERCIAL') return next();
+  const role = req.user.role;
+  if (role === 'SUPER_ADMIN' || role === 'DIRECTEUR_COMMERCIAL') return next();
   try {
     const { rows } = await pool.query(
-      'SELECT commercial_id FROM livraisons WHERE id = $1',
+      'SELECT commercial_id, status, created_at FROM livraisons WHERE id = $1',
       [req.params.id]
     );
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Livraison introuvable.' });
     }
-    if (rows[0].commercial_id !== req.user.id) {
-      return res.status(403).json({ error: 'Accès refusé.' });
+    if (role === 'COMMERCIAL') {
+      if (rows[0].commercial_id !== req.user.id) return res.status(403).json({ error: 'Accès refusé.' });
+      return next();
     }
-    next();
+    if (role === 'MAGASINIER') {
+      const finished = ['CLOTURE', 'ANNULE'].includes(rows[0].status);
+      const tooOld = (Date.now() - new Date(rows[0].created_at).getTime()) > 5 * 24 * 3600 * 1000;
+      if (finished || tooOld) return res.status(403).json({ error: 'Accès refusé.' });
+      return next();
+    }
+    return next();
   } catch (err) {
     console.error('requireLivraisonOwnership error:', err);
     res.status(500).json({ error: 'Erreur interne du serveur' });
   }
 }
 
-router.post('/', authorize('SUPER_ADMIN', 'ADMIN'), createLivraison);
+router.post('/', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL'), createLivraison);
 router.get('/', listLivraisons);
-router.get('/:id', getLivraison);
+router.get('/:id', requireLivraisonOwnership, getLivraison);
 router.put('/:id/confirm-sortie', authorize('COMMERCIAL'), confirmSortie);
 
 // Archive (SUPER_ADMIN only)
 router.put('/:id/archive', authorize('SUPER_ADMIN'), archiveLivraison);
 
-// Annulation flow: commercial requests → admin confirms
+// Annulation flow: commercial requests → directeur confirms
 router.put('/:id/demander-annulation', authorize('COMMERCIAL'), demanderAnnulation);
-router.put('/:id/confirmer-annulation', authorize('SUPER_ADMIN', 'ADMIN'), confirmerAnnulation);
+router.put('/:id/confirmer-annulation', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL'), confirmerAnnulation);
 
-// Reopen flow: commercial requests → admin confirms (Cloture → EN_COURS)
+// Reopen flow: commercial requests → directeur confirms (Cloture → EN_COURS)
 router.post('/:id/demander-reouverture', authorize('COMMERCIAL'), demanderReouverture);
-router.put('/:id/confirmer-reouverture', authorize('SUPER_ADMIN', 'ADMIN'), confirmerReouverture);
+router.put('/:id/confirmer-reouverture', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL'), confirmerReouverture);
 
-// Retour creation flow: commercial requests → admin confirms (EN_COURS → CONFIRME)
+// Retour creation flow: commercial requests → directeur confirms (EN_COURS → CONFIRME)
 router.put('/:id/demander-retour-creation', authorize('COMMERCIAL'), demanderRetourCreation);
-router.put('/:id/confirmer-retour-creation', authorize('SUPER_ADMIN', 'ADMIN'), confirmerRetourCreation);
+router.put('/:id/confirmer-retour-creation', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL'), confirmerRetourCreation);
 
 // Avances (advance payments during EN_COURS)
 router.post('/:id/avances', authorize('COMMERCIAL'), declarerAvance);
-router.get('/:id/avances', authorize('SUPER_ADMIN', 'ADMIN', 'COMMERCIAL'), requireLivraisonOwnership, getAvances);
+router.get('/:id/avances', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL', 'MAGASINIER', 'COMMERCIAL'), requireLivraisonOwnership, getAvances);
 router.put('/:id/avances/:avanceId/accepter', authorize('SUPER_ADMIN'), accepterAvance);
 router.put('/:id/avances/:avanceId/refuser', authorize('SUPER_ADMIN'), refuserAvance);
 router.put('/:id/avances/:avanceId/mode-paiement', authorize('SUPER_ADMIN'), modifierAvancePaiement);
 
 // Ecarts (discrepancy declarations)
 router.post('/:id/ecarts', authorize('SUPER_ADMIN'), declarerEcart);
-router.get('/:id/ecarts', authorize('SUPER_ADMIN', 'ADMIN', 'COMMERCIAL'), requireLivraisonOwnership, listEcarts);
+router.get('/:id/ecarts', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL', 'MAGASINIER', 'COMMERCIAL'), requireLivraisonOwnership, listEcarts);
 router.post('/:id/ecarts/:ecartId/confirm', authorize('COMMERCIAL'), confirmerEcart);
 router.post('/:id/ecarts/:ecartId/request-payment', authorize('COMMERCIAL'), requestPaymentEcart);
 router.post('/:id/ecarts/:ecartId/confirm-payment', authorize('SUPER_ADMIN'), confirmPaymentEcart);
 
 // Real-time monitoring route
-router.get('/:id/realtime', authorize('SUPER_ADMIN', 'ADMIN', 'COMMERCIAL'), requireLivraisonOwnership, realtimeData);
+router.get('/:id/realtime', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL', 'MAGASINIER', 'COMMERCIAL'), requireLivraisonOwnership, realtimeData);
 
 // Sales routes
 router.get('/:id/sales', authorize('COMMERCIAL'), getSales);
@@ -117,7 +125,7 @@ router.post('/:id/sales/sync', authorize('COMMERCIAL'), syncOfflineSales);
 
 // End & Retour routes
 router.put('/:id/terminer', authorize('COMMERCIAL'), terminerLivraison);
-router.put('/:id/confirmer-retour', authorize('SUPER_ADMIN', 'ADMIN', 'COMMERCIAL'), confirmerRetour);
+router.put('/:id/confirmer-retour', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL', 'COMMERCIAL'), confirmerRetour);
 
 // PDF routes — ownership + download token scope must match the requested livraison
 router.get('/:id/bon-sortie/pdf', requireLivraisonOwnership, ensureDownloadTokenScope, downloadBonSortiePDF);

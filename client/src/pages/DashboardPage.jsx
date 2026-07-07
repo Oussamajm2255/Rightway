@@ -171,7 +171,7 @@ export default function DashboardPage() {
     let cancelled = false;
     async function fetchDashboard() {
       try {
-        const endpoint = `/dashboard/${user.role === 'SUPER_ADMIN' ? 'super-admin' : user.role === 'ADMIN' ? 'admin' : 'commercial'}`;
+        const endpoint = `/dashboard/${user.role === 'SUPER_ADMIN' ? 'super-admin' : (user.role === 'DIRECTEUR_COMMERCIAL' || user.role === 'MAGASINIER') ? 'admin' : 'commercial'}`;
         const result = await apiGet(endpoint);
         if (!cancelled) setData(result);
       } catch { /* ignore */ }
@@ -202,7 +202,7 @@ export default function DashboardPage() {
   return (
     <div className="dashboard-page">
       {user.role === 'SUPER_ADMIN' && <SuperAdminView data={data} navigate={navigate} user={user} />}
-      {user.role === 'ADMIN' && <AdminView data={data} navigate={navigate} user={user} />}
+      {(user.role === 'DIRECTEUR_COMMERCIAL' || user.role === 'MAGASINIER') && <AdminView data={data} navigate={navigate} user={user} />}
       {user.role === 'COMMERCIAL' && <CommercialView data={data} navigate={navigate} user={user} />}
     </div>
   );
@@ -258,6 +258,10 @@ function SuperAdminView({ data, navigate, user }) {
           <KpiCard icon={Icons.package} label="Produits actifs" value={fmtInt(data.products_count)} sub="catalogue" color={PALETTE.emerald} onClick={() => navigate('/products')} />
           <KpiCard icon={Icons.truck} label="Livraisons actives" value={fmtInt(data.active_livraisons)} sub="EN_COURS + EN_RETOUR" color={PALETTE.orange} onClick={() => navigate('/livraisons')} />
           <KpiCard icon={Icons.dollar} label="CA Global TTC" value={fmtDT(data.ca_total)} sub="livraisons clôturées" color={PALETTE.amber} />
+          <KpiCard icon={Icons.package} label="CA Stock Depot" value={fmtDT(data.depot_stock_ca)} sub="valeur totale au prix de vente" color={PALETTE.emerald} onClick={() => navigate('/stock')} />
+          <KpiCard icon={Icons.truck} label="CA Stock Chargé" value={fmtDT(data.voitures_ca)} sub="marchandise en tournée" color={PALETTE.cyan} onClick={() => navigate('/livraisons')} />
+        </div>
+        <div className="kpi-grid kpi-grid-3" style={{ marginTop: 'var(--space-4)' }}>
           <KpiCard icon={Icons.percent} label="Commissions" value={fmtDT(data.commissions)} sub="10% du CA global" color={PALETTE.green} />
           <KpiCard icon={Icons.alert} label="Alertes stock" value={<span style={{color:PALETTE.red}}>{fmtInt(data.stock_alerts_count)}</span>} sub="produits &lt; 20 unités" color={PALETTE.red} onClick={() => navigate('/stock')} />
         </div>

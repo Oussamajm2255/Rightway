@@ -70,7 +70,7 @@ function AppRoutes() {
 
 function HomeRoute() {
   const { user } = useAuth();
-  if (user?.role === 'COMMERCIAL' || user?.role === 'ADMIN') {
+  if (user?.role === 'COMMERCIAL' || user?.role === 'DIRECTEUR_COMMERCIAL' || user?.role === 'MAGASINIER') {
     return <Navigate to="/livraisons" replace />;
   }
   return <DashboardPage />;
@@ -127,7 +127,7 @@ function AppRoutesInner() {
         path="/stock"
         element={
           <ProtectedRoute>
-            <RoleGuard roles={['SUPER_ADMIN', 'ADMIN']}>
+            <RoleGuard roles={['SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL', 'MAGASINIER']}>
               <StockPage />
             </RoleGuard>
           </ProtectedRoute>
@@ -137,7 +137,7 @@ function AppRoutesInner() {
         path="/commercials"
         element={
           <ProtectedRoute>
-            <RoleGuard roles={['SUPER_ADMIN', 'ADMIN']}>
+            <RoleGuard roles={['SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL']}>
               <CommercialsPage />
             </RoleGuard>
           </ProtectedRoute>
@@ -147,7 +147,9 @@ function AppRoutesInner() {
         path="/historique"
         element={
           <ProtectedRoute>
-            <HistoriquePage />
+            <RoleGuard roles={['SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL', 'COMMERCIAL']}>
+              <HistoriquePage />
+            </RoleGuard>
           </ProtectedRoute>
         }
       />
@@ -173,7 +175,7 @@ function AppRoutesInner() {
         path="/livraisons/nouvelle"
         element={
           <ProtectedRoute>
-            <RoleGuard roles={['SUPER_ADMIN', 'ADMIN']}>
+            <RoleGuard roles={['SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL']}>
               <CreateLivraisonPage />
             </RoleGuard>
           </ProtectedRoute>

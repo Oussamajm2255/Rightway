@@ -136,6 +136,12 @@
   align-self: center;
 }
 
+.prel-stats-presets {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
 .prel-commercial-badge {
   display: inline-block;
   padding: 2px 9px;
@@ -591,4 +597,49 @@
   .prel-form-card {
     position: static;
   }
+}
+
+/* ===== Day Grid for Monthly Recurring ===== */
+.prel-day-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 340px;
+}
+
+.prel-day-btn {
+  width: 30px;
+  height: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  font-family: inherit;
+  line-height: 1;
+  padding: 0;
+}
+
+.prel-day-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-subtle);
+}
+
+.prel-day-btn.selected {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+  font-weight: 600;
+}
+
+.prel-day-btn.selected:hover {
+  background: var(--color-primary-dark, #0a2e21);
+  border-color: var(--color-primary-dark, #0a2e21);
 }

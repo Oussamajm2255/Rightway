@@ -447,7 +447,7 @@ function LivraisonDetailPage() {
   const isAnnule = livraison?.status === 'ANNULE';
   const isCloture = livraison?.status === 'CLOTURE';
   const isCommercial = user?.role === 'COMMERCIAL';
-  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+  const isAdmin = user?.role === 'DIRECTEUR_COMMERCIAL' || user?.role === 'SUPER_ADMIN';
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
   const isAssignedCommercial = isCommercial && livraison?.commercial_id === user?.id;
   const isSalaire = livraison?.commercial_remuneration_type === 'SALAIRE';

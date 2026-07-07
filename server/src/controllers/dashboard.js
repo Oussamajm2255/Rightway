@@ -54,6 +54,8 @@ async function superAdminDashboard(req, res) {
       ecartsTotals,
       ecartsDetails,
       salaireCommerciaux,
+      depotStockCa,
+      voituresCa,
     ] = await Promise.all([
       // KPI: active users
       pool.query('SELECT COUNT(*)::INT AS count FROM users WHERE is_active = true'),
@@ -240,6 +242,17 @@ async function superAdminDashboard(req, res) {
         WHERE u.role = 'COMMERCIAL' AND u.is_active = true AND u.remuneration_type = 'SALAIRE'
         GROUP BY u.id, u.full_name
         ORDER BY u.full_name`),
+      // Inventory value on hand — stock sitting in the depot, at selling price
+      pool.query(`SELECT COALESCE(SUM(ds.quantity * p.selling_price_ttc), 0)::NUMERIC(14,3) AS total
+        FROM depot_stock ds
+        JOIN products p ON ds.product_id = p.id
+        WHERE p.is_active = true`),
+      // Inventory value on hand — unsold goods still loaded in vehicles
+      // (livraisons where stock has left the depot but not yet returned)
+      pool.query(`SELECT COALESCE(SUM((li.qte_chargee - li.qte_vendue) * li.prix_ttc), 0)::NUMERIC(14,3) AS total
+        FROM livraison_items li
+        JOIN livraisons l ON li.livraison_id = l.id
+        WHERE l.status IN ('EN_COURS', 'EN_RETOUR') AND l.is_archived = false`),
     ]);
 
     // Build monthly CA array
@@ -335,6 +348,8 @@ async function superAdminDashboard(req, res) {
         cloturees: r.cloturees,
         actives: r.actives,
       })),
+      depot_stock_ca: Number(depotStockCa.rows[0]?.total || 0),
+      voitures_ca: Number(voituresCa.rows[0]?.total || 0),
     });
   } catch (err) {
     console.error('superAdminDashboard error:', err);
@@ -342,11 +357,17 @@ async function superAdminDashboard(req, res) {
   }
 }
 
-// ─── ADMIN ───
+// ─── ADMIN / DIRECTEUR_COMMERCIAL / MAGASINIER ───
 
 async function adminDashboard(req, res) {
   try {
+    const role = req.user.role;
     const adminId = req.user.id;
+
+    // DIRECTEUR_COMMERCIAL sees ALL data (no admin_id scope).
+    // MAGASINIER sees all active/pending + stock data, unscoped.
+    const scopeByAdmin = role !== 'DIRECTEUR_COMMERCIAL' && role !== 'MAGASINIER';
+    const magasinierScope = role === 'MAGASINIER';
 
     const [
       stockCount,
@@ -361,15 +382,35 @@ async function adminDashboard(req, res) {
       // KPI: stock
       pool.query('SELECT COUNT(*)::INT AS count, COALESCE(SUM(quantity), 0)::INT AS total_qty FROM depot_stock WHERE quantity > 0'),
       // KPI: active livraisons
-      pool.query("SELECT COUNT(*)::INT AS count FROM livraisons WHERE admin_id = $1 AND is_archived = false AND status IN ('EN_COURS','EN_RETOUR')", [adminId]),
+      magasinierScope
+        ? pool.query("SELECT COUNT(*)::INT AS count FROM livraisons WHERE is_archived = false AND status IN ('EN_COURS','EN_RETOUR','EN_ATTENTE_COMMERCIAL')")
+        : scopeByAdmin
+          ? pool.query("SELECT COUNT(*)::INT AS count FROM livraisons WHERE admin_id = $1 AND is_archived = false AND status IN ('EN_COURS','EN_RETOUR')", [adminId])
+          : pool.query("SELECT COUNT(*)::INT AS count FROM livraisons WHERE is_archived = false AND status IN ('EN_COURS','EN_RETOUR')"),
       // KPI: pending
-      pool.query("SELECT COUNT(*)::INT AS count FROM livraisons WHERE admin_id = $1 AND is_archived = false AND status = 'EN_ATTENTE_COMMERCIAL'", [adminId]),
+      magasinierScope
+        ? pool.query("SELECT COUNT(*)::INT AS count FROM livraisons WHERE is_archived = false AND status = 'EN_ATTENTE_COMMERCIAL'")
+        : scopeByAdmin
+          ? pool.query("SELECT COUNT(*)::INT AS count FROM livraisons WHERE admin_id = $1 AND is_archived = false AND status = 'EN_ATTENTE_COMMERCIAL'", [adminId])
+          : pool.query("SELECT COUNT(*)::INT AS count FROM livraisons WHERE is_archived = false AND status = 'EN_ATTENTE_COMMERCIAL'"),
       // KPI: CA this month
-      pool.query(`SELECT COALESCE(SUM(li.qte_vendue * li.prix_ttc), 0)::NUMERIC(12,3) AS total
-        FROM livraison_items li
-        JOIN livraisons l ON li.livraison_id = l.id
-        WHERE l.admin_id = $1 AND l.status = 'CLOTURE' AND l.is_archived = false
-          AND l.closed_at >= DATE_TRUNC('month', CURRENT_DATE)`, [adminId]),
+      magasinierScope
+        ? pool.query(`SELECT COALESCE(SUM(li.qte_vendue * li.prix_ttc), 0)::NUMERIC(12,3) AS total
+            FROM livraison_items li
+            JOIN livraisons l ON li.livraison_id = l.id
+            WHERE l.status = 'CLOTURE' AND l.is_archived = false
+              AND l.closed_at >= DATE_TRUNC('month', CURRENT_DATE)`)
+        : scopeByAdmin
+          ? pool.query(`SELECT COALESCE(SUM(li.qte_vendue * li.prix_ttc), 0)::NUMERIC(12,3) AS total
+              FROM livraison_items li
+              JOIN livraisons l ON li.livraison_id = l.id
+              WHERE l.admin_id = $1 AND l.status = 'CLOTURE' AND l.is_archived = false
+                AND l.closed_at >= DATE_TRUNC('month', CURRENT_DATE)`, [adminId])
+          : pool.query(`SELECT COALESCE(SUM(li.qte_vendue * li.prix_ttc), 0)::NUMERIC(12,3) AS total
+              FROM livraison_items li
+              JOIN livraisons l ON li.livraison_id = l.id
+              WHERE l.status = 'CLOTURE' AND l.is_archived = false
+                AND l.closed_at >= DATE_TRUNC('month', CURRENT_DATE)`),
       // Stock alerts with code + category
       pool.query(`SELECT p.id, p.name, p.id AS code, p.category,
           COALESCE(ds.quantity, 0)::INT AS quantity
@@ -377,23 +418,55 @@ async function adminDashboard(req, res) {
         LEFT JOIN depot_stock ds ON p.id = ds.product_id
         WHERE p.is_active = true AND COALESCE(ds.quantity, 0) < 20
         ORDER BY quantity`),
-      // Unread notifications
-      pool.query('SELECT COUNT(*)::INT AS count FROM notifications WHERE user_id = $1 AND is_read = false', [adminId]),
+      // Unread notifications (only scoped for legacy ADMIN users)
+      scopeByAdmin
+        ? pool.query('SELECT COUNT(*)::INT AS count FROM notifications WHERE user_id = $1 AND is_read = false', [adminId])
+        : Promise.resolve({ rows: [{ count: 0 }] }),
       // Chart: monthly CA
-      pool.query(`SELECT
-          EXTRACT(MONTH FROM l.closed_at)::INT AS month_num,
-          COALESCE(SUM(li.qte_vendue * li.prix_ttc), 0)::NUMERIC(12,3) AS ca
-        FROM livraisons l
-        JOIN livraison_items li ON li.livraison_id = l.id
-        WHERE l.admin_id = $1 AND l.status = 'CLOTURE' AND l.is_archived = false
-          AND l.closed_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '5 months'
-        GROUP BY EXTRACT(MONTH FROM l.closed_at)
-        ORDER BY month_num`, [adminId]),
+      magasinierScope
+        ? pool.query(`SELECT
+            EXTRACT(MONTH FROM l.closed_at)::INT AS month_num,
+            COALESCE(SUM(li.qte_vendue * li.prix_ttc), 0)::NUMERIC(12,3) AS ca
+          FROM livraisons l
+          JOIN livraison_items li ON li.livraison_id = l.id
+          WHERE l.status = 'CLOTURE' AND l.is_archived = false
+            AND l.closed_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '5 months'
+          GROUP BY EXTRACT(MONTH FROM l.closed_at)
+          ORDER BY month_num`)
+        : scopeByAdmin
+          ? pool.query(`SELECT
+              EXTRACT(MONTH FROM l.closed_at)::INT AS month_num,
+              COALESCE(SUM(li.qte_vendue * li.prix_ttc), 0)::NUMERIC(12,3) AS ca
+            FROM livraisons l
+            JOIN livraison_items li ON li.livraison_id = l.id
+            WHERE l.admin_id = $1 AND l.status = 'CLOTURE' AND l.is_archived = false
+              AND l.closed_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '5 months'
+            GROUP BY EXTRACT(MONTH FROM l.closed_at)
+            ORDER BY month_num`, [adminId])
+          : pool.query(`SELECT
+              EXTRACT(MONTH FROM l.closed_at)::INT AS month_num,
+              COALESCE(SUM(li.qte_vendue * li.prix_ttc), 0)::NUMERIC(12,3) AS ca
+            FROM livraisons l
+            JOIN livraison_items li ON li.livraison_id = l.id
+            WHERE l.status = 'CLOTURE' AND l.is_archived = false
+              AND l.closed_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '5 months'
+            GROUP BY EXTRACT(MONTH FROM l.closed_at)
+            ORDER BY month_num`),
       // Chart: status distribution
-      pool.query(`SELECT l.status, COUNT(*)::INT AS count
-        FROM livraisons l
-        WHERE l.admin_id = $1 AND l.is_archived = false
-        GROUP BY l.status`, [adminId]),
+      magasinierScope
+        ? pool.query(`SELECT l.status, COUNT(*)::INT AS count
+            FROM livraisons l
+            WHERE l.is_archived = false
+            GROUP BY l.status`)
+        : scopeByAdmin
+          ? pool.query(`SELECT l.status, COUNT(*)::INT AS count
+              FROM livraisons l
+              WHERE l.admin_id = $1 AND l.is_archived = false
+              GROUP BY l.status`, [adminId])
+          : pool.query(`SELECT l.status, COUNT(*)::INT AS count
+              FROM livraisons l
+              WHERE l.is_archived = false
+              GROUP BY l.status`),
     ]);
 
     const caMap = {};

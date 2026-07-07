@@ -205,7 +205,7 @@ async function findById(id) {
 /**
  * List livraisons with filters
  */
-async function findAll({ status, commercial_id, date_from, date_to, admin_id, include_archived, limit = 100, offset = 0 } = {}) {
+async function findAll({ status, commercial_id, date_from, date_to, admin_id, magasinier_scope, include_archived, limit = 100, offset = 0 } = {}) {
   let query = `
     SELECT l.reference, l.id, l.status, l.created_at, l.closed_at, l.is_archived,
            c.full_name AS commercial_name, c.vehicle_name, c.vehicle_plate, c.remuneration_type AS commercial_remuneration_type,
@@ -246,6 +246,12 @@ async function findAll({ status, commercial_id, date_from, date_to, admin_id, in
   if (admin_id) {
     query += ` AND l.admin_id = $${idx++}`;
     params.push(admin_id);
+  }
+
+  // Magasinier: only unfinished livraisons (not CLOTURE/ANNULE) created in
+  // the last 5 days. No date/status params — fixed operational window.
+  if (magasinier_scope) {
+    query += ` AND l.status NOT IN ('CLOTURE', 'ANNULE') AND l.created_at >= (NOW() - INTERVAL '5 days')`;
   }
 
   if (date_from) {
@@ -590,7 +596,7 @@ async function confirmerRetour(id, user_id, role) {
     const now = new Date().toISOString();
     let bothConfirmed = false;
 
-    if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
+    if (role === 'DIRECTEUR_COMMERCIAL' || role === 'SUPER_ADMIN') {
       if (livRows[0].retour_confirmed_by_admin_at) { await client.query('ROLLBACK'); return { error: 'Vous avez déjà confirmé ce bon de retour.' }; }
       await client.query('UPDATE livraisons SET retour_confirmed_by_admin_at = $2 WHERE id = $1', [id, now]);
     } else if (role === 'COMMERCIAL') {
