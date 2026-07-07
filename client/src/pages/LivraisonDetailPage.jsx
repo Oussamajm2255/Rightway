@@ -31,7 +31,7 @@ function LivraisonDetailPage() {
   useEffect(() => {
     if (!actionConsumed.current && searchParams.get('action')) {
       actionConsumed.current = true;
-      navigate.replace(`/livraisons/${id}`, { replace: true });
+      navigate(`/livraisons/${id}`, { replace: true });
     }
   }, [searchParams, navigate, id]);
   const [terminerSummary, setTerminerSummary] = useState(null);
