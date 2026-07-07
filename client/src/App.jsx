@@ -70,7 +70,7 @@ function AppRoutes() {
 
 function HomeRoute() {
   const { user } = useAuth();
-  if (user?.role === 'COMMERCIAL') {
+  if (user?.role === 'COMMERCIAL' || user?.role === 'ADMIN') {
     return <Navigate to="/livraisons" replace />;
   }
   return <DashboardPage />;

@@ -213,7 +213,6 @@ function AppLayout({ children }) {
     navItems.push({ to: '/prelevements', label: 'Prélèvements', icon: 'prelevement' });
     navItems.push({ to: '/historique', label: 'Historique', icon: 'historique' });
   } else if (role === 'ADMIN') {
-    navItems.push({ to: '/', label: 'Tableau de bord', icon: 'dashboard' });
     navItems.push({ to: '/stock', label: 'Stock', icon: 'stock' });
     navItems.push({ to: '/livraisons', label: 'Livraisons', icon: 'livraisons' });
     navItems.push({ to: '/commercials', label: 'Commerciaux', icon: 'commercials' });
