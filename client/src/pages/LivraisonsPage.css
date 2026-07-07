@@ -1,4 +1,14 @@
 /* ===== Livraisons Shared Styles ===== */
+/* Shared by LivraisonsListPage.jsx and LivraisonDetailPage.jsx.
+   Anything already covered by the global classes in styles/index.css
+   (.badge-status-*, .detail-grid, .detail-card, .alert-card, .yellow-banner,
+   .page-container) is intentionally NOT redefined here. This file used to
+   carry duplicate, drifted local copies of those — different hex values for
+   the status badges, and a broken .alert-icon missing width/height/flex-
+   centering that made the icon render as a cramped sliver instead of the
+   intended 44px rounded badge. Removing the duplicates fixes both and
+   brings this page back in line with the rest of the app. */
+
 .livraisons-page,
 .livraison-detail {
   max-width: 1100px;
@@ -6,82 +16,7 @@
   padding: var(--space-6);
 }
 
-/* ===== Status Badges (lifecycle) ===== */
-.badge-status-pending {
-  background: var(--status-pending-bg);
-  color: var(--status-pending-text);
-}
-
-.badge-status-info {
-  background: var(--status-info-bg);
-  color: var(--status-info-text);
-}
-
-.badge-status-active {
-  background: var(--status-active-bg);
-  color: var(--status-active-text);
-}
-
-.badge-status-warning {
-  background: var(--status-warning-bg);
-  color: var(--status-warning-text);
-}
-
-.badge-status-closed {
-  background: var(--status-closed-bg);
-  color: var(--status-closed-text);
-}
-
-/* ===== Detail ===== */
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: var(--space-3);
-  margin-bottom: var(--space-6);
-}
-
-.detail-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-4);
-}
-
-.detail-card h3 {
-  font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-uppercase);
-  color: var(--color-text-secondary);
-  margin: 0 0 var(--space-2);
-}
-
-.detail-value {
-  font-weight: var(--weight-semibold);
-  font-size: var(--text-md);
-  margin: 0 0 0.125rem;
-}
-
-.detail-sub {
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
-  margin: 0.1rem 0;
-}
-
-.detail-section {
-  margin-top: var(--space-6);
-}
-
-.detail-section h2 {
-  font-size: var(--text-lg);
-  font-weight: var(--weight-semibold);
-  margin: 0 0 var(--space-4);
-  padding-bottom: var(--space-2);
-  border-bottom: 1px solid var(--color-border);
-  letter-spacing: var(--tracking-tight);
-}
-
-/* ===== Status Timeline ===== */
+/* ===== Status Timeline (LivraisonDetailPage only) ===== */
 .status-timeline {
   display: flex;
   align-items: center;
@@ -133,17 +68,6 @@
   white-space: nowrap;
 }
 
-/* ===== Category Subtotal Footer Row ===== */
-.cat-subtotal {
-  border-top: 2px solid var(--color-border-strong);
-  font-weight: var(--weight-bold);
-  font-size: var(--text-sm);
-  background: #F1F3F5;
-}
-.cat-subtotal td {
-  font-weight: var(--weight-bold);
-}
-
 .timeline-step.current .timeline-label {
   color: var(--color-primary);
   font-weight: var(--weight-semibold);
@@ -155,65 +79,15 @@
   display: block;
 }
 
-/* ===== Alert Card ===== */
-.alert-card {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  background: var(--color-warning-bg);
-  border: 1px solid var(--color-warning-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-4);
-  margin-bottom: var(--space-4);
-}
-
-.alert-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  background: var(--color-warning);
-  color: #fff;
-}
-
-.alert-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.alert-body strong {
-  display: block;
-  font-size: var(--text-base);
-  font-weight: var(--weight-semibold);
-  margin-bottom: 0.125rem;
-}
-
-.alert-body p {
+/* ===== Category Subtotal Footer Row ===== */
+.cat-subtotal {
+  border-top: 2px solid var(--color-border-strong);
+  font-weight: var(--weight-bold);
   font-size: var(--text-sm);
-  color: var(--color-text-secondary);
-  margin: 0;
+  background: #F1F3F5;
 }
-
-/* ===== Yellow Banner ===== */
-.yellow-banner {
-  background: var(--color-warning-bg);
-  border: 1px solid var(--color-warning-border);
-  color: var(--color-warning);
-  padding: 0.5625rem var(--space-4);
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  margin-bottom: var(--space-4);
-}
-
-/* ===== Page Container ===== */
-.page-container {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: var(--space-6);
+.cat-subtotal td {
+  font-weight: var(--weight-bold);
 }
 
 /* ===== Back button style ===== */
@@ -224,60 +98,17 @@
   margin-bottom: var(--space-4);
 }
 
-/* ===== Responsive ===== */
-@media (max-width: 768px) {
-  .livraisons-page,
-  .livraison-detail {
-    padding: var(--space-4);
-  }
-
-  .alert-card {
-    flex-direction: column;
-    text-align: center;
-    align-items: center;
-  }
-
-  .detail-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .status-timeline {
-    padding: var(--space-3);
-    gap: 0;
-  }
-
-  .timeline-line {
-    width: 16px;
-  }
-}
-/* ===== Livraisons Shared Styles ===== */
-.livraisons-page,
-.livraison-detail {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 1.5rem;
-}
-
+/* ===== List page: clickable rows ===== */
 .clickable-row {
   cursor: pointer;
-  transition: background var(--transition);
+  transition: background var(--transition-fast);
 }
 
 .clickable-row:hover {
-  background: rgba(26, 60, 52, 0.04) !important;
+  background: var(--color-surface-hover) !important;
 }
 
-/* ─── Écart row accent ─── */
-.row-ecart-pending {
-  background: linear-gradient(to right, rgba(245, 158, 11, 0.07) 0%, rgba(245, 158, 11, 0.02) 40%, transparent 100%) !important;
-  box-shadow: inset 4px 0 0 var(--color-warning);
-}
-
-.row-ecart-pending:hover {
-  background: linear-gradient(to right, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.05) 40%, transparent 100%) !important;
-}
-
-/* ─── Écart badges ─── */
+/* ─── Écart badges (used by both list rows/cards and detail page) ─── */
 .ecart-badge {
   display: inline-flex;
   align-items: center;
@@ -311,7 +142,7 @@
   opacity: 0.75;
 }
 
-/* Subtle success badge for resolved écarts */
+/* Subtle success badge for resolved écarts (detail page) */
 .badge-success-subtle {
   background: rgba(16, 185, 129, 0.1);
   color: #065f46;
@@ -321,141 +152,258 @@
   border-radius: 4px;
 }
 
-/* ===== Status Badges ===== */
-.badge-status-pending {
-  background: #fef3c7;
-  color: #92400e;
+/* ===== List page: per-status left accent bar ===== */
+/* Reuses the same solid "-text" status tokens the badges already use for
+   color, so the accent bar and its row's badge always visually agree. */
+.livr-row-accent-pending  { box-shadow: inset 3px 0 0 var(--status-pending-text); }
+.livr-row-accent-info     { box-shadow: inset 3px 0 0 var(--status-info-text); }
+.livr-row-accent-active   { box-shadow: inset 3px 0 0 var(--status-active-text); }
+.livr-row-accent-warning  { box-shadow: inset 3px 0 0 var(--status-warning-text); }
+.livr-row-accent-closed   { box-shadow: inset 3px 0 0 var(--status-closed-text); }
+
+/* Écart-pending is the more urgent signal — its warning wash + accent bar
+   wins over the plain status accent when a row/card has both. */
+.row-ecart-pending {
+  background: linear-gradient(to right, rgba(245, 158, 11, 0.07) 0%, rgba(245, 158, 11, 0.02) 40%, transparent 100%) !important;
+  box-shadow: inset 4px 0 0 var(--color-warning);
+}
+.row-ecart-pending:hover {
+  background: linear-gradient(to right, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.05) 40%, transparent 100%) !important;
 }
 
-.badge-status-info {
-  background: #dbeafe;
-  color: #1e40af;
+/* ===== List page: toolbar (search + status chips) ===== */
+.livr-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
 }
 
-.badge-status-active {
-  background: #dcfce7;
-  color: #166534;
+.livr-search-wrap {
+  position: relative;
+  max-width: 360px;
 }
 
-.badge-status-warning {
-  background: #fee2e2;
-  color: #991b1b;
+.livr-search-wrap svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-tertiary);
+  pointer-events: none;
 }
 
-.badge-status-closed {
-  background: #f3f4f6;
-  color: #6b7280;
-}
-
-/* ===== Detail ===== */
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-}
-
-.detail-card {
-  background: var(--color-surface);
+.livr-search-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem 0.5rem 2.25rem;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: 1rem;
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+  box-sizing: border-box;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.detail-card h3 {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.livr-search-input:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: var(--focus-ring);
+}
+
+.livr-chip-row {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.livr-chip-row::-webkit-scrollbar {
+  height: 4px;
+}
+.livr-chip-row::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: var(--radius-full);
+}
+
+.livr-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
   color: var(--color-text-secondary);
-  margin: 0 0 0.5rem;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
 }
 
-.detail-value {
-  font-weight: 600;
-  font-size: 0.95rem;
-  margin: 0 0 0.25rem;
+.livr-chip:hover {
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
 }
 
-.detail-sub {
-  font-size: 0.82rem;
-  color: var(--color-text-secondary);
-  margin: 0.1rem 0;
+.livr-chip:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
-.detail-section {
-  margin-top: 1.5rem;
+.livr-chip.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
 }
 
-.detail-section h2 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin: 0 0 0.75rem;
+.livr-chip-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-hover);
+  color: var(--color-text-tertiary);
+  font-size: 0.68rem;
+  font-weight: var(--weight-semibold);
 }
 
-/* ===== Alert Card ===== */
-.alert-card {
+.livr-chip.active .livr-chip-count {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+/* ===== List page: commercial avatar + avance chip ===== */
+.livr-commercial-cell {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  background: #fffbeb;
-  border: 2px solid #fcd34d;
-  border-radius: var(--radius-md);
-  padding: 1.25rem;
-  margin-bottom: 1.5rem;
+  gap: var(--space-2);
 }
 
-.alert-icon {
-  font-size: 1.75rem;
+.livr-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: var(--weight-semibold);
+  color: #fff;
   flex-shrink: 0;
 }
 
-.alert-body {
-  flex: 1;
+.livr-avance-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
+  border: 1px solid rgba(15, 59, 44, 0.18);
 }
 
-.alert-body strong {
-  display: block;
-  font-size: 0.95rem;
-  margin-bottom: 0.25rem;
+.livr-muted-dash {
+  color: var(--color-text-tertiary);
+  font-size: var(--text-xs);
 }
 
-.alert-body p {
-  font-size: 0.85rem;
-  color: var(--color-text-secondary);
-  margin: 0;
+/* ===== List page: desktop table / mobile card toggle ===== */
+.livr-mobile-only {
+  display: none;
 }
 
-/* ===== Yellow Banner ===== */
-.yellow-banner {
-  background: #fefce8;
-  border: 1px solid #fde047;
-  color: #854d0e;
-  padding: 0.6rem 1rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.85rem;
-  font-weight: 500;
-  margin-bottom: 1rem;
+.livr-fade-in {
+  animation: livr-fadeIn var(--transition-slow) ease;
+}
+@keyframes livr-fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* ===== Page Container ===== */
-.page-container {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 1.5rem;
+.livr-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }
 
+.livr-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  cursor: pointer;
+  transition: box-shadow var(--transition-base), border-color var(--transition-base);
+}
+
+.livr-card:hover {
+  box-shadow: var(--shadow-sm);
+  border-color: var(--color-border-strong);
+}
+
+.livr-card:active {
+  transform: scale(0.99);
+}
+
+.livr-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.livr-card-body {
+  margin-bottom: var(--space-3);
+}
+
+.livr-card-sub {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  margin-top: 2px;
+}
+
+.livr-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ===== Responsive ===== */
 @media (max-width: 768px) {
   .livraisons-page,
   .livraison-detail {
-    padding: 1rem;
+    padding: var(--space-4);
   }
 
-  .alert-card {
-    flex-direction: column;
-    text-align: center;
+  .status-timeline {
+    padding: var(--space-3);
+    gap: 0;
   }
 
-  .detail-grid {
-    grid-template-columns: 1fr;
+  .timeline-line {
+    width: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .livr-desktop-only {
+    display: none;
+  }
+  .livr-mobile-only {
+    display: block;
   }
 }
