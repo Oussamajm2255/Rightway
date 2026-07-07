@@ -70,6 +70,18 @@ const migrations = [
   `ALTER TABLE recurring_prelevements ADD COLUMN IF NOT EXISTS generation_weekday INTEGER CHECK (generation_weekday BETWEEN 1 AND 7)`,
   `ALTER TABLE recurring_prelevements ADD COLUMN IF NOT EXISTS generation_month INTEGER CHECK (generation_month BETWEEN 1 AND 12)`,
 
+  // Monthly charges can now fire on SEVERAL days per month (e.g. 7, 14,
+  // 21 and 31). Days up to 31 are allowed; a day beyond the current
+  // month's length fires on its last day instead (31 -> 30/28).
+  `ALTER TABLE recurring_prelevements ADD COLUMN IF NOT EXISTS generation_days INTEGER[]`,
+  `UPDATE recurring_prelevements
+     SET generation_days = ARRAY[generation_day]
+   WHERE generation_days IS NULL AND frequency = 'MONTHLY' AND generation_day IS NOT NULL`,
+  // generation_day was capped at 28; days up to 31 are now legal since the
+  // cron falls back to the month's last day when the month is shorter.
+  `ALTER TABLE recurring_prelevements DROP CONSTRAINT IF EXISTS recurring_prelevements_generation_day_check`,
+  `ALTER TABLE recurring_prelevements ADD CONSTRAINT recurring_prelevements_generation_day_check CHECK (generation_day BETWEEN 1 AND 31)`,
+
   // Prelevements attributable to a specific commercial (vehicle repair,
   // fuel bonus, salary, etc.) — nullable, so "no commercial" (a general
   // company charge) stays the default for every existing row.

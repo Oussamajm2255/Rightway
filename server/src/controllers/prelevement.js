@@ -273,9 +273,10 @@ async function deletePrelevement(req, res) {
 // STATS / KPI
 // ═══════════════════════════════════════════════
 
-async function getStats(_req, res) {
+async function getStats(req, res) {
   try {
-    const stats = await prelevementModel.getStats();
+    const { date_from, date_to } = req.query;
+    const stats = await prelevementModel.getStats({ date_from, date_to });
     res.json({ stats });
   } catch (err) {
     console.error('getStats error:', err);
@@ -389,10 +390,22 @@ async function listRecurringPrelevements(_req, res) {
 
 const RECURRING_FREQUENCIES = ['WEEKLY', 'MONTHLY', 'YEARLY'];
 
+// Normalizes a monthly days list: accepts an array (or single day as
+// fallback), dedupes, sorts, validates 1-31. Days beyond the current
+// month's length fire on its last day (31 -> 30/28) — handled by the cron.
+function normalizeMonthlyDays({ generation_days, generation_day }) {
+  const raw = Array.isArray(generation_days) && generation_days.length > 0
+    ? generation_days
+    : (generation_day !== undefined && generation_day !== null ? [generation_day] : []);
+  const days = [...new Set(raw.map((d) => parseInt(d, 10)))].sort((a, b) => a - b);
+  if (days.length === 0 || days.some((d) => isNaN(d) || d < 1 || d > 31)) return null;
+  return days;
+}
+
 // Validates the cycle-specific fields for a given frequency.
-// MONTHLY/YEARLY reuse generation_day (1-28) as "day of month" —
-// capped at 28 so the schedule never skips a month on short Februaries.
-function validateCycleFields(frequency, { generation_day, generation_weekday, generation_month }) {
+// YEARLY keeps generation_day capped at 28 so the schedule never
+// skips a year on short Februaries.
+function validateCycleFields(frequency, { generation_day, generation_weekday, generation_month, generation_days }) {
   if (!RECURRING_FREQUENCIES.includes(frequency)) {
     return 'Cycle invalide. Choisissez Hebdomadaire, Mensuel ou Annuel.';
   }
@@ -402,9 +415,8 @@ function validateCycleFields(frequency, { generation_day, generation_weekday, ge
       return 'Le jour de la semaine est requis pour un cycle hebdomadaire.';
     }
   } else if (frequency === 'MONTHLY') {
-    const day = parseInt(generation_day, 10);
-    if (!day || day < 1 || day > 28) {
-      return 'Le jour du mois (1-28) est requis pour un cycle mensuel.';
+    if (!normalizeMonthlyDays({ generation_days, generation_day })) {
+      return 'Au moins un jour du mois (1-31) est requis pour un cycle mensuel.';
     }
   } else if (frequency === 'YEARLY') {
     const month = parseInt(generation_month, 10);
@@ -441,6 +453,7 @@ async function createRecurringPrelevement(req, res) {
       return res.status(400).json({ error: commercialError });
     }
 
+    const monthlyDays = frequency === 'MONTHLY' ? normalizeMonthlyDays(req.body) : null;
     const created = await prelevementModel.createRecurringPrelevement({
       category_id,
       amount,
@@ -448,9 +461,13 @@ async function createRecurringPrelevement(req, res) {
       is_active,
       created_by: req.user.id,
       frequency,
-      generation_day: frequency !== 'WEEKLY' ? parseInt(req.body.generation_day, 10) : null,
+      // generation_day kept in sync with the first monthly day for
+      // backward compatibility with anything still reading it.
+      generation_day: frequency === 'MONTHLY' ? monthlyDays[0]
+        : frequency === 'YEARLY' ? parseInt(req.body.generation_day, 10) : null,
       generation_weekday: frequency === 'WEEKLY' ? parseInt(req.body.generation_weekday, 10) : null,
       generation_month: frequency === 'YEARLY' ? parseInt(req.body.generation_month, 10) : null,
+      generation_days: monthlyDays,
       commercial_id: req.body.commercial_id || null,
     });
 
@@ -490,7 +507,7 @@ async function updateRecurringPrelevement(req, res) {
 
     // Cycle fields are validated together (frequency + its matching day/weekday/month),
     // falling back to the existing row's values for anything not sent in this request.
-    const touchesCycle = ['frequency', 'generation_day', 'generation_weekday', 'generation_month']
+    const touchesCycle = ['frequency', 'generation_day', 'generation_weekday', 'generation_month', 'generation_days']
       .some((key) => req.body[key] !== undefined);
 
     if (touchesCycle) {
@@ -499,14 +516,18 @@ async function updateRecurringPrelevement(req, res) {
         generation_day: req.body.generation_day !== undefined ? req.body.generation_day : existing.generation_day,
         generation_weekday: req.body.generation_weekday !== undefined ? req.body.generation_weekday : existing.generation_weekday,
         generation_month: req.body.generation_month !== undefined ? req.body.generation_month : existing.generation_month,
+        generation_days: req.body.generation_days !== undefined ? req.body.generation_days : existing.generation_days,
       };
       const cycleError = validateCycleFields(frequency, merged);
       if (cycleError) return res.status(400).json({ error: cycleError });
 
+      const monthlyDays = frequency === 'MONTHLY' ? normalizeMonthlyDays(merged) : null;
       fields.frequency = frequency;
-      fields.generation_day = frequency !== 'WEEKLY' ? parseInt(merged.generation_day, 10) : null;
+      fields.generation_day = frequency === 'MONTHLY' ? monthlyDays[0]
+        : frequency === 'YEARLY' ? parseInt(merged.generation_day, 10) : null;
       fields.generation_weekday = frequency === 'WEEKLY' ? parseInt(merged.generation_weekday, 10) : null;
       fields.generation_month = frequency === 'YEARLY' ? parseInt(merged.generation_month, 10) : null;
+      fields.generation_days = monthlyDays;
     }
 
     await prelevementModel.updateRecurringPrelevement(id, fields);

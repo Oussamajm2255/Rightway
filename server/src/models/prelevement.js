@@ -184,7 +184,25 @@ async function deletePrelevement(id) {
 // STATS / KPI
 // ═══════════════════════════════════════════════
 
-async function getStats() {
+async function getStats({ date_from, date_to } = {}) {
+  // Optional date range narrows every aggregate. Bounds are parameterized
+  // and appended in a fixed order: $1 = date_from, $2 = date_to when both
+  // are present, $1 = whichever one is when only one is.
+  const params = [];
+  let rangeFilter = '';
+  if (date_from) {
+    params.push(date_from);
+    rangeFilter += ` AND {p}.expense_date >= $${params.length}`;
+  }
+  if (date_to) {
+    params.push(date_to);
+    rangeFilter += ` AND {p}.expense_date <= $${params.length}`;
+  }
+  // Two variants: one for queries where prelevements is unaliased,
+  // one for queries where it's aliased as "p".
+  const rangePlain = rangeFilter.replaceAll('{p}.', '');
+  const rangeAliased = rangeFilter.replaceAll('{p}', 'p');
+
   const [totals, monthly, byMain, byChild, topExpenses] = await Promise.all([
     pool.query(`
       SELECT
@@ -195,46 +213,46 @@ async function getStats() {
           THEN (SUM(amount) / COUNT(DISTINCT DATE_TRUNC('month', expense_date)))::float
           ELSE 0 END AS monthly_avg
       FROM prelevements
-      WHERE status = 'VALIDE'
-    `),
+      WHERE status = 'VALIDE'${rangePlain}
+    `, params),
     pool.query(`
       SELECT TO_CHAR(DATE_TRUNC('month', expense_date), 'YYYY-MM') AS month,
              COALESCE(SUM(amount), 0)::float AS total,
              COUNT(*)::int AS count
       FROM prelevements
-      WHERE expense_date >= CURRENT_DATE - INTERVAL '12 months' AND status = 'VALIDE'
+      WHERE ${date_from || date_to ? "TRUE" : "expense_date >= CURRENT_DATE - INTERVAL '12 months'"} AND status = 'VALIDE'${rangePlain}
       GROUP BY month ORDER BY month
-    `),
+    `, params),
     pool.query(`
       SELECT c.id AS category_id, c.name AS category_name,
              COALESCE(SUM(p.amount), 0)::float AS total,
              COUNT(p.id)::int AS count
       FROM prelevement_categories c
-      LEFT JOIN prelevements p ON p.category_id = c.id AND p.status = 'VALIDE'
+      LEFT JOIN prelevements p ON p.category_id = c.id AND p.status = 'VALIDE'${rangeAliased}
       WHERE c.parent_id IS NULL
       GROUP BY c.id, c.name
       ORDER BY total DESC
-    `),
+    `, params),
     pool.query(`
       SELECT c.id AS category_id, c.name AS category_name,
              pc.name AS parent_name,
              COALESCE(SUM(p.amount), 0)::float AS total,
              COUNT(p.id)::int AS count
       FROM prelevement_categories c
-      LEFT JOIN prelevements p ON p.category_id = c.id AND p.status = 'VALIDE'
+      LEFT JOIN prelevements p ON p.category_id = c.id AND p.status = 'VALIDE'${rangeAliased}
       LEFT JOIN prelevement_categories pc ON c.parent_id = pc.id
       WHERE c.parent_id IS NOT NULL
       GROUP BY c.id, c.name, pc.name
       ORDER BY total DESC
-    `),
+    `, params),
     pool.query(`
       SELECT p.id, p.description, p.amount, p.expense_date,
              c.name AS category_name
       FROM prelevements p
       JOIN prelevement_categories c ON p.category_id = c.id
-      WHERE p.status = 'VALIDE'
+      WHERE p.status = 'VALIDE'${rangeAliased}
       ORDER BY p.amount DESC LIMIT 10
-    `),
+    `, params),
   ]);
 
   const t = totals.rows[0] || {};
@@ -282,20 +300,20 @@ async function findRecurringPrelevementById(id) {
 async function createRecurringPrelevement({
   category_id, amount, description, is_active = true, created_by,
   frequency = 'MONTHLY', generation_day = null, generation_weekday = null, generation_month = null,
-  commercial_id = null,
+  generation_days = null, commercial_id = null,
 }) {
   const { rows } = await pool.query(
     `INSERT INTO recurring_prelevements
-       (category_id, amount, description, is_active, created_by, frequency, generation_day, generation_weekday, generation_month, commercial_id)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       (category_id, amount, description, is_active, created_by, frequency, generation_day, generation_weekday, generation_month, generation_days, commercial_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
      RETURNING *`,
-    [category_id, amount, description || null, is_active, created_by, frequency, generation_day, generation_weekday, generation_month, commercial_id]
+    [category_id, amount, description || null, is_active, created_by, frequency, generation_day, generation_weekday, generation_month, generation_days, commercial_id]
   );
   return rows[0];
 }
 
 async function updateRecurringPrelevement(id, fields) {
-  const allowed = ['category_id', 'amount', 'description', 'is_active', 'frequency', 'generation_day', 'generation_weekday', 'generation_month', 'commercial_id'];
+  const allowed = ['category_id', 'amount', 'description', 'is_active', 'frequency', 'generation_day', 'generation_weekday', 'generation_month', 'generation_days', 'commercial_id'];
   const sets = [];
   const params = [id];
   let idx = 2;

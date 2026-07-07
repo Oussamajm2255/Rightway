@@ -504,7 +504,7 @@ const FREQUENCY_META = {
 
 const EMPTY_RECURRING_FORM = {
   category_id: '', amount: '', description: '',
-  frequency: 'MONTHLY', generation_day: 1, generation_weekday: 1, generation_month: 1,
+  frequency: 'MONTHLY', generation_days: [1], generation_day: 1, generation_weekday: 1, generation_month: 1,
   commercial_id: '',
 };
 
@@ -517,7 +517,11 @@ function cycleLabel(item) {
     const m = MONTHS.find(m => m.value === item.generation_month);
     return `Le ${item.generation_day} ${m ? m.label.toLowerCase() : '—'} (chaque année)`;
   }
-  return `Le ${item.generation_day} du mois`;
+  const days = (item.generation_days && item.generation_days.length > 0)
+    ? item.generation_days
+    : [item.generation_day];
+  if (days.length === 1) return `Le ${days[0]} du mois`;
+  return `Les ${days.join(', ')} du mois`;
 }
 
 function RecurringModal({ categories, commercials, onClose }) {
@@ -557,9 +561,17 @@ function RecurringModal({ categories, commercials, onClose }) {
       payload.generation_month = parseInt(form.generation_month) || 1;
       payload.generation_day = parseInt(form.generation_day) || 1;
     } else {
-      payload.generation_day = parseInt(form.generation_day) || 1;
+      payload.generation_days = form.generation_days.length > 0 ? form.generation_days : [1];
     }
     return payload;
+  }
+
+  function toggleMonthlyDay(day) {
+    setForm(f => {
+      const has = f.generation_days.includes(day);
+      const next = has ? f.generation_days.filter(d => d !== day) : [...f.generation_days, day];
+      return { ...f, generation_days: next.sort((a, b) => a - b) };
+    });
   }
 
   async function handleSubmit(e) {
@@ -584,6 +596,9 @@ function RecurringModal({ categories, commercials, onClose }) {
       amount: String(item.amount),
       description: item.description || '',
       frequency: item.frequency || 'MONTHLY',
+      generation_days: (item.generation_days && item.generation_days.length > 0)
+        ? [...item.generation_days].sort((a, b) => a - b)
+        : [item.generation_day || 1],
       generation_day: item.generation_day || 1,
       generation_weekday: item.generation_weekday || 1,
       generation_month: item.generation_month || 1,
@@ -681,12 +696,9 @@ function RecurringModal({ categories, commercials, onClose }) {
             )}
 
             {form.frequency === 'MONTHLY' && (
-              <input
-                className="prel-form-input" type="number" min="1" max="28"
-                placeholder="Jour (1-28)" value={form.generation_day}
-                onChange={e => setForm({...form, generation_day: e.target.value})}
-                title="Jour du mois" style={{ width: '110px' }} required
-              />
+              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', alignSelf: 'center' }}>
+                {form.generation_days.length} jour{form.generation_days.length > 1 ? 's' : ''} sélectionné{form.generation_days.length > 1 ? 's' : ''}
+              </span>
             )}
 
             {form.frequency === 'YEARLY' && (
@@ -828,6 +840,7 @@ export default function PrelevementPage() {
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({ category_id: '', commercial_id: '', date_from: '', date_to: '', search: '' });
   const [stats, setStats] = useState(null);
+  const [statsRange, setStatsRange] = useState({ date_from: '', date_to: '' });
 
   // Modals
   const [showCatModal, setShowCatModal] = useState(false);
@@ -883,12 +896,16 @@ export default function PrelevementPage() {
 
   const fetchStats = useCallback(async () => {
     try {
-      const data = await apiGet('/prelevements/stats');
+      const params = new URLSearchParams();
+      if (statsRange.date_from) params.set('date_from', statsRange.date_from);
+      if (statsRange.date_to) params.set('date_to', statsRange.date_to);
+      const qs = params.toString();
+      const data = await apiGet(`/prelevements/stats${qs ? `?${qs}` : ''}`);
       setStats(data.stats || null);
     } catch (err) {
       console.error('[Prelevement] fetchStats error:', err.message);
     }
-  }, []);
+  }, [statsRange]);
 
   useEffect(() => { fetchCategories(); }, [fetchCategories]);
   useEffect(() => { fetchCommercials(); }, [fetchCommercials]);
@@ -896,7 +913,7 @@ export default function PrelevementPage() {
   useEffect(() => {
     if (tab === 'declaration') fetchExpenses();
     else fetchStats();
-  }, [tab]);
+  }, [tab, fetchStats]);
 
   // Refetch expenses when filters/page change on declaration tab
   useEffect(() => {
@@ -1178,7 +1195,31 @@ export default function PrelevementPage() {
       )}
 
       {tab === 'analyse' && (
-        <AnalyseTab stats={stats} categories={categories} />
+        <>
+          <div className="prel-stats-range">
+            <label>Du
+              <input className="prel-form-input" type="date" value={statsRange.date_from}
+                max={statsRange.date_to || undefined}
+                onChange={e => setStatsRange(r => ({ ...r, date_from: e.target.value }))} />
+            </label>
+            <label>Au
+              <input className="prel-form-input" type="date" value={statsRange.date_to}
+                min={statsRange.date_from || undefined}
+                onChange={e => setStatsRange(r => ({ ...r, date_to: e.target.value }))} />
+            </label>
+            {(statsRange.date_from || statsRange.date_to) && (
+              <button className="btn btn-ghost btn-sm" onClick={() => setStatsRange({ date_from: '', date_to: '' })}>
+                Réinitialiser
+              </button>
+            )}
+            <span className="prel-stats-range-hint">
+              {statsRange.date_from || statsRange.date_to
+                ? 'Analyse limitée à la période sélectionnée'
+                : 'Toute la période (tendance sur 12 mois)'}
+            </span>
+          </div>
+          <AnalyseTab stats={stats} categories={categories} />
+        </>
       )}
 
       {/* Modals */}

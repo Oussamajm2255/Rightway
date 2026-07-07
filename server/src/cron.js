@@ -85,22 +85,20 @@ function isoWeekNumber(date) {
 }
 
 // Check and generate recurring expenses — each row picks its own cycle
-// (WEEKLY / MONTHLY / YEARLY) instead of everything being monthly-only.
+// (WEEKLY / MONTHLY / YEARLY). Matching happens in JS because a monthly
+// charge can now fire on SEVERAL days (generation_days array), including
+// day 31, which falls back to the month's last day on shorter months.
 async function checkAndGenerateRecurring(today) {
   const dayOfMonth = today.getDate();
   const weekday = isoWeekday(today);
   const month = today.getMonth() + 1;
+  const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  const isLastDayOfMonth = dayOfMonth === daysInMonth;
+  const yyyymm = `${today.getFullYear()}${String(month).padStart(2, '0')}`;
 
   const { rows: recurring } = await pool.query(`
-    SELECT * FROM recurring_prelevements
-    WHERE is_active = true
-      AND (
-        (frequency = 'MONTHLY' AND generation_day = $1)
-        OR (frequency = 'WEEKLY' AND generation_weekday = $2)
-        OR (frequency = 'YEARLY' AND generation_month = $3 AND generation_day = $1)
-      )
-  `, [dayOfMonth, weekday, month]);
-
+    SELECT * FROM recurring_prelevements WHERE is_active = true
+  `);
   if (recurring.length === 0) return;
 
   const systemUserId = await getSystemUserId();
@@ -108,36 +106,65 @@ async function checkAndGenerateRecurring(today) {
 
   let createdCount = 0;
   for (const r of recurring) {
-    let refPrefix, periodLabel;
+    // Each entry in `occurrences` is one prelevement to generate today,
+    // with its own unique dedup reference.
+    const occurrences = [];
+
     if (r.frequency === 'WEEKLY') {
-      const week = isoWeekNumber(today);
-      refPrefix = `REC-${r.id}-${today.getFullYear()}-W${String(week).padStart(2, '0')}`;
-      periodLabel = `Semaine ${week}/${today.getFullYear()}`;
+      if (r.generation_weekday === weekday) {
+        const week = isoWeekNumber(today);
+        occurrences.push({
+          ref: `REC-${r.id}-${today.getFullYear()}-W${String(week).padStart(2, '0')}`,
+          periodLabel: `Semaine ${week}/${today.getFullYear()}`,
+        });
+      }
     } else if (r.frequency === 'YEARLY') {
-      refPrefix = `REC-${r.id}-${today.getFullYear()}`;
-      periodLabel = String(today.getFullYear());
+      if (r.generation_month === month && r.generation_day === dayOfMonth) {
+        occurrences.push({
+          ref: `REC-${r.id}-${today.getFullYear()}`,
+          periodLabel: String(today.getFullYear()),
+        });
+      }
     } else {
-      refPrefix = `REC-${r.id}-${today.getFullYear()}${(today.getMonth()+1).toString().padStart(2, '0')}`;
-      periodLabel = today.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
+      // MONTHLY — generation_days is the source of truth (backfilled from
+      // generation_day by migration); a configured day beyond this month's
+      // length fires on the month's last day instead (31 -> 30/28).
+      const days = (r.generation_days && r.generation_days.length > 0)
+        ? r.generation_days
+        : (r.generation_day ? [r.generation_day] : []);
+      const monthLabel = today.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
+      for (const d of days) {
+        const fires = d === dayOfMonth || (isLastDayOfMonth && d > daysInMonth);
+        if (!fires) continue;
+        occurrences.push({
+          ref: `REC-${r.id}-${yyyymm}-D${String(d).padStart(2, '0')}`,
+          // Legacy single-day monthly refs had no -D suffix; checking the
+          // old format too prevents a double charge in the transition month.
+          legacyRef: `REC-${r.id}-${yyyymm}`,
+          periodLabel: days.length > 1 ? `${d} ${monthLabel}` : monthLabel,
+        });
+      }
     }
 
-    const { rows: existingRows } = await pool.query(`
-      SELECT id FROM prelevements WHERE reference = $1
-    `, [refPrefix]);
+    for (const occ of occurrences) {
+      const { rows: existingRows } = await pool.query(
+        `SELECT id FROM prelevements WHERE reference = $1 OR reference = $2`,
+        [occ.ref, occ.legacyRef || occ.ref]
+      );
+      if (existingRows.length > 0) continue;
 
-    if (existingRows.length > 0) continue;
-
-    await prelevementModel.createPrelevement({
-      category_id: r.category_id,
-      amount: r.amount,
-      description: r.description ? `${r.description} - ${periodLabel}` : `Charge fixe - ${periodLabel}`,
-      reference: refPrefix,
-      expense_date: today.toISOString().split('T')[0],
-      declared_by: systemUserId,
-      status: 'EN_ATTENTE',
-      commercial_id: r.commercial_id || null,
-    });
-    createdCount++;
+      await prelevementModel.createPrelevement({
+        category_id: r.category_id,
+        amount: r.amount,
+        description: r.description ? `${r.description} - ${occ.periodLabel}` : `Charge fixe - ${occ.periodLabel}`,
+        reference: occ.ref,
+        expense_date: today.toISOString().split('T')[0],
+        declared_by: systemUserId,
+        status: 'EN_ATTENTE',
+        commercial_id: r.commercial_id || null,
+      });
+      createdCount++;
+    }
   }
   if (createdCount > 0) console.log(`Cron: Generated ${createdCount} recurring expenses.`);
 }
