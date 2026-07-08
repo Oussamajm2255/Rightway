@@ -1,6 +1,6 @@
 const pool = require('../db/pool');
 
-async function findAll({ role, is_active, search } = {}) {
+async function findAll({ role, roles, is_active, search } = {}) {
   let query = 'SELECT id, full_name, email, role, phone, vehicle_name, vehicle_plate, is_active, remuneration_type, salary_amount, last_login_at, created_at FROM users WHERE 1=1';
   const params = [];
   let idx = 1;
@@ -8,6 +8,12 @@ async function findAll({ role, is_active, search } = {}) {
   if (role) {
     query += ` AND role = $${idx++}`;
     params.push(role);
+  }
+
+  if (roles && roles.length > 0) {
+    const placeholders = roles.map(() => `$${idx++}`).join(', ');
+    query += ` AND role IN (${placeholders})`;
+    params.push(...roles);
   }
 
   if (is_active !== undefined && is_active !== null) {

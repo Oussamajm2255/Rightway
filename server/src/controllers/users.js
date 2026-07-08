@@ -190,11 +190,12 @@ async function deactivateUser(req, res) {
 
 /**
  * GET /api/users/commercials
- * Returns only active commercials (for livraison creation dropdown)
+ * Returns active personnel (COMMERCIAL + DIRECTEUR_COMMERCIAL).
+ * Used by: prélèvement commercial dropdown, charges fixes, livraison assignment.
  */
 async function listCommercials(req, res) {
   try {
-    const users = await userModel.findAll({ role: 'COMMERCIAL', is_active: true });
+    const users = await userModel.findAll({ roles: ['COMMERCIAL', 'DIRECTEUR_COMMERCIAL'], is_active: true });
     res.json({ users });
   } catch (err) {
     console.error('listCommercials error:', err);
