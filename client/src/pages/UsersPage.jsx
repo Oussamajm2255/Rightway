@@ -375,7 +375,7 @@ function UserFormModal({ user, onClose, onSaved }) {
             </div>
           </div>
           
-          {(formData.role === 'COMMERCIAL' || formData.role === 'MAGASINIER') && (
+          {(formData.role === 'COMMERCIAL' || formData.role === 'MAGASINIER' || formData.role === 'DIRECTEUR_COMMERCIAL') && (
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Rémunération</label>
