@@ -37,11 +37,13 @@ async function listLivraisons(req, res) {
     const { status, commercial_id, date_from, date_to, include_archived } = req.query;
     const filters = { status, date_from, date_to };
     if (include_archived === 'true') filters.include_archived = true;
-    // SUPER_ADMIN + DIRECTEUR_COMMERCIAL see every livraison.
+    // SUPER_ADMIN sees every livraison.
+    // DIRECTEUR_COMMERCIAL: last 5 days + active + cloturé with pending écart.
     // COMMERCIAL is scoped to their own deliveries.
     // MAGASINIER sees only unfinished livraisons from the last 5 days (no history).
     if (req.user.role === 'COMMERCIAL') filters.commercial_id = req.user.id;
     if (req.user.role === 'MAGASINIER') filters.magasinier_scope = true;
+    if (req.user.role === 'DIRECTEUR_COMMERCIAL') filters.directeur_scope = true;
     if (req.user.role !== 'COMMERCIAL' && commercial_id) filters.commercial_id = commercial_id;
     res.json({ livraisons: await livraisonModel.findAll(filters) });
   } catch (err) { console.error('listLivraisons error:', err); res.status(500).json({ error: 'Erreur interne du serveur' }); }

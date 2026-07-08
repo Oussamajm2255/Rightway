@@ -205,7 +205,7 @@ async function findById(id) {
 /**
  * List livraisons with filters
  */
-async function findAll({ status, commercial_id, date_from, date_to, admin_id, magasinier_scope, include_archived, limit = 100, offset = 0 } = {}) {
+async function findAll({ status, commercial_id, date_from, date_to, admin_id, magasinier_scope, directeur_scope, include_archived, limit = 100, offset = 0 } = {}) {
   let query = `
     SELECT l.reference, l.id, l.status, l.created_at, l.closed_at, l.is_archived,
            c.full_name AS commercial_name, c.vehicle_name, c.vehicle_plate, c.remuneration_type AS commercial_remuneration_type,
@@ -252,6 +252,16 @@ async function findAll({ status, commercial_id, date_from, date_to, admin_id, ma
   // the last 5 days. No date/status params — fixed operational window.
   if (magasinier_scope) {
     query += ` AND l.status NOT IN ('CLOTURE', 'ANNULE') AND l.created_at >= (NOW() - INTERVAL '5 days')`;
+  }
+
+  // Directeur Commercial: last 5 days OR still active OR cloturé with pending écart.
+  // Prevents history-scrolling while keeping unresolved deliveries visible.
+  if (directeur_scope) {
+    query += ` AND (
+      l.created_at >= (NOW() - INTERVAL '5 days')
+      OR l.status NOT IN ('CLOTURE', 'ANNULE')
+      OR EXISTS(SELECT 1 FROM livraison_ecarts e WHERE e.livraison_id = l.id AND e.status IN ('PENDING','CONFIRMED','PAYMENT_REQUESTED'))
+    )`;
   }
 
   if (date_from) {
