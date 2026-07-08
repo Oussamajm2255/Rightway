@@ -170,6 +170,16 @@
   color: #1565c0;
 }
 
+.badge-directeur {
+  background: #ede7f6;
+  color: #4527a0;
+}
+
+.badge-magasinier {
+  background: #e0f2f1;
+  color: #00695c;
+}
+
 .badge-commercial {
   background: #fff3e0;
   color: #e65100;

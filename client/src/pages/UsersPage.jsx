@@ -97,7 +97,8 @@ function UsersPage() {
   function getRoleBadge(role) {
     const map = {
       SUPER_ADMIN: { label: 'Super Admin', className: 'badge-super-admin' },
-      ADMIN: { label: 'Admin', className: 'badge-admin' },
+      DIRECTEUR_COMMERCIAL: { label: 'Directeur Com.', className: 'badge-directeur' },
+      MAGASINIER: { label: 'Magasinier', className: 'badge-magasinier' },
       COMMERCIAL: { label: 'Commercial', className: 'badge-commercial' },
     };
     const item = map[role] || { label: role, className: '' };
@@ -168,7 +169,7 @@ function UsersPage() {
                   <td>{user.email}</td>
                   <td>{getRoleBadge(user.role)}</td>
                   <td>
-                    {user.role === 'COMMERCIAL' ? (
+                    {(user.role === 'COMMERCIAL' || user.role === 'MAGASINIER' || user.role === 'DIRECTEUR_COMMERCIAL') ? (
                       <>
                         <select
                           className="form-input form-input-sm"
