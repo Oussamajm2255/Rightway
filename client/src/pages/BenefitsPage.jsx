@@ -349,7 +349,7 @@ export default function BenefitsPage() {
               </div>
             )}
 
-            <div className="table-scroll">
+            <div className="table-scroll cards-on-mobile">
               <table className="data-table">
                 <thead>
                   <tr>
@@ -379,16 +379,16 @@ export default function BenefitsPage() {
                       const cColors = getColor(p.category);
                       return (
                         <tr key={p.id} style={{ '--cat-bg': cColors.bg }}>
-                          <td className="val-mono muted">{p.id}</td>
-                          <td className="td-name" title={p.name}>{p.name}</td>
-                          <td>{p.category ? <span className="cat-badge" style={{ background: cColors.bg, color: cColors.text }}>{p.category}</span> : <span className="cat-badge cat-default">—</span>}</td>
-                          <td className="val-mono right">{fmtDT(p.purchase_price)}</td>
-                          <td className="val-mono right">{fmtDT(p.selling_price_ttc)}</td>
-                          <td className="val-mono right">{fmtInt(p.total_sold)}</td>
-                          <td className="val-mono right">{p.ca > 0 ? fmtDT(p.ca) : <span className="muted">—</span>}</td>
-                          <td className="val-mono right">{p.cost > 0 ? fmtDT(p.cost) : <span className="muted">—</span>}</td>
-                          <td className={`right ${benefitClass}`}>{fmtDT(p.benefit)}</td>
-                          <td>
+                          <td className="val-mono muted" data-label="Code">{p.id}</td>
+                          <td className="td-name" title={p.name} data-label="Produit">{p.name}</td>
+                          <td data-label="Catégorie">{p.category ? <span className="cat-badge" style={{ background: cColors.bg, color: cColors.text }}>{p.category}</span> : <span className="cat-badge cat-default">—</span>}</td>
+                          <td className="val-mono right" data-label="Prix Achat">{fmtDT(p.purchase_price)}</td>
+                          <td className="val-mono right" data-label="Prix Vente">{fmtDT(p.selling_price_ttc)}</td>
+                          <td className="val-mono right" data-label="Qté Vendue">{fmtInt(p.total_sold)}</td>
+                          <td className="val-mono right" data-label="CA">{p.ca > 0 ? fmtDT(p.ca) : <span className="muted">—</span>}</td>
+                          <td className="val-mono right" data-label="Coût">{p.cost > 0 ? fmtDT(p.cost) : <span className="muted">—</span>}</td>
+                          <td className={`right ${benefitClass}`} data-label="Bénéfice">{fmtDT(p.benefit)}</td>
+                          <td data-label="Marge %">
                             <div className={`margin-cell ${mClass}`}>
                               <div className="margin-track"><div className="margin-fill" style={{ width: marginFillW + '%' }} /></div>
                               <span className="margin-pct">{fmtPct(p.margin_pct)}</span>
@@ -403,9 +403,9 @@ export default function BenefitsPage() {
                   <tfoot>
                     <tr>
                       <td colSpan={6} className="total-label">TOTAL — {products.length} produit(s)</td>
-                      <td className="val-mono right">{fmtDT(totalCA)}</td>
-                      <td className="val-mono right">{fmtDT(totalCost)}</td>
-                      <td className={`right ${totalBenefit >= 0 ? 'val-positive' : 'val-negative'}`}>{fmtDT(totalBenefit)}</td>
+                      <td className="val-mono right" data-label="CA">{fmtDT(totalCA)}</td>
+                      <td className="val-mono right" data-label="Coût">{fmtDT(totalCost)}</td>
+                      <td className={`right ${totalBenefit >= 0 ? 'val-positive' : 'val-negative'}`} data-label="Bénéfice">{fmtDT(totalBenefit)}</td>
                       <td />
                     </tr>
                   </tfoot>

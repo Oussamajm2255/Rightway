@@ -90,18 +90,18 @@ function HistoriquePage() {
       {/* List */}
       {loading ? <div className="loading-state">Chargement...</div> :
        livraisons.length === 0 ? <div className="empty-state"><p>Aucune livraison trouvée.</p></div> : (
-        <div className="table-container">
+        <div className="table-container cards-on-mobile">
           <table className="data-table">
             <thead><tr><th>Référence</th><th>Commercial</th><th>Véhicule</th><th>Statut</th><th>Date</th><th>Clôturé</th></tr></thead>
             <tbody>
               {livraisons.map((l) => (
                 <tr key={l.id} className="clickable-row" onClick={() => openDossier(l.id)}>
-                  <td className="td-code">{l.reference}</td>
-                  <td>{l.commercial_name}</td>
-                  <td>{l.vehicle_name}{l.vehicle_plate ? ` — ${l.vehicle_plate}` : ''}</td>
-                  <td><span className={`badge ${STATUS_CLASS[l.status] || ''}`}>{STATUS_LABELS[l.status] || l.status}</span></td>
-                  <td className="td-date">{formatDate(l.created_at)}</td>
-                  <td className="td-date">{formatDate(l.closed_at)}</td>
+                  <td className="td-code" data-label="Référence">{l.reference}</td>
+                  <td data-label="Commercial">{l.commercial_name}</td>
+                  <td data-label="Véhicule">{l.vehicle_name}{l.vehicle_plate ? ` — ${l.vehicle_plate}` : ''}</td>
+                  <td data-label="Statut"><span className={`badge ${STATUS_CLASS[l.status] || ''}`}>{STATUS_LABELS[l.status] || l.status}</span></td>
+                  <td className="td-date" data-label="Date">{formatDate(l.created_at)}</td>
+                  <td className="td-date" data-label="Clôturé">{formatDate(l.closed_at)}</td>
                 </tr>
               ))}
             </tbody>

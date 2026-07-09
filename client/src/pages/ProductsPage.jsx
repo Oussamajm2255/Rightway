@@ -127,7 +127,7 @@ function ProductsPage() {
           <p>Aucun produit trouvé.</p>
         </div>
       ) : (
-        <div className="table-container">
+        <div className="table-container cards-on-mobile">
           <table className="data-table">
             <thead>
               <tr>
@@ -154,15 +154,15 @@ function ProductsPage() {
                   <Fragment key={cat}>
                     {catItems.map((product) => (
                       <tr key={product.id} className={!product.is_active ? 'row-inactive' : ''} style={{ background: catCol.bg, borderLeftColor: catCol.bar }}>
-                        <td className="td-code">{product.id}</td>
-                        <td>{product.barcode}</td>
-                        <td className="td-name">{product.name}</td>
-                        <td>
+                        <td className="td-code" data-label="Code">{product.id}</td>
+                        <td data-label="Code-barres">{product.barcode}</td>
+                        <td className="td-name" data-label="Nom">{product.name}</td>
+                        <td data-label="Catégorie">
                           <span className="cat-pill" style={{ background: catCol.bg, color: catCol.text }}>{cat}</span>
                         </td>
-                        <td className="td-price">{formatDT(product.purchase_price)}</td>
-                        <td className="td-price">{formatDT(product.selling_price_ttc)}</td>
-                        <td>
+                        <td className="td-price" data-label="Prix d'achat">{formatDT(product.purchase_price)}</td>
+                        <td className="td-price" data-label="Prix vente TTC">{formatDT(product.selling_price_ttc)}</td>
+                        <td data-label="Statut">
                           <span className={`status-dot ${product.is_active ? 'active' : 'inactive'}`} />
                           {product.is_active ? 'Actif' : 'Archivé'}
                         </td>

@@ -1189,3 +1189,120 @@ textarea.form-input {
 .app-shell p {
   color: var(--color-text-secondary);
 }
+
+/* ============================================================
+   Responsive tables → cards on mobile (reusable utility)
+   ------------------------------------------------------------
+   Opt in by adding `cards-on-mobile` to the .table-container and a
+   data-label="Column" to each <td>. Below the breakpoint every row
+   becomes a card and each cell a "LABEL … value" line. Cells with no
+   data-label (e.g. an actions cell) span the full width instead.
+   Grouped tables (category subtotals / colSpan) use bespoke card views
+   instead of this utility.
+   ============================================================ */
+@media (max-width: 768px) {
+  .table-container.cards-on-mobile {
+    background: none;
+    border: none;
+    border-radius: 0;
+    overflow: visible;
+  }
+
+  .cards-on-mobile table,
+  .cards-on-mobile tbody,
+  .cards-on-mobile tr,
+  .cards-on-mobile td {
+    display: block;
+    width: 100%;
+  }
+
+  .cards-on-mobile thead {
+    display: none;
+  }
+
+  .cards-on-mobile tbody tr {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-border-strong);
+    border-radius: var(--radius-lg);
+    padding: var(--space-2) var(--space-4);
+    margin-bottom: var(--space-3);
+    box-shadow: none;
+    transition: border-color var(--transition-fast);
+  }
+  .cards-on-mobile tbody tr:hover {
+    background: var(--color-surface);
+    border-color: var(--color-border-strong);
+  }
+  .cards-on-mobile tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .cards-on-mobile td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    text-align: right;
+    padding: 8px 0;
+    min-height: 36px;
+    border: none;
+    border-bottom: 1px solid var(--color-border);
+    white-space: normal;
+    word-break: break-word;
+  }
+  .cards-on-mobile td:last-child {
+    border-bottom: none;
+  }
+
+  .cards-on-mobile td[data-label]::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    font-weight: var(--weight-bold);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+    text-align: left;
+  }
+
+  /* Unlabeled cells (actions, full-width content) take the whole row */
+  .cards-on-mobile td:not([data-label]) {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  /* An actions cell reads best as a full-width button row */
+  .cards-on-mobile td.td-actions {
+    justify-content: stretch;
+    padding-top: var(--space-2);
+  }
+  .cards-on-mobile td.td-actions > * {
+    flex: 1;
+  }
+
+  /* Empty spacer cells collapse instead of leaving a blank line */
+  .cards-on-mobile td:empty {
+    display: none;
+  }
+
+  /* Footer total row → its own emphasized card */
+  .cards-on-mobile tfoot {
+    display: block;
+  }
+  .cards-on-mobile tfoot tr {
+    background: var(--color-page);
+    border: 1px solid var(--color-ink);
+    border-radius: var(--radius-lg);
+    padding: var(--space-2) var(--space-4);
+    font-weight: var(--weight-bold);
+  }
+  .cards-on-mobile tfoot td {
+    border-bottom: 1px solid var(--color-border);
+    font-weight: var(--weight-bold);
+  }
+  .cards-on-mobile tfoot td:last-child {
+    border-bottom: none;
+  }
+}

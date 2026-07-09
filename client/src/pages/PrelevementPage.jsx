@@ -455,7 +455,7 @@ function AnalyseTab({ stats, categories }) {
         {stats.top_expenses?.length > 0 && (
           <div className="prel-top-table-wrap">
             <h3>Top 10 dépenses</h3>
-            <div className="prel-table-wrap">
+            <div className="prel-table-wrap cards-on-mobile">
               <table className="prel-table">
                 <thead>
                   <tr>
@@ -468,10 +468,10 @@ function AnalyseTab({ stats, categories }) {
                 <tbody>
                   {stats.top_expenses.map((e, i) => (
                     <tr key={i}>
-                      <td>{formatDate(e.expense_date)}</td>
-                      <td>{e.category_name}</td>
-                      <td>{e.description || '—'}</td>
-                      <td className="prel-amount">{formatMoney(e.amount)}</td>
+                      <td data-label="Date">{formatDate(e.expense_date)}</td>
+                      <td data-label="Catégorie">{e.category_name}</td>
+                      <td data-label="Description">{e.description || '—'}</td>
+                      <td className="prel-amount" data-label="Montant">{formatMoney(e.amount)}</td>
                     </tr>
                   ))}
                 </tbody>

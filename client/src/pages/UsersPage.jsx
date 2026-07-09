@@ -147,7 +147,7 @@ function UsersPage() {
           <p>Aucun utilisateur trouvé.</p>
         </div>
       ) : (
-        <div className="table-container">
+        <div className="table-container cards-on-mobile">
           <table className="data-table">
             <thead>
               <tr>
@@ -165,10 +165,10 @@ function UsersPage() {
             <tbody>
               {users.map((user) => (
                 <tr key={user.id} className={!user.is_active ? 'row-inactive' : ''}>
-                  <td className="td-name">{user.full_name}</td>
-                  <td>{user.email}</td>
-                  <td>{getRoleBadge(user.role)}</td>
-                  <td>
+                  <td className="td-name" data-label="Nom">{user.full_name}</td>
+                  <td data-label="Email">{user.email}</td>
+                  <td data-label="Rôle">{getRoleBadge(user.role)}</td>
+                  <td data-label="Rémunération">
                     {(user.role === 'COMMERCIAL' || user.role === 'MAGASINIER' || user.role === 'DIRECTEUR_COMMERCIAL') ? (
                       <>
                         <select
@@ -198,8 +198,8 @@ function UsersPage() {
                       <span className="text-muted">—</span>
                     )}
                   </td>
-                  <td>{user.phone || '—'}</td>
-                  <td className="td-vehicle">
+                  <td data-label="Téléphone">{user.phone || '—'}</td>
+                  <td className="td-vehicle" data-label="Véhicule">
                     {user.vehicle_name ? (
                       <span>
                         {user.vehicle_name}
@@ -209,11 +209,11 @@ function UsersPage() {
                       </span>
                     ) : '—'}
                   </td>
-                  <td>
+                  <td data-label="Statut">
                     <span className={`status-dot ${user.is_active ? 'active' : 'inactive'}`} />
                     {user.is_active ? 'Actif' : 'Inactif'}
                   </td>
-                  <td className="td-date">
+                  <td className="td-date" data-label="Dernière connexion">
                     {user.last_login_at
                       ? formatDateTime(user.last_login_at)
                       : 'Jamais'}

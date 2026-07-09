@@ -455,6 +455,136 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ===== Detail page: "Produits chargés" table ↔ cards ===== */
+.load-cards-view {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .load-table-view {
+    display: none;
+  }
+  .load-cards-view {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+  }
+}
+
+.load-cat-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.load-cat-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-1);
+}
+
+.load-cat-head .cat-pill {
+  font-weight: var(--weight-bold);
+}
+
+.load-cat-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+.load-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.load-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.load-card-name {
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-md);
+  color: var(--color-text);
+  line-height: 1.3;
+}
+
+.load-card-code {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+.load-card-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-3);
+}
+
+.load-card-stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.load-card-stats span {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.load-card-stats b {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+.load-cat-subtotal {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-surface-hover);
+  border-radius: var(--radius-md);
+}
+
+.load-cat-subtotal > span {
+  font-weight: var(--weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-tertiary);
+  margin-right: var(--space-1);
+}
+
+.load-cat-subtotal b {
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
   .livraisons-page,
