@@ -186,6 +186,55 @@ function LivraisonsListPage() {
     );
   }
 
+  // Mobile equivalent of renderRow — every column preserved as card content.
+  function renderCard(l) {
+    const accent = STATUS_ACCENT[l.status] || 'closed';
+    const avatar = getAvatar(l.commercial_name);
+    return (
+      <article
+        key={l.id}
+        className={`livr-card livr-row-accent-${accent}${l.has_pending_ecart ? ' row-ecart-pending' : ''}`}
+        onClick={() => navigate(`/livraisons/${l.id}`)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/livraisons/${l.id}`); }}
+      >
+        <div className="livr-card-top">
+          <span className="livr-card-ref">{l.reference}</span>
+          {getStatusBadge(l.status)}
+        </div>
+
+        <div className="livr-card-commercial">
+          <span className="livr-avatar" style={{ background: avatar.bg }}>{avatar.initials}</span>
+          <div className="livr-card-idn">
+            <span className="livr-card-name">{l.commercial_name}</span>
+            <span className="livr-card-vehicle">
+              {l.vehicle_name}
+              {l.vehicle_plate && <span className="vehicle-plate">{l.vehicle_plate}</span>}
+            </span>
+          </div>
+        </div>
+
+        <div className="livr-card-chips">
+          <div className="livr-card-chip-cell">
+            <span className="livr-card-k">Avance</span>
+            {renderAvanceChip(l)}
+          </div>
+          <div className="livr-card-chip-cell">
+            <span className="livr-card-k">Écart</span>
+            {renderEcartChip(l)}
+          </div>
+        </div>
+
+        <div className="livr-card-meta">
+          <div><span>Créé par</span><b>{l.admin_name || '—'}</b></div>
+          <div><span>Date</span><b>{formatDateTime(l.created_at)}</b></div>
+          <div><span>Clôturé</span><b>{l.closed_at ? formatDateTime(l.closed_at) : '—'}</b></div>
+        </div>
+      </article>
+    );
+  }
+
   return (
     <div className="livraisons-page">
       <div className="page-header">
@@ -272,26 +321,34 @@ function LivraisonsListPage() {
           )}
         </div>
       ) : (
-        <div className="table-container livr-fade-in">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Référence</th>
-                <th>Commercial</th>
-                <th>Véhicule</th>
-                <th>Statut</th>
-                <th style={{ textAlign: 'center' }}>Avance</th>
-                <th style={{ textAlign: 'center' }}>Écart</th>
-                <th>Créé par</th>
-                <th>Date</th>
-                <th>Clôturé</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map(renderRow)}
-            </tbody>
-          </table>
-        </div>
+        <>
+          {/* Desktop: full table */}
+          <div className="table-container livr-fade-in livr-table-view">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Référence</th>
+                  <th>Commercial</th>
+                  <th>Véhicule</th>
+                  <th>Statut</th>
+                  <th style={{ textAlign: 'center' }}>Avance</th>
+                  <th style={{ textAlign: 'center' }}>Écart</th>
+                  <th>Créé par</th>
+                  <th>Date</th>
+                  <th>Clôturé</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(renderRow)}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile: card list (all content, no horizontal scroll) */}
+          <div className="livr-cards-view livr-fade-in">
+            {filtered.map(renderCard)}
+          </div>
+        </>
       )}
     </div>
   );

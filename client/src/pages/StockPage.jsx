@@ -47,6 +47,13 @@ function formatDT(value) {
   return Number(value).toFixed(3) + ' DT';
 }
 
+// Shared status badge — used by both the desktop table and the mobile cards.
+function StockStatusBadge({ item, low }) {
+  if (low) return <span className="badge badge-alert">Stock faible</span>;
+  if (item.quantity === 0) return <span className="badge badge-empty">Épuisé</span>;
+  return <span className="badge badge-ok">OK</span>;
+}
+
 // Before/after preview shown between the product-selection step and the
 // actual API call for a multi-product stock adjustment. Lets the super
 // admin visually double-check every line before committing the chargement.
@@ -344,6 +351,15 @@ function StockPage() {
     return qty < alertThreshold;
   }
 
+  // Grouped once, shared by the desktop table and the mobile card list.
+  const groupedStock = Object.entries(
+    stock.reduce((acc, item) => {
+      const cat = item.category || 'Sans catégorie';
+      (acc[cat] = acc[cat] || []).push(item);
+      return acc;
+    }, {})
+  );
+
   return (
     <div className="stock-page">
       <div className="page-header">
@@ -432,7 +448,9 @@ function StockPage() {
           ) : stock.length === 0 ? (
             <div className="empty-state"><p>Aucun produit en stock.</p></div>
           ) : (
-            <div className="table-container">
+            <>
+            {/* Desktop: full table */}
+            <div className="table-container stock-table-view">
               <table className="data-table">
                 <thead>
                   <tr>
@@ -449,13 +467,7 @@ function StockPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {Object.entries(
-                    stock.reduce((acc, item) => {
-                      const cat = item.category || 'Sans catégorie';
-                      (acc[cat] = acc[cat] || []).push(item);
-                      return acc;
-                    }, {})
-                  ).map(([cat, catItems]) => {
+                  {groupedStock.map(([cat, catItems]) => {
                     const catCol = getColor(cat);
                     return (
                       <Fragment key={cat}>
@@ -478,13 +490,7 @@ function StockPage() {
                                 {item.virtual_stock || 0}
                               </td>
                               <td>
-                                {low ? (
-                                  <span className="badge badge-alert">Stock faible</span>
-                                ) : item.quantity === 0 ? (
-                                  <span className="badge badge-empty">Épuisé</span>
-                                ) : (
-                                  <span className="badge badge-ok">OK</span>
-                                )}
+                                <StockStatusBadge item={item} low={low} />
                               </td>
                               <td>
                                 {user?.role === 'SUPER_ADMIN' && (
@@ -520,6 +526,67 @@ function StockPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile: card list (all content, no horizontal scroll) */}
+            <div className="stock-cards-view">
+              {groupedStock.map(([cat, catItems]) => {
+                const catCol = getColor(cat);
+                return (
+                  <section className="stock-cat-group" key={cat}>
+                    <header className="stock-cat-head">
+                      <span className="cat-pill" style={{ background: catCol.bg, color: catCol.text }}>{cat}</span>
+                      <span className="stock-cat-count">{catItems.length} produit{catItems.length > 1 ? 's' : ''}</span>
+                    </header>
+
+                    {catItems.map((item) => {
+                      const low = isLowStock(item.quantity);
+                      return (
+                        <article key={item.id} className={`stock-card ${low ? 'is-low' : ''}`} style={{ borderLeftColor: catCol.bar }}>
+                          <div className="stock-card-top">
+                            <div className="stock-card-title">
+                              <span className="stock-card-name">{item.name}</span>
+                              <span className="stock-card-code">{item.id}{item.barcode ? ` · ${item.barcode}` : ''}</span>
+                            </div>
+                            <StockStatusBadge item={item} low={low} />
+                          </div>
+
+                          <div className="stock-card-price">{formatDT(item.selling_price_ttc)}</div>
+
+                          <div className="stock-card-stats">
+                            <div>
+                              <span>Dépôt</span>
+                              <b className={low ? 'qty-low' : ''}>{item.quantity}</b>
+                            </div>
+                            <div>
+                              <span>Mobile</span>
+                              <b>{item.in_transit || 0}</b>
+                            </div>
+                            <div>
+                              <span>Virtuel</span>
+                              <b>{item.virtual_stock || 0}</b>
+                            </div>
+                          </div>
+
+                          {user?.role === 'SUPER_ADMIN' && (
+                            <button className="btn btn-sm btn-outline stock-card-action" onClick={() => handleAdjustClick(item)}>
+                              Ajuster
+                            </button>
+                          )}
+                        </article>
+                      );
+                    })}
+
+                    <div className="stock-cat-subtotal">
+                      <span>Sous-total</span>
+                      Dépôt <b>{catItems.reduce((s, i) => s + i.quantity, 0)}</b>
+                      · Mobile <b>{catItems.reduce((s, i) => s + (i.in_transit || 0), 0)}</b>
+                      · Virtuel <b>{catItems.reduce((s, i) => s + (i.virtual_stock || 0), 0)}</b>
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+            </>
           )}
 
           {/* Adjust Modal */}
@@ -859,54 +926,84 @@ function StockPage() {
             </div>
           )}
 
-          <div className="table-container">
-            {movementsLoading ? (
-              <div className="loading-state">Chargement du journal...</div>
-            ) : movements.length === 0 ? (
-              <div className="empty-state"><p>Aucun ajustement manuel enregistré.</p></div>
-            ) : (
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Produit</th>
-                    <th>Catégorie</th>
-                    <th>Opération</th>
-                    <th>Qté</th>
-                    <th>N° Facture</th>
-                    <th>Société</th>
-                    <th>Motif</th>
-                    <th>Par</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {movements.map((m) => (
-                    <tr key={m.id} style={{ background: getColor(m.product_category).bg, borderLeftColor: getColor(m.product_category).bar }}>
-                      <td className="td-date">
-                        {m.movement_date
-                          ? formatDate(m.movement_date)
-                          : formatDate(m.created_at)}
-                      </td>
-                      <td className="td-name">{m.product_name}</td>
-                      <td><span className="cat-pill" style={{ background: getColor(m.product_category).bg, color: getColor(m.product_category).text }}>{m.product_category || 'Sans catégorie'}</span></td>
-                      <td>
-                        <span className={`movement-badge ${m.quantity > 0 ? 'movement-add' : 'movement-remove'}`}>
-                          {m.quantity > 0 ? 'Ajout' : 'Retrait'}
-                        </span>
-                      </td>
-                      <td className={`td-qty ${m.quantity < 0 ? 'qty-low' : ''}`}>
-                        {m.quantity > 0 ? '+' : ''}{m.quantity}
-                      </td>
-                      <td>{m.invoice_number || '—'}</td>
-                      <td>{m.company_name || '—'}</td>
-                      <td className="movement-reason">{m.reason || '—'}</td>
-                      <td>{m.created_by_name || '—'}</td>
+          {movementsLoading ? (
+            <div className="table-container"><div className="loading-state">Chargement du journal...</div></div>
+          ) : movements.length === 0 ? (
+            <div className="table-container"><div className="empty-state"><p>Aucun ajustement manuel enregistré.</p></div></div>
+          ) : (
+            <>
+              {/* Desktop: full table */}
+              <div className="table-container journal-table-view">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Produit</th>
+                      <th>Catégorie</th>
+                      <th>Opération</th>
+                      <th>Qté</th>
+                      <th>N° Facture</th>
+                      <th>Société</th>
+                      <th>Motif</th>
+                      <th>Par</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+                  </thead>
+                  <tbody>
+                    {movements.map((m) => (
+                      <tr key={m.id} style={{ background: getColor(m.product_category).bg, borderLeftColor: getColor(m.product_category).bar }}>
+                        <td className="td-date">
+                          {m.movement_date
+                            ? formatDate(m.movement_date)
+                            : formatDate(m.created_at)}
+                        </td>
+                        <td className="td-name">{m.product_name}</td>
+                        <td><span className="cat-pill" style={{ background: getColor(m.product_category).bg, color: getColor(m.product_category).text }}>{m.product_category || 'Sans catégorie'}</span></td>
+                        <td>
+                          <span className={`movement-badge ${m.quantity > 0 ? 'movement-add' : 'movement-remove'}`}>
+                            {m.quantity > 0 ? 'Ajout' : 'Retrait'}
+                          </span>
+                        </td>
+                        <td className={`td-qty ${m.quantity < 0 ? 'qty-low' : ''}`}>
+                          {m.quantity > 0 ? '+' : ''}{m.quantity}
+                        </td>
+                        <td>{m.invoice_number || '—'}</td>
+                        <td>{m.company_name || '—'}</td>
+                        <td className="movement-reason">{m.reason || '—'}</td>
+                        <td>{m.created_by_name || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile: card list */}
+              <div className="journal-cards-view">
+                {movements.map((m) => {
+                  const catCol = getColor(m.product_category);
+                  return (
+                    <article key={m.id} className="journal-card" style={{ borderLeftColor: catCol.bar }}>
+                      <div className="journal-card-top">
+                        <span className="journal-card-product">{m.product_name}</span>
+                        <span className={`movement-badge ${m.quantity > 0 ? 'movement-add' : 'movement-remove'}`}>
+                          {m.quantity > 0 ? 'Ajout' : 'Retrait'} {m.quantity > 0 ? '+' : ''}{m.quantity}
+                        </span>
+                      </div>
+                      <div className="journal-card-meta">
+                        <span className="cat-pill" style={{ background: catCol.bg, color: catCol.text }}>{m.product_category || 'Sans catégorie'}</span>
+                        <span>{m.movement_date ? formatDate(m.movement_date) : formatDate(m.created_at)}</span>
+                      </div>
+                      <div className="journal-card-grid">
+                        <div><span>N° Facture</span><b>{m.invoice_number || '—'}</b></div>
+                        <div><span>Société</span><b>{m.company_name || '—'}</b></div>
+                        <div><span>Par</span><b>{m.created_by_name || '—'}</b></div>
+                      </div>
+                      {m.reason && <div className="journal-card-reason">{m.reason}</div>}
+                    </article>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </>
       )}
     </div>
