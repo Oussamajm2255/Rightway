@@ -137,7 +137,7 @@ function AppRoutesInner() {
         path="/commercials"
         element={
           <ProtectedRoute>
-            <RoleGuard roles={['SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL']}>
+            <RoleGuard roles={['SUPER_ADMIN']}>
               <CommercialsPage />
             </RoleGuard>
           </ProtectedRoute>

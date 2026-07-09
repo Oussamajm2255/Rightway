@@ -215,7 +215,6 @@ function AppLayout({ children }) {
   } else if (role === 'DIRECTEUR_COMMERCIAL') {
     navItems.push({ to: '/stock', label: 'Stock', icon: 'stock' });
     navItems.push({ to: '/livraisons', label: 'Livraisons', icon: 'livraisons' });
-    navItems.push({ to: '/commercials', label: 'Commerciaux', icon: 'commercials' });
     navItems.push({ to: '/historique', label: 'Historique', icon: 'historique' });
   } else if (role === 'MAGASINIER') {
     navItems.push({ to: '/stock', label: 'Stock', icon: 'stock' });
