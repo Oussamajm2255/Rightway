@@ -42,7 +42,7 @@
   background: var(--color-primary);
   color: var(--color-text-inverse);
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(15, 59, 44, 0.12);
+  box-shadow: 0 0 0 3px rgba(225, 6, 0, 0.12);
 }
 
 .stepper-circle.done {
@@ -133,7 +133,7 @@
 .commercial-card.selected {
   border-color: var(--color-primary);
   background: var(--color-primary-subtle);
-  box-shadow: 0 0 0 3px rgba(15, 59, 44, 0.06);
+  box-shadow: 0 0 0 3px rgba(225, 6, 0, 0.06);
 }
 
 .com-avatar {
@@ -288,7 +288,7 @@
 
 .qty-input:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(15, 59, 44, 0.08);
+  box-shadow: 0 0 0 3px rgba(225, 6, 0, 0.08);
 }
 
 .ps-total {

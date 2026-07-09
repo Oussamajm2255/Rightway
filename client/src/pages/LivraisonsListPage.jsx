@@ -26,7 +26,7 @@ const STATUS_ACCENT = {
   CLOTURE: 'closed',
 };
 
-const AVATAR_PALETTE = ['#0F3B2C', '#B8860B', '#0369A1', '#0D7B4B', '#7C3AED', '#B45309', '#BE185D'];
+const AVATAR_PALETTE = ['#0A0A0B', '#57575E', '#26262B', '#3D3D42', '#57575E', '#9A9AA2', '#E10600'];
 
 function getAvatar(name) {
   const str = (name || '?').trim();

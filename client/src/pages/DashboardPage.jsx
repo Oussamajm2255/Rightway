@@ -6,13 +6,14 @@ import { formatDate } from '../lib/utils';
 import { Chart } from 'chart.js/auto';
 import './DashboardPage.css';
 
-// ─── Palette ───
+// ─── Palette (Editorial Terminal: ink · red · grey) ───
+const INK = '#0A0A0B', INK_SOFT = '#57575E', GREY = '#9A9AA2', GREY_LT = '#C9C8C4', RED = '#E10600';
 const PALETTE = {
-  blue: '#2a78d6', green: '#0f9e6a', amber: '#c98500', purple: '#7c3aed',
-  red: '#dc2626', pink: '#db2777', orange: '#d95926', emerald: '#16a34a',
-  cyan: '#0891b2', violet: '#9333ea', rose: '#e11d48', lime: '#65a30d',
+  blue: INK, green: INK, amber: INK_SOFT, purple: INK_SOFT,
+  red: RED, pink: RED, orange: RED, emerald: INK,
+  cyan: RED, violet: INK_SOFT, rose: RED, lime: INK_SOFT,
 };
-const DONUT_COLORS = [PALETTE.emerald, PALETTE.red, PALETTE.blue, PALETTE.orange];
+const DONUT_COLORS = [INK, RED, GREY, GREY_LT];
 const DONUT_LABELS = ['Clôturée', 'Annulée', 'En cours', 'En retour'];
 
 // ─── Shared Chart Configs (mobile-friendly legend sizing) ───
@@ -72,21 +73,24 @@ const Icons = {
 };
 
 // ─── KPI Card ───
-function KpiCard({ icon, label, value, sub, color, onClick }) {
+function KpiCard({ icon, label, value, sub, onClick, invert, accent }) {
+  const cls = [
+    'kpi-card',
+    onClick && 'kpi-clickable',
+    invert && 'kpi-invert',
+    accent && 'kpi-accent-red',
+  ].filter(Boolean).join(' ');
   return (
     <div
-      className={`kpi-card${onClick ? ' kpi-clickable' : ''}`}
+      className={cls}
       onClick={onClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={onClick ? (e) => { if (e.key === 'Enter') onClick(); } : undefined}
     >
-      <div className="kpi-accent" style={{ background: color || PALETTE.blue }} />
-      <div className="kpi-icon-wrap" style={{ background: hexAlpha(color || PALETTE.blue, 0.12) }}>
-        <span style={{ color: color || PALETTE.blue }}>{icon}</span>
-      </div>
+      <div className="kpi-icon-wrap"><span>{icon}</span></div>
       <div className="kpi-label">{label}</div>
-      <div className="kpi-value" style={label.length > 14 ? { fontSize: '15px' } : {}}>{value}</div>
+      <div className="kpi-value">{value}</div>
       {sub && <div className="kpi-sub">{sub}</div>}
     </div>
   );
@@ -354,14 +358,14 @@ function SuperAdminView({ data, navigate, user }) {
           <KpiCard icon={Icons.users} label="Commerciaux actifs" value={fmtInt(data.users_count)} sub="comptes activés" color={PALETTE.blue} onClick={() => navigate('/commercials')} />
           <KpiCard icon={Icons.package} label="Produits actifs" value={fmtInt(data.products_count)} sub="catalogue" color={PALETTE.emerald} onClick={() => navigate('/products')} />
           <KpiCard icon={Icons.truck} label="Livraisons actives" value={fmtInt(data.active_livraisons)} sub="EN_COURS + EN_RETOUR" color={PALETTE.orange} onClick={() => navigate('/livraisons')} />
-          <KpiCard icon={Icons.dollar} label="CA Global TTC" value={fmtDT(data.ca_total)} sub="livraisons clôturées" color={PALETTE.amber} />
+          <KpiCard icon={Icons.dollar} label="CA Global TTC" value={fmtDT(data.ca_total)} sub="livraisons clôturées" invert />
         </div>
 
         {/* Stock hero — Depot + Chargé fused into a live total */}
         <StockHero depot={data.depot_stock_ca} charge={data.voitures_ca} navigate={navigate} />
         <div className="kpi-grid kpi-grid-3" style={{ marginTop: 'var(--space-4)' }}>
-          <KpiCard icon={Icons.percent} label="Commissions" value={fmtDT(data.commissions)} sub="10% du CA global" color={PALETTE.green} />
-          <KpiCard icon={Icons.alert} label="Alertes stock" value={<span style={{color:PALETTE.red}}>{fmtInt(data.stock_alerts_count)}</span>} sub="produits &lt; 20 unités" color={PALETTE.red} onClick={() => navigate('/stock')} />
+          <KpiCard icon={Icons.percent} label="Commissions" value={fmtDT(data.commissions)} sub="10% du CA global" />
+          <KpiCard icon={Icons.alert} label="Alertes stock" value={fmtInt(data.stock_alerts_count)} sub="produits &lt; 20 unités" accent onClick={() => navigate('/stock')} />
         </div>
 
         {/* Écarts section */}
@@ -374,7 +378,7 @@ function SuperAdminView({ data, navigate, user }) {
                 label="Total Écarts"
                 value={fmtDT(data.ecarts_total)}
                 sub={`${data.ecarts_count} actif(s) · ${data.ecarts_pending_count} en attente · ${data.ecarts_confirmed_count} confirmé(s) · ${data.ecarts_payment_requested_count || 0} paiement${data.ecarts_paid_count > 0 ? ` · ${data.ecarts_paid_count} résolu(s)` : ''}`}
-                color={PALETTE.red}
+                accent
               />
               <div className="chart-card" style={{flex: 1, maxHeight: 300, overflowY: 'auto'}}>
                 <h3>Justifications</h3>
@@ -417,7 +421,7 @@ function SuperAdminView({ data, navigate, user }) {
                 label="Total Dépenses"
                 value={fmtDT(data.prelevement_total)}
                 sub={`${data.prelevement_count} déclaration${data.prelevement_count !== 1 ? 's' : ''} · ${fmtDTShort(data.prelevement_current_month)} ce mois`}
-                color={PALETTE.red}
+                accent
               />
               {data.prelevement_top_categories?.length > 0 && (
                 <div className="chart-card" style={{flex: 1}}>
@@ -597,8 +601,8 @@ function AdminView({ data, navigate, user }) {
           <KpiCard icon={Icons.package} label="Produits en stock" value={fmtInt(data.stock_products)} sub={`${fmtInt(data.stock_total_qty)} unités totales`} color={PALETTE.emerald} onClick={() => navigate('/stock')} />
           <KpiCard icon={Icons.truck} label="Livraisons actives" value={fmtInt(data.active_livraisons)} sub="EN_COURS + EN_RETOUR" color={PALETTE.orange} onClick={() => navigate('/livraisons')} />
           <KpiCard icon={Icons.clock} label="En attente commercial" value={fmtInt(data.pending_livraisons)} sub="confirmation bon de sortie" color={PALETTE.amber} onClick={() => navigate('/livraisons')} />
-          <KpiCard icon={Icons.dollar} label="CA période" value={fmtDT(data.ca_period)} sub="ce mois (Juin)" color={PALETTE.blue} />
-          <KpiCard icon={Icons.alert} label="Alertes stock" value={<span style={{color:PALETTE.red}}>{fmtInt(data.stock_alerts?.length || 0)}</span>} sub="produits &lt; 20 unités" color={PALETTE.red} onClick={() => navigate('/stock')} />
+          <KpiCard icon={Icons.dollar} label="CA période" value={fmtDT(data.ca_period)} sub="ce mois (Juin)" invert />
+          <KpiCard icon={Icons.alert} label="Alertes stock" value={fmtInt(data.stock_alerts?.length || 0)} sub="produits &lt; 20 unités" accent onClick={() => navigate('/stock')} />
         </div>
 
         {/* Charts */}
@@ -708,7 +712,7 @@ function CommercialView({ data, navigate, user }) {
       <div className="dash-content">
         {/* KPI Row */}
         <div className="kpi-grid kpi-grid-4">
-          <KpiCard icon={Icons.dollar} label="Mon CA Total" value={fmtDT(data.ca_total)} sub="livraisons clôturées" color={PALETTE.blue} />
+          <KpiCard icon={Icons.dollar} label="Mon CA Total" value={fmtDT(data.ca_total)} sub="livraisons clôturées" invert />
           <KpiCard icon={Icons.pie} label="Taux complétion" value={<span style={{color:PALETTE.purple}}>{data.completion_rate}%</span>} sub={`${data.completion_details?.cloturees || 0} / ${data.completion_details?.total || 0} livraisons`} color={PALETTE.purple} />
           <KpiCard icon={Icons.truck} label="En tournée" value={fmtInt(data.en_tournee)} sub="active" color={PALETTE.orange} onClick={() => navigate('/livraisons')} />
           <KpiCard icon={Icons.wallet} label="Avances acceptées" value={fmtDT(data.avances_acceptees)} sub="total" color={PALETTE.amber} />

@@ -47,7 +47,7 @@
 
 .timeline-dot.active {
   background: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(15, 59, 44, 0.15);
+  box-shadow: 0 0 0 3px rgba(225, 6, 0, 0.15);
 }
 
 .timeline-dot.done {
@@ -312,7 +312,7 @@
   letter-spacing: 0.01em;
   background: var(--color-primary-subtle);
   color: var(--color-primary);
-  border: 1px solid rgba(15, 59, 44, 0.18);
+  border: 1px solid rgba(225, 6, 0, 0.18);
 }
 
 .livr-muted-dash {

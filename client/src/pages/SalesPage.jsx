@@ -391,7 +391,7 @@ function SalesPage() {
                           className={`sale-card ${hasPending ? 'pending' : ''} ${isSaving ? 'saving' : ''}`}
                           style={{
                             background: hasPending
-                              ? `linear-gradient(135deg, var(--color-surface) 0%, rgba(184,134,11,.03) 100%)`
+                              ? `linear-gradient(135deg, var(--color-surface) 0%, rgba(225,6,0,.03) 100%)`
                               : `linear-gradient(135deg, var(--color-surface) 0%, ${catBar}0d 100%)`,
                           }}
                         >

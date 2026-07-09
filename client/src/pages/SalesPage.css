@@ -104,7 +104,7 @@
 .sales-search::placeholder { color: var(--color-text-tertiary); }
 .sales-search:focus {
   border-color: var(--color-border-focus);
-  box-shadow: 0 0 0 3px rgba(15,59,44,.08);
+  box-shadow: 0 0 0 3px rgba(225, 6, 0,.08);
 }
 
 /* ===== Category Chips ===== */
@@ -299,7 +299,7 @@
 /* Pending state */
 .sale-card.pending {
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 1px rgba(184,134,11,.12);
+  box-shadow: 0 0 0 1px rgba(225,6,0,.12);
 }
 
 /* Card header */

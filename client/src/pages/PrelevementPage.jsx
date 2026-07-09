@@ -338,7 +338,7 @@ function AnalyseTab({ stats, categories }) {
           data: {
             labels: sorted.map(r => r.category_name),
             datasets: [{ label: 'Total (DT)', data: sorted.map(r => r.total),
-              backgroundColor: '#0F3B2C', borderRadius: 4 }],
+              backgroundColor: '#0A0A0B', borderRadius: 4 }],
           },
           options: {
             indexAxis: 'y',
@@ -357,7 +357,7 @@ function AnalyseTab({ stats, categories }) {
       // --- Doughnut: Distribution ---
       if (pieRef.current && stats.by_main_category?.length) {
         const ctx = pieRef.current.getContext('2d');
-        const colors = ['#0F3B2C','#B8860B','#165440','#0369A1','#475569','#854D0E','#14532D','#991B1B'];
+        const colors = ['#0A0A0B','#E10600','#57575E','#9A9AA2','#26262B','#C9C8C4','#3D3D42','#7A7A80'];
         const c = new ChartClass(ctx, {
           type: 'doughnut',
           data: {
@@ -389,8 +389,8 @@ function AnalyseTab({ stats, categories }) {
             datasets: [{
               label: 'Dépenses (DT)',
               data: stats.monthly_trend.map(r => r.total),
-              borderColor: '#0F3B2C',
-              backgroundColor: 'rgba(15,59,44,0.05)',
+              borderColor: '#0A0A0B',
+              backgroundColor: 'rgba(225, 6, 0, 0.05)',
               fill: true,
               tension: 0.3,
               pointRadius: 3,

@@ -4,30 +4,38 @@
 
 /* ===== Design Tokens ===== */
 :root {
-  /* --- Color Palette --- */
-  --color-primary: #0F3B2C;
-  --color-primary-hover: #0A2A1F;
-  --color-primary-light: #165440;
-  --color-primary-subtle: rgba(15, 59, 44, 0.06);
-  --color-primary-subtle-hover: rgba(15, 59, 44, 0.10);
+  /* --- Brand: Editorial Terminal (ink · paper · red) --- */
+  --color-ink: #0A0A0B;
+  --color-ink-soft: #26262B;
+  --color-red: #E10600;
+  --color-red-hover: #B80500;
+  --color-red-wash: rgba(225, 6, 0, 0.06);
+  --color-paper: #FFFFFF;
 
-  --color-accent: #B8860B;
-  --color-accent-subtle: rgba(184, 134, 11, 0.08);
+  /* --- Color Palette (mapped to brand) --- */
+  --color-primary: #0A0A0B;
+  --color-primary-hover: #26262B;
+  --color-primary-light: #3D3D42;
+  --color-primary-subtle: rgba(10, 10, 11, 0.05);
+  --color-primary-subtle-hover: rgba(10, 10, 11, 0.09);
 
-  --color-page: #FAFAFA;
+  --color-accent: #E10600;
+  --color-accent-subtle: rgba(225, 6, 0, 0.07);
+
+  --color-page: #F3F2EF;
   --color-surface: #FFFFFF;
-  --color-surface-hover: #F5F6F8;
+  --color-surface-hover: #F3F2EF;
   --color-surface-raised: #FFFFFF;
 
-  --color-border: #E8ECF0;
-  --color-border-strong: #D0D5DD;
-  --color-border-focus: #0F3B2C;
+  --color-border: #E5E4E0;
+  --color-border-strong: #C9C8C4;
+  --color-border-focus: #0A0A0B;
 
-  --color-text: #0B1C2E;
-  --color-text-secondary: #5E6F7D;
-  --color-text-tertiary: #94A0AE;
+  --color-text: #0A0A0B;
+  --color-text-secondary: #57575E;
+  --color-text-tertiary: #9A9AA2;
   --color-text-inverse: #FFFFFF;
-  --color-text-link: #0F3B2C;
+  --color-text-link: #0A0A0B;
 
   /* --- Semantic Colors --- */
   --color-success: #0D7B4B;
@@ -38,10 +46,10 @@
   --color-warning-bg: #FFFBEB;
   --color-warning-border: #FDE68A;
 
-  --color-danger: #CF1124;
-  --color-danger-hover: #A61B2B;
+  --color-danger: #E10600;
+  --color-danger-hover: #B80500;
   --color-danger-bg: #FEF2F2;
-  --color-danger-border: #FECACA;
+  --color-danger-border: #FBC5C3;
 
   --color-info: #0369A1;
   --color-info-bg: #F0F9FF;
@@ -61,7 +69,8 @@
 
   /* --- Typography --- */
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', 'Monaco', monospace;
+  --font-display: 'Space Grotesk', 'Inter', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
 
   --text-xs: 0.75rem;
   --text-sm: 0.8125rem;
@@ -99,23 +108,23 @@
   --space-12: 48px;
   --space-16: 64px;
 
-  /* --- Border Radius --- */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 20px;
+  /* --- Border Radius (sharp / editorial) --- */
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+  --radius-2xl: 8px;
   --radius-full: 9999px;
 
-  /* --- Elevation --- */
-  --shadow-xs: 0 1px 2px rgba(11, 28, 46, 0.04);
-  --shadow-sm: 0 1px 3px rgba(11, 28, 46, 0.06), 0 1px 2px rgba(11, 28, 46, 0.04);
-  --shadow-md: 0 4px 12px rgba(11, 28, 46, 0.08), 0 1px 2px rgba(11, 28, 46, 0.04);
-  --shadow-lg: 0 12px 32px rgba(11, 28, 46, 0.10), 0 2px 4px rgba(11, 28, 46, 0.04);
-  --shadow-xl: 0 20px 48px rgba(11, 28, 46, 0.12), 0 4px 8px rgba(11, 28, 46, 0.04);
+  /* --- Elevation (ink-based, restrained) --- */
+  --shadow-xs: 0 1px 2px rgba(10, 10, 11, 0.05);
+  --shadow-sm: 0 1px 3px rgba(10, 10, 11, 0.07), 0 1px 2px rgba(10, 10, 11, 0.05);
+  --shadow-md: 0 6px 16px rgba(10, 10, 11, 0.09), 0 1px 2px rgba(10, 10, 11, 0.06);
+  --shadow-lg: 0 14px 36px rgba(10, 10, 11, 0.12), 0 2px 4px rgba(10, 10, 11, 0.06);
+  --shadow-xl: 0 24px 52px rgba(10, 10, 11, 0.16), 0 4px 8px rgba(10, 10, 11, 0.06);
 
   /* --- Focus --- */
-  --focus-ring: 0 0 0 2px #FFFFFF, 0 0 0 4px rgba(15, 59, 44, 0.4);
+  --focus-ring: 0 0 0 2px #FFFFFF, 0 0 0 4px rgba(225, 6, 0, 0.5);
 
   /* --- Transitions --- */
   --transition-fast: 0.12s cubic-bezier(0.4, 0, 0.2, 1);
@@ -178,12 +187,14 @@ img, svg {
 
 /* ===== Typography Scale ===== */
 h1, h2, h3, h4 {
-  font-weight: var(--weight-semibold);
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
   line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
   color: var(--color-text);
 }
 
-h1 { font-size: var(--text-2xl); letter-spacing: var(--tracking-tight); }
+h1 { font-size: var(--text-2xl); letter-spacing: -0.03em; }
 h2 { font-size: var(--text-lg); }
 h3 { font-size: var(--text-md); }
 
@@ -414,7 +425,7 @@ h3 { font-size: var(--text-md); }
 
 .form-input:focus {
   border-color: var(--color-border-focus);
-  box-shadow: 0 0 0 3px rgba(15, 59, 44, 0.10);
+  box-shadow: 0 0 0 3px rgba(225, 6, 0, 0.12);
 }
 
 .form-input:disabled {
@@ -1159,78 +1170,6 @@ textarea.form-input {
     max-width: 140px;
   }
 }
-/* ===== Right Way — Global Styles ===== */
-:root {
-  --color-primary: #1a3c34;
-  --color-primary-light: #2d5a4e;
-  --color-primary-dark: #0f2620;
-  --color-accent: #c8a84e;
-  --color-bg: #f8f9fa;
-  --color-surface: #ffffff;
-  --color-border: #e0e0e0;
-  --color-text: #212529;
-  --color-text-secondary: #6c757d;
-  --color-danger: #dc3545;
-  --color-warning: #ffc107;
-  --color-success: #28a745;
-  --color-info: #0dcaf0;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
-  --font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
-  --transition: 0.2s ease;
-}
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html {
-  font-size: 16px;
-  -webkit-text-size-adjust: 100%;
-}
-
-body {
-  font-family: var(--font-family);
-  background-color: var(--color-bg);
-  color: var(--color-text);
-  line-height: 1.6;
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  color: var(--color-primary);
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-
-button {
-  cursor: pointer;
-  font-family: inherit;
-}
-
-input, select, textarea {
-  font-family: inherit;
-  font-size: inherit;
-}
-
-img {
-  max-width: 100%;
-  height: auto;
-}
-
 /* ===== Utility Classes ===== */
 .app-shell {
   min-height: 100vh;
