@@ -90,6 +90,82 @@ function KpiCard({ icon, label, value, sub, color, onClick }) {
   );
 }
 
+// ─── Count-up animation hook ───
+function useCountUp(target, duration = 1100) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    const to = Number(target);
+    if (target === null || target === undefined || Number.isNaN(to)) { setVal(0); return; }
+    let raf;
+    const start = performance.now();
+    const tick = (now) => {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setVal(to * eased);
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return val;
+}
+
+// ─── Stock Total Hub (bridges Depot + Chargé) ───
+const RING_C = 2 * Math.PI * 50; // r = 50
+
+function StockTotalHub({ depot, charge, onClick }) {
+  const d = Number(depot) || 0;
+  const c = Number(charge) || 0;
+  const total = d + c;
+  const animated = useCountUp(total, 1200);
+  const [drawn, setDrawn] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setDrawn(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  const depotFrac = total > 0 ? d / total : 0;
+  const chargeFrac = total > 0 ? c / total : 0;
+
+  return (
+    <div
+      className="stock-hub"
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter') onClick(); } : undefined}
+    >
+      <div className="stock-hub-badge">Total</div>
+      <div className="stock-hub-ring">
+        <svg viewBox="0 0 120 120" className="stock-hub-svg">
+          <circle cx="60" cy="60" r="50" className="ring-track" />
+          <circle
+            cx="60" cy="60" r="50" className="ring-arc"
+            stroke={PALETTE.emerald}
+            strokeDasharray={RING_C}
+            strokeDashoffset={drawn ? RING_C * (1 - depotFrac) : RING_C}
+          />
+          <circle
+            cx="60" cy="60" r="50" className="ring-arc ring-arc-charge"
+            stroke={PALETTE.cyan}
+            transform={`rotate(${360 * depotFrac} 60 60)`}
+            strokeDasharray={RING_C}
+            strokeDashoffset={drawn ? RING_C * (1 - chargeFrac) : RING_C}
+          />
+        </svg>
+        <div className="stock-hub-center">
+          <div className="stock-hub-label">Patrimoine</div>
+          <div className="stock-hub-value">{fmtDTShort(animated)}</div>
+        </div>
+      </div>
+      <div className="stock-hub-legend">
+        <span><span className="stock-hub-dot" style={{ background: PALETTE.emerald }} />Dépôt <b>{Math.round(depotFrac * 100)}%</b></span>
+        <span><span className="stock-hub-dot" style={{ background: PALETTE.cyan }} />Chargé <b>{Math.round(chargeFrac * 100)}%</b></span>
+      </div>
+    </div>
+  );
+}
+
 // ─── Section Header ───
 function SectionHeader({ title }) {
   return (
@@ -253,12 +329,17 @@ function SuperAdminView({ data, navigate, user }) {
       <DashboardTopbar subtitle="Vue d'ensemble · STE RIGHT WAY FOR TRADING" user={user} showExport />
       <div className="dash-content">
         {/* KPI Row */}
-        <div className="kpi-grid kpi-grid-6">
+        <div className="kpi-grid kpi-grid-4">
           <KpiCard icon={Icons.users} label="Commerciaux actifs" value={fmtInt(data.users_count)} sub="comptes activés" color={PALETTE.blue} onClick={() => navigate('/commercials')} />
           <KpiCard icon={Icons.package} label="Produits actifs" value={fmtInt(data.products_count)} sub="catalogue" color={PALETTE.emerald} onClick={() => navigate('/products')} />
           <KpiCard icon={Icons.truck} label="Livraisons actives" value={fmtInt(data.active_livraisons)} sub="EN_COURS + EN_RETOUR" color={PALETTE.orange} onClick={() => navigate('/livraisons')} />
           <KpiCard icon={Icons.dollar} label="CA Global TTC" value={fmtDT(data.ca_total)} sub="livraisons clôturées" color={PALETTE.amber} />
-          <KpiCard icon={Icons.package} label="CA Stock Depot" value={fmtDT(data.depot_stock_ca)} sub="valeur totale au prix de vente" color={PALETTE.emerald} onClick={() => navigate('/stock')} />
+        </div>
+
+        {/* Stock bridge — Depot + Chargé fused into a total */}
+        <div className="stock-bridge">
+          <KpiCard icon={Icons.package} label="CA Stock Depot" value={fmtDT(data.depot_stock_ca)} sub="valeur au prix de vente" color={PALETTE.emerald} onClick={() => navigate('/stock')} />
+          <StockTotalHub depot={data.depot_stock_ca} charge={data.voitures_ca} onClick={() => navigate('/stock')} />
           <KpiCard icon={Icons.truck} label="CA Stock Chargé" value={fmtDT(data.voitures_ca)} sub="marchandise en tournée" color={PALETTE.cyan} onClick={() => navigate('/livraisons')} />
         </div>
         <div className="kpi-grid kpi-grid-3" style={{ marginTop: 'var(--space-4)' }}>
