@@ -67,6 +67,8 @@ const Icons = {
   circleCheck: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5"/></svg>,
   adjust: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="5" cy="6" r="2"/><path d="M7 6h14M3 12h14"/><circle cx="19" cy="12" r="2"/><path d="M3 18h14"/><circle cx="19" cy="18" r="2"/></svg>,
   receipt: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>,
+  chevRight: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6"/></svg>,
+  chevLeft: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 6l-6 6 6 6"/></svg>,
 };
 
 // ─── KPI Card ───
@@ -110,14 +112,16 @@ function useCountUp(target, duration = 1100) {
   return val;
 }
 
-// ─── Stock Total Hub (bridges Depot + Chargé) ───
-const RING_C = 2 * Math.PI * 50; // r = 50
+// ─── Stock Total Hero (Depot + Chargé fused into a live total) ───
+const HERO_RING_C = 2 * Math.PI * 62; // r = 62
 
-function StockTotalHub({ depot, charge, onClick }) {
+function StockHero({ depot, charge, navigate }) {
   const d = Number(depot) || 0;
   const c = Number(charge) || 0;
   const total = d + c;
-  const animated = useCountUp(total, 1200);
+  const aTotal = useCountUp(total, 1300);
+  const aDepot = useCountUp(d, 1100);
+  const aCharge = useCountUp(c, 1100);
   const [drawn, setDrawn] = useState(false);
   useEffect(() => {
     const id = requestAnimationFrame(() => setDrawn(true));
@@ -128,40 +132,57 @@ function StockTotalHub({ depot, charge, onClick }) {
   const chargeFrac = total > 0 ? c / total : 0;
 
   return (
-    <div
-      className="stock-hub"
-      onClick={onClick}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      onKeyDown={onClick ? (e) => { if (e.key === 'Enter') onClick(); } : undefined}
-    >
-      <div className="stock-hub-badge">Total</div>
-      <div className="stock-hub-ring">
-        <svg viewBox="0 0 120 120" className="stock-hub-svg">
-          <circle cx="60" cy="60" r="50" className="ring-track" />
-          <circle
-            cx="60" cy="60" r="50" className="ring-arc"
-            stroke={PALETTE.emerald}
-            strokeDasharray={RING_C}
-            strokeDashoffset={drawn ? RING_C * (1 - depotFrac) : RING_C}
-          />
-          <circle
-            cx="60" cy="60" r="50" className="ring-arc ring-arc-charge"
-            stroke={PALETTE.cyan}
-            transform={`rotate(${360 * depotFrac} 60 60)`}
-            strokeDasharray={RING_C}
-            strokeDashoffset={drawn ? RING_C * (1 - chargeFrac) : RING_C}
-          />
-        </svg>
-        <div className="stock-hub-center">
-          <div className="stock-hub-label">Patrimoine</div>
-          <div className="stock-hub-value">{fmtDTShort(animated)}</div>
+    <div className="stock-hero">
+      <div className="stock-hero-accent" />
+
+      <button type="button" className="stock-hero-side" onClick={() => navigate('/stock')}>
+        <span className="stock-hero-icon" style={{ background: hexAlpha(PALETTE.emerald, 0.12), color: PALETTE.emerald }}>{Icons.package}</span>
+        <span className="stock-hero-label">CA Stock Depot</span>
+        <span className="stock-hero-val">{fmtDT(aDepot)}</span>
+        <span className="stock-hero-sub"><span className="stock-hero-dot" style={{ background: PALETTE.emerald }} />valeur au prix de vente</span>
+      </button>
+
+      <div className="stock-hero-link" aria-hidden="true">{Icons.chevRight}</div>
+
+      <div className="stock-hero-center">
+        <div className="stock-hero-ring">
+          <span className="stock-hero-glow" />
+          <svg viewBox="0 0 150 150" className="stock-hero-svg">
+            <circle cx="75" cy="75" r="62" className="ring-track" />
+            <circle
+              cx="75" cy="75" r="62" className="ring-arc"
+              stroke={PALETTE.emerald}
+              strokeDasharray={HERO_RING_C}
+              strokeDashoffset={drawn ? HERO_RING_C * (1 - depotFrac) : HERO_RING_C}
+            />
+            <circle
+              cx="75" cy="75" r="62" className="ring-arc ring-arc-charge"
+              stroke={PALETTE.cyan}
+              transform={`rotate(${360 * depotFrac} 75 75)`}
+              strokeDasharray={HERO_RING_C}
+              strokeDashoffset={drawn ? HERO_RING_C * (1 - chargeFrac) : HERO_RING_C}
+            />
+          </svg>
+          <div className="stock-hero-ring-center">
+            <span className="stock-hero-ring-label">Patrimoine</span>
+            <span className="stock-hero-ring-val">{fmtDTShort(aTotal)}</span>
+            <span className="stock-hero-ring-unit">total marchandise</span>
+          </div>
+        </div>
+        <div className="stock-hero-legend">
+          <span><span className="stock-hero-dot" style={{ background: PALETTE.emerald }} />Dépôt <b>{Math.round(depotFrac * 100)}%</b></span>
+          <span><span className="stock-hero-dot" style={{ background: PALETTE.cyan }} />Chargé <b>{Math.round(chargeFrac * 100)}%</b></span>
         </div>
       </div>
-      <div className="stock-hub-legend">
-        <span><span className="stock-hub-dot" style={{ background: PALETTE.emerald }} />Dépôt <b>{Math.round(depotFrac * 100)}%</b></span>
-        <span><span className="stock-hub-dot" style={{ background: PALETTE.cyan }} />Chargé <b>{Math.round(chargeFrac * 100)}%</b></span>
-      </div>
+
+      <div className="stock-hero-link" aria-hidden="true">{Icons.chevLeft}</div>
+
+      <button type="button" className="stock-hero-side right" onClick={() => navigate('/livraisons')}>
+        <span className="stock-hero-icon" style={{ background: hexAlpha(PALETTE.cyan, 0.12), color: PALETTE.cyan }}>{Icons.truck}</span>
+        <span className="stock-hero-label">CA Stock Chargé</span>
+        <span className="stock-hero-val">{fmtDT(aCharge)}</span>
+        <span className="stock-hero-sub"><span className="stock-hero-dot" style={{ background: PALETTE.cyan }} />marchandise en tournée</span>
+      </button>
     </div>
   );
 }
@@ -336,12 +357,8 @@ function SuperAdminView({ data, navigate, user }) {
           <KpiCard icon={Icons.dollar} label="CA Global TTC" value={fmtDT(data.ca_total)} sub="livraisons clôturées" color={PALETTE.amber} />
         </div>
 
-        {/* Stock bridge — Depot + Chargé fused into a total */}
-        <div className="stock-bridge">
-          <KpiCard icon={Icons.package} label="CA Stock Depot" value={fmtDT(data.depot_stock_ca)} sub="valeur au prix de vente" color={PALETTE.emerald} onClick={() => navigate('/stock')} />
-          <StockTotalHub depot={data.depot_stock_ca} charge={data.voitures_ca} onClick={() => navigate('/stock')} />
-          <KpiCard icon={Icons.truck} label="CA Stock Chargé" value={fmtDT(data.voitures_ca)} sub="marchandise en tournée" color={PALETTE.cyan} onClick={() => navigate('/livraisons')} />
-        </div>
+        {/* Stock hero — Depot + Chargé fused into a live total */}
+        <StockHero depot={data.depot_stock_ca} charge={data.voitures_ca} navigate={navigate} />
         <div className="kpi-grid kpi-grid-3" style={{ marginTop: 'var(--space-4)' }}>
           <KpiCard icon={Icons.percent} label="Commissions" value={fmtDT(data.commissions)} sub="10% du CA global" color={PALETTE.green} />
           <KpiCard icon={Icons.alert} label="Alertes stock" value={<span style={{color:PALETTE.red}}>{fmtInt(data.stock_alerts_count)}</span>} sub="produits &lt; 20 unités" color={PALETTE.red} onClick={() => navigate('/stock')} />
