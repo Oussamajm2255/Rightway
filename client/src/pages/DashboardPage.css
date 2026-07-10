@@ -18,6 +18,9 @@
   background: var(--color-ink);
   border-bottom: 2px solid var(--color-red);
   border-radius: 0;
+  position: sticky;
+  top: 52px;
+  z-index: 400;
 }
 
 .dash-topbar .topbar-left {
