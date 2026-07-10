@@ -389,10 +389,10 @@ export default function CommercialsPage() {
   if (loading) {
     return (
       <div className="comm-page">
-        <div className="comm-topbar">
-          <div className="comm-topbar-left">
+        <div className="brand-masthead">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span className="comm-live-badge"><span className="comm-live-dot" />Live</span>
-            <div><div className="comm-page-title">Performances Commerciaux</div></div>
+            <h1 className="page-title">Performances Commerciaux</h1>
           </div>
         </div>
         <p style={{ color: 'var(--color-text-tertiary)' }}>Chargement...</p>
@@ -413,21 +413,21 @@ export default function CommercialsPage() {
   return (
     <div className="comm-page">
       {/* ══ TOP BAR ══ */}
-      <div className="comm-topbar">
-        <div className="comm-topbar-left">
+      <div className="brand-masthead">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <span className="comm-live-badge"><span className="comm-live-dot" />Live</span>
           <div>
-            <div className="comm-page-title">Performances Commerciaux</div>
-            <div className="comm-page-sub">
+            <h1 className="page-title">Performances Commerciaux</h1>
+            <p className="page-subtitle">
               {globals?.agents || 0} commerciaux actifs · CA global: {globals ? fmtDTShort(globals.ca_global) : '—'}
-            </div>
+            </p>
           </div>
         </div>
-        <div className="comm-topbar-right">
-          <div className="comm-btn" style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', gap: '6px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <div className="btn btn-outline btn-sm" style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', gap: '6px', display: 'flex', alignItems: 'center' }}>
             <SvgClock /> <span>{clock || '—'}</span>
           </div>
-          <button className="comm-btn" onClick={() => { /* export */ }}>
+          <button className="btn btn-outline btn-sm" onClick={() => { /* export */ }} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <SvgDownload /> Exporter
           </button>
         </div>
