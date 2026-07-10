@@ -20,7 +20,7 @@
   border-radius: 0;
   position: sticky;
   top: 52px;
-  z-index: 400;
+  z-index: 9999;
 }
 
 .dash-topbar .topbar-left {
