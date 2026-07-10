@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "885851818573",
+    "project_id": "right-way-1b091",
+    "storage_bucket": "right-way-1b091.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:885851818573:android:ad04de233538c68c5eaa04",
+        "android_client_info": {
+          "package_name": "com.rightway.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMVHAKxwPxD2_DFHLUx-jetY1ELpB4ov0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
