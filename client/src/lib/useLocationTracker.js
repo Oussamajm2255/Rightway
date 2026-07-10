@@ -1,12 +1,19 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { Geolocation } from '@capacitor/geolocation';
+import { Capacitor } from '@capacitor/core';
+
+// Try importing Geolocation — may fail at bundle time if plugin not synced, handled at runtime
+let Geolocation = null;
+try {
+  Geolocation = require('@capacitor/geolocation').Geolocation;
+} catch {
+  // plugin not loaded — will fall back to browser geolocation
+}
 
 const POLL_INTERVAL_MS = 15_000;  // 15s — check tracking preference
 const UPLOAD_INTERVAL_MS = 60_000; // 60s — send location to server
 const MIN_DISTANCE_M = 50;         // only send if moved 50m+
 
-const isCapacitor = typeof window !== 'undefined' &&
-  !!(window.Capacitor || window.navigator?.userAgent?.includes?.('Capacitor'));
+const isCapacitor = typeof window !== 'undefined' && Capacitor.isNativePlatform();
 
 /**
  * Reverse-geocode lat/lng → human-readable location name
@@ -77,34 +84,46 @@ export default function useLocationTracker({ role, apiGet, apiPut }) {
   const startGps = useCallback(async () => {
     if (gpsActive.current || cancelledRef.current) return;
 
-    try {
-      if (isCapacitor) {
+    let started = false;
+
+    // ── Path 1: Capacitor Geolocation plugin ──
+    if (isCapacitor && Geolocation) {
+      try {
         const perm = await Geolocation.checkPermissions();
         if (perm.location !== 'granted') {
           const req = await Geolocation.requestPermissions();
-          if (req.location !== 'granted') return;
-        }
-      }
-
-      if (isCapacitor) {
-        const id = await Geolocation.watchPosition(
-          { enableHighAccuracy: false, timeout: 15000, maximumAge: 30000 },
-          (position, err) => {
-            if (cancelledRef.current) return;
-            if (err) return;
-            if (position?.coords) {
-              currentPos.current = {
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude,
-              };
-            }
+          if (req.location !== 'granted') {
+            console.warn('[GPS] Capacitor location permission denied');
+            // fall through to browser fallback
           }
-        );
-        watchId.current = id;
-      }
+        }
 
-      // Also attempt browser geolocation as fallback (dev / desktop)
-      if (!isCapacitor && navigator.geolocation) {
+        if (perm.location === 'granted' || (await Geolocation.checkPermissions()).location === 'granted') {
+          const id = await Geolocation.watchPosition(
+            { enableHighAccuracy: false, timeout: 15000, maximumAge: 30000 },
+            (position, err) => {
+              if (cancelledRef.current) return;
+              if (err) return;
+              if (position?.coords) {
+                currentPos.current = {
+                  latitude: position.coords.latitude,
+                  longitude: position.coords.longitude,
+                };
+              }
+            }
+          );
+          watchId.current = id;
+          started = true;
+          console.log('[GPS] Capacitor Geolocation active');
+        }
+      } catch (e) {
+        console.warn('[GPS] Capacitor Geolocation plugin error, trying browser fallback:', e.message);
+      }
+    }
+
+    // ── Path 2: Browser geolocation (fallback for desktop, or Android WebView without plugin) ──
+    if (!started && navigator.geolocation) {
+      try {
         const id = navigator.geolocation.watchPosition(
           (pos) => {
             if (cancelledRef.current) return;
@@ -113,37 +132,45 @@ export default function useLocationTracker({ role, apiGet, apiPut }) {
               longitude: pos.coords.longitude,
             };
           },
-          () => {}, // silent on error — permission may not be granted yet
+          (err) => {
+            console.warn('[GPS] Browser geolocation error:', err?.message || err);
+          },
           { enableHighAccuracy: false, timeout: 15000, maximumAge: 30000 }
         );
         watchId.current = id;
+        started = true;
+        console.log('[GPS] Browser geolocation active');
+      } catch (e) {
+        console.warn('[GPS] Browser geolocation failed:', e.message);
       }
-
-      // Only mark GPS as active if a watch was successfully established
-      if (watchId.current == null) return;
-
-      gpsActive.current = true;
-
-      // Send immediately after first fix
-      setTimeout(() => {
-        if (!cancelledRef.current) uploadLocation();
-      }, 5000);
-
-      // Periodic upload
-      uploadTimer.current = setInterval(() => {
-        if (!cancelledRef.current) uploadLocation();
-      }, UPLOAD_INTERVAL_MS);
-
-    } catch {
-      // GPS unavailable — will retry on next poll
     }
+
+    if (!started) {
+      console.warn('[GPS] No location source available — will retry on next poll');
+      return;
+    }
+
+    // Only mark GPS as active if a watch was successfully established
+    if (watchId.current == null) return;
+
+    gpsActive.current = true;
+
+    // Send immediately after first fix
+    setTimeout(() => {
+      if (!cancelledRef.current) uploadLocation();
+    }, 5000);
+
+    // Periodic upload
+    uploadTimer.current = setInterval(() => {
+      if (!cancelledRef.current) uploadLocation();
+    }, UPLOAD_INTERVAL_MS);
   }, [/* capture nothing — all deps are refs */]);
 
   const stopGps = useCallback(() => {
     gpsActive.current = false;
 
     if (watchId.current != null) {
-      if (isCapacitor) {
+      if (isCapacitor && Geolocation) {
         Geolocation.clearWatch({ id: watchId.current }).catch(() => {});
       } else if (navigator.geolocation) {
         navigator.geolocation.clearWatch(watchId.current);
