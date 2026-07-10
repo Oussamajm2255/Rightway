@@ -1,8 +1,12 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { Geolocation } from '@capacitor/geolocation';
 
-const TRACK_INTERVAL_MS = 60_000; // 60 seconds — battery-friendly
-const MIN_DISTANCE_M = 50;        // only send if moved 50m+
+const POLL_INTERVAL_MS = 15_000;  // 15s — check tracking preference
+const UPLOAD_INTERVAL_MS = 60_000; // 60s — send location to server
+const MIN_DISTANCE_M = 50;         // only send if moved 50m+
+
+const isCapacitor = typeof window !== 'undefined' &&
+  !!(window.Capacitor || window.navigator?.userAgent?.includes?.('Capacitor'));
 
 /**
  * Reverse-geocode lat/lng → human-readable location name
@@ -51,11 +55,13 @@ async function reverseGeocode(lat, lng) {
 export default function useLocationTracker({ role, apiGet, apiPut }) {
   const lastSent = useRef(null);
   const watchId = useRef(null);
-  const intervalRef = useRef(null);
+  const uploadTimer = useRef(null);
+  const pollTimer = useRef(null);
   const currentPos = useRef(null);
-  const trackingEnabled = useRef(false);
+  const gpsActive = useRef(false);
   const apiGetRef = useRef(apiGet);
   const apiPutRef = useRef(apiPut);
+  const cancelledRef = useRef(false);
   apiGetRef.current = apiGet;
   apiPutRef.current = apiPut;
 
@@ -64,22 +70,105 @@ export default function useLocationTracker({ role, apiGet, apiPut }) {
       const data = await apiGetRef.current('/users/me/tracking');
       return data.location_tracking_enabled === true;
     } catch {
-      return trackingEnabled.current; // keep current state on error
+      return gpsActive.current; // keep current state on error
     }
   }, []);
 
-  const sendLocation = useCallback(async () => {
-    // Re-verify tracking is still enabled before each send
+  const startGps = useCallback(async () => {
+    if (gpsActive.current || cancelledRef.current) return;
+
+    try {
+      if (isCapacitor) {
+        const perm = await Geolocation.checkPermissions();
+        if (perm.location !== 'granted') {
+          const req = await Geolocation.requestPermissions();
+          if (req.location !== 'granted') return;
+        }
+      }
+
+      if (isCapacitor) {
+        const id = await Geolocation.watchPosition(
+          { enableHighAccuracy: false, timeout: 15000, maximumAge: 30000 },
+          (position, err) => {
+            if (cancelledRef.current) return;
+            if (err) return;
+            if (position?.coords) {
+              currentPos.current = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+              };
+            }
+          }
+        );
+        watchId.current = id;
+      }
+
+      // Also attempt browser geolocation as fallback (dev / desktop)
+      if (!isCapacitor && navigator.geolocation) {
+        const id = navigator.geolocation.watchPosition(
+          (pos) => {
+            if (cancelledRef.current) return;
+            currentPos.current = {
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+            };
+          },
+          () => {}, // silent on error
+          { enableHighAccuracy: false, timeout: 15000, maximumAge: 30000 }
+        );
+        watchId.current = id;
+      }
+
+      gpsActive.current = true;
+
+      // Send immediately after first fix
+      setTimeout(() => {
+        if (!cancelledRef.current) uploadLocation();
+      }, 5000);
+
+      // Periodic upload
+      uploadTimer.current = setInterval(() => {
+        if (!cancelledRef.current) uploadLocation();
+      }, UPLOAD_INTERVAL_MS);
+
+    } catch {
+      // GPS unavailable — will retry on next poll
+    }
+  }, [/* capture nothing — all deps are refs */]);
+
+  const stopGps = useCallback(() => {
+    gpsActive.current = false;
+
+    if (watchId.current != null) {
+      if (isCapacitor) {
+        Geolocation.clearWatch({ id: watchId.current }).catch(() => {});
+      } else if (navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchId.current);
+      }
+      watchId.current = null;
+    }
+
+    if (uploadTimer.current) {
+      clearInterval(uploadTimer.current);
+      uploadTimer.current = null;
+    }
+
+    currentPos.current = null;
+  }, []);
+
+  const uploadLocation = useCallback(async () => {
+    // Re-verify tracking preference before sending
     const enabled = await checkTrackingEnabled();
-    trackingEnabled.current = enabled;
-    if (!enabled) return;
+    if (!enabled) {
+      stopGps();
+      return;
+    }
 
     const pos = currentPos.current;
     if (!pos) return;
 
     const { latitude, longitude } = pos;
 
-    // Skip if within MIN_DISTANCE_M of last-sent position
     if (lastSent.current) {
       const dLat = latitude - lastSent.current.lat;
       const dLng = longitude - lastSent.current.lng;
@@ -100,77 +189,45 @@ export default function useLocationTracker({ role, apiGet, apiPut }) {
     } catch {
       // silent — retry next interval
     }
-  }, [checkTrackingEnabled]);
+  }, [checkTrackingEnabled, stopGps]);
 
+  // ── Polling loop: checks tracking preference & manages GPS state ──
   useEffect(() => {
     if (role !== 'COMMERCIAL') {
-      cleanup();
+      cancelledRef.current = true;
+      stopGps();
+      if (pollTimer.current) {
+        clearInterval(pollTimer.current);
+        pollTimer.current = null;
+      }
       return;
     }
 
-    let cancelled = false;
+    cancelledRef.current = false;
 
-    async function start() {
-      // First check if tracking is enabled by user preference
+    async function poll() {
+      if (cancelledRef.current) return;
       const enabled = await checkTrackingEnabled();
-      trackingEnabled.current = enabled;
-      if (cancelled || !enabled) return; // don't request GPS if tracking is off
+      if (cancelledRef.current) return;
 
-      try {
-        // Request permission (Android shows system dialog on first call)
-        const perm = await Geolocation.checkPermissions();
-        if (perm.location !== 'granted') {
-          const req = await Geolocation.requestPermissions();
-          if (req.location !== 'granted') return;
-        }
-
-        // Start watching with moderate accuracy
-        const id = await Geolocation.watchPosition(
-          { enableHighAccuracy: false, timeout: 15000, maximumAge: 30000 },
-          (position, err) => {
-            if (cancelled) return;
-            if (err) return;
-            if (position?.coords) {
-              currentPos.current = {
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude,
-              };
-            }
-          }
-        );
-        watchId.current = id;
-
-        // Initial send after first position fix
-        setTimeout(() => {
-          if (!cancelled) sendLocation();
-        }, 3000);
-
-        // Periodic upload with preference re-check
-        intervalRef.current = setInterval(() => {
-          if (!cancelled) sendLocation();
-        }, TRACK_INTERVAL_MS);
-
-      } catch {
-        // Capacitor not available (browser) — silent
+      if (enabled && !gpsActive.current) {
+        startGps();
+      } else if (!enabled && gpsActive.current) {
+        stopGps();
       }
     }
 
-    start();
+    // Check immediately and then every POLL_INTERVAL_MS
+    poll();
+    pollTimer.current = setInterval(poll, POLL_INTERVAL_MS);
 
     return () => {
-      cancelled = true;
-      cleanup();
+      cancelledRef.current = true;
+      stopGps();
+      if (pollTimer.current) {
+        clearInterval(pollTimer.current);
+        pollTimer.current = null;
+      }
     };
-  }, [role, checkTrackingEnabled, sendLocation]);
-
-  function cleanup() {
-    if (watchId.current) {
-      Geolocation.clearWatch({ id: watchId.current }).catch(() => {});
-      watchId.current = null;
-    }
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  }
+  }, [role, checkTrackingEnabled, startGps, stopGps]);
 }
