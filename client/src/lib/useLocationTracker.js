@@ -1,13 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
-
-// Try importing Geolocation — may fail at bundle time if plugin not synced, handled at runtime
-let Geolocation = null;
-try {
-  Geolocation = require('@capacitor/geolocation').Geolocation;
-} catch {
-  // plugin not loaded — will fall back to browser geolocation
-}
+import { Geolocation } from '@capacitor/geolocation';
 
 const POLL_INTERVAL_MS = 15_000;  // 15s — check tracking preference
 const UPLOAD_INTERVAL_MS = 60_000; // 60s — send location to server
