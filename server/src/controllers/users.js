@@ -126,6 +126,7 @@ async function updateUser(req, res) {
     if (req.body.phone !== undefined) fields.phone = req.body.phone;
     if (req.body.vehicle_name !== undefined) fields.vehicle_name = req.body.vehicle_name;
     if (req.body.vehicle_plate !== undefined) fields.vehicle_plate = req.body.vehicle_plate;
+    if (req.body.role !== undefined) fields.role = req.body.role;
     if (req.body.is_active !== undefined) fields.is_active = req.body.is_active;
     if (req.body.remuneration_type !== undefined) fields.remuneration_type = req.body.remuneration_type;
     
@@ -136,6 +137,22 @@ async function updateUser(req, res) {
     // If the user is changed to COMMISSION, force salary_amount to 0
     if (fields.remuneration_type === 'COMMISSION' || (!fields.remuneration_type && targetUser.remuneration_type === 'COMMISSION')) {
       fields.salary_amount = 0;
+    }
+
+    // If role changed, adjust remuneration defaults for personnel roles
+    if (fields.role) {
+      const isPersonnel = fields.role === 'COMMERCIAL' || fields.role === 'MAGASINIER' || fields.role === 'DIRECTEUR_COMMERCIAL';
+      if (isPersonnel && !fields.remuneration_type) {
+        // Switched to personnel role without specifying remuneration — keep existing or default to COMMISSION
+        fields.remuneration_type = targetUser.remuneration_type || 'COMMISSION';
+        if (fields.remuneration_type === 'COMMISSION' && fields.salary_amount === undefined) {
+          fields.salary_amount = 0;
+        }
+      } else if (!isPersonnel) {
+        // Switched away from personnel — clear remuneration fields
+        fields.remuneration_type = null;
+        fields.salary_amount = 0;
+      }
     }
 
     const updated = await userModel.update(id, fields);
