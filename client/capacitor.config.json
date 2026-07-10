@@ -4,7 +4,8 @@
   "webDir": "dist",
   "bundledWebRuntime": false,
   "server": {
-    "androidScheme": "https"
+    "url": "https://rightway-production-384a.up.railway.app",
+    "cleartext": false
   },
   "android": {
     "allowMixedContent": true,
