@@ -79,7 +79,7 @@ app.use(helmet({
         ? ["'self'"]                          // production build has no inline scripts
         : ["'self'", "'unsafe-inline'"],      // Vite HMR requires inline in development
       styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'], // React style={{}} requires inline style attributes
-      imgSrc: ["'self'", 'data:', 'blob:'],
+      imgSrc: ["'self'", 'data:', 'blob:', 'https://*.tile.openstreetmap.org', 'https://unpkg.com'],
       fontSrc: ["'self'", 'https://fonts.gstatic.com'],
       connectSrc: ["'self'"],
       frameAncestors: ["'none'"],
@@ -197,6 +197,7 @@ const pushRoutes = require('./routes/push');
 const commercialsRoutes = require('./routes/commercials');
 const benefitsRoutes = require('./routes/benefits');
 const prelevementsRoutes = require('./routes/prelevements');
+const commercialLocationsRoutes = require('./routes/commercials-locations');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
@@ -209,6 +210,7 @@ app.use('/api/push', pushRoutes);
 app.use('/api/commercials', commercialsRoutes);
 app.use('/api/benefits', benefitsRoutes);
 app.use('/api/prelevements', prelevementsRoutes);
+app.use('/api/commercials/locations', commercialLocationsRoutes);
 
 // ============================================================
 // SPA FALLBACK (production) / 404 (dev)

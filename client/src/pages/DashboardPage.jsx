@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { apiGet } from '../lib/api';
 import { formatDate } from '../lib/utils';
 import { Chart } from 'chart.js/auto';
+import CommercialsMap from '../components/CommercialsMap';
 import './DashboardPage.css';
 
 // ─── Palette (Editorial Terminal: ink · red · grey) ───
@@ -367,6 +368,9 @@ function SuperAdminView({ data, navigate, user }) {
           <KpiCard icon={Icons.percent} label="Commissions" value={fmtDT(data.commissions)} sub="10% du CA global" />
           <KpiCard icon={Icons.alert} label="Alertes stock" value={fmtInt(data.stock_alerts_count)} sub="produits &lt; 20 unités" accent onClick={() => navigate('/stock')} />
         </div>
+
+        {/* Live Commercials Map — first-contact KPI */}
+        <CommercialsMap />
 
         {/* Écarts section */}
         {data.ecarts_count > 0 && (

@@ -276,6 +276,20 @@ CREATE TABLE IF NOT EXISTS livraison_retour_creation_log (
 CREATE INDEX IF NOT EXISTS idx_retour_creation_log_livraison ON livraison_retour_creation_log(livraison_id);
 
 -- ============================================================
+-- COMMERCIAL LOCATIONS (real-time GPS tracking)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS commercial_locations (
+  id SERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE UNIQUE,
+  latitude NUMERIC(10, 7) NOT NULL,
+  longitude NUMERIC(10, 7) NOT NULL,
+  location_name VARCHAR(255) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_commercial_locations_user ON commercial_locations(user_id);
+
+-- ============================================================
 -- PUSH NOTIFICATION SUBSCRIPTIONS
 -- ============================================================
 CREATE TABLE IF NOT EXISTS push_subscriptions (
