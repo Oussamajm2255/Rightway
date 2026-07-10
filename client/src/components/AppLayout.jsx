@@ -388,9 +388,9 @@ function AppLayout({ children }) {
         </main>
       </div>
 
-      {/* Bottom Nav Mobile */}
+      {/* Bottom Nav Mobile — all role-appropriate tabs, horizontally scrollable */}
       <nav className="bottom-nav">
-        {navItems.slice(0, 5).map((item) => {
+        {navItems.map((item) => {
           const Icon = ICON_MAP[item.icon];
           return (
             <NavLink
