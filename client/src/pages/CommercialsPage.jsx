@@ -457,8 +457,8 @@ export default function CommercialsPage() {
             <div className="comm-kpi-val">{globals?.agents ?? '—'}</div>
             <div className="comm-kpi-sub">comptes activés</div>
           </div>
-          <div className="comm-kpi-card" style={{ '--accent': PALETTE[5] }}>
-            <div className="comm-kpi-icon" style={{ background: hexAlpha(PALETTE[5], 0.1), color: PALETTE[5] }}><SvgTruck /></div>
+          <div className="comm-kpi-card" style={{ '--accent': PALETTE[5 % PALETTE.length] }}>
+            <div className="comm-kpi-icon" style={{ background: hexAlpha(PALETTE[5 % PALETTE.length], 0.1), color: PALETTE[5 % PALETTE.length] }}><SvgTruck /></div>
             <div className="comm-kpi-label">Livraisons en cours</div>
             <div className="comm-kpi-val">{globals?.encours ?? '—'}</div>
             <div className="comm-kpi-sub">EN_COURS + EN_RETOUR</div>
@@ -475,8 +475,8 @@ export default function CommercialsPage() {
             <div className="comm-kpi-val" style={{ fontSize: '18px' }}>{globals ? fmtDTShort(globals.commissions) : '—'}</div>
             <div className="comm-kpi-sub">10% du CA global</div>
           </div>
-          <div className="comm-kpi-card" style={{ '--accent': PALETTE[3] }}>
-            <div className="comm-kpi-icon" style={{ background: hexAlpha(PALETTE[3], 0.1), color: PALETTE[3] }}><SvgChartPie /></div>
+          <div className="comm-kpi-card" style={{ '--accent': PALETTE[3 % PALETTE.length] }}>
+            <div className="comm-kpi-icon" style={{ background: hexAlpha(PALETTE[3 % PALETTE.length], 0.1), color: PALETTE[3 % PALETTE.length] }}><SvgChartPie /></div>
             <div className="comm-kpi-label">Taux de complétion</div>
             <div className="comm-kpi-val">{globals ? fmtPct(globals.completion_avg) : '—'}</div>
             <div className="comm-kpi-sub">moyenne tous commerciaux</div>
