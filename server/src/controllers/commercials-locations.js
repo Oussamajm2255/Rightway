@@ -1,7 +1,7 @@
 const pool = require('../db/pool');
 
 // GET /api/commercials/locations
-// Returns all COMMERCIAL users' last known locations
+// Returns COMMERCIAL users' locations — only those who opted in
 async function getAllLocations(req, res) {
   try {
     const { rows } = await pool.query(`
@@ -16,6 +16,7 @@ async function getAllLocations(req, res) {
       FROM commercial_locations cl
       JOIN users u ON cl.user_id = u.id
       WHERE u.role = 'COMMERCIAL'
+        AND u.location_tracking_enabled = true
       ORDER BY u.full_name
     `);
 
@@ -37,7 +38,7 @@ async function getAllLocations(req, res) {
 }
 
 // PUT /api/commercials/location
-// Commercial updates their own GPS location
+// Commercial updates their own GPS location — only if tracking is enabled
 async function updateLocation(req, res) {
   const userId = req.user.id;
   const { latitude, longitude, location_name } = req.body;
@@ -54,6 +55,15 @@ async function updateLocation(req, res) {
   }
 
   try {
+    // Check tracking opt-in
+    const { rows: userRows } = await pool.query(
+      'SELECT location_tracking_enabled FROM users WHERE id = $1',
+      [userId]
+    );
+    if (!userRows[0] || !userRows[0].location_tracking_enabled) {
+      return res.status(403).json({ error: 'Suivi de localisation désactivé. Activez-le dans Paramètres.' });
+    }
+
     await pool.query(
       `INSERT INTO commercial_locations (user_id, latitude, longitude, location_name)
        VALUES ($1, $2, $3, $4)

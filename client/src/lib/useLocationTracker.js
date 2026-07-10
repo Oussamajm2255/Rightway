@@ -37,24 +37,43 @@ async function reverseGeocode(lat, lng) {
 
 /**
  * Hook: track commercial's GPS location in the background.
- * Only activates when role === 'COMMERCIAL'.
+ * Only activates when role === 'COMMERCIAL' AND tracking is opted-in.
  *
  * Behaviour:
- * - Requests Android location permission on mount
+ * - Fetches tracking preference from server on mount
+ * - Only requests Android location permission if tracking is enabled
  * - Watches position continuously (low-power mode)
- * - Every TRACK_INTERVAL_MS: reverse-geocode & PUT to server
+ * - Every TRACK_INTERVAL_MS: re-verifies tracking preference, reverse-geocode & PUT
  * - Skips duplicate positions (< MIN_DISTANCE_M change)
+ * - Stops immediately if user disables tracking in settings
  * - Cleans up on unmount / role change
  */
-export default function useLocationTracker({ role, apiPut, enabled = true }) {
-  const lastSent = useRef(null);     // { lat, lng }
+export default function useLocationTracker({ role, apiGet, apiPut }) {
+  const lastSent = useRef(null);
   const watchId = useRef(null);
   const intervalRef = useRef(null);
-  const currentPos = useRef(null);   // latest reading from watch
+  const currentPos = useRef(null);
+  const trackingEnabled = useRef(false);
+  const apiGetRef = useRef(apiGet);
   const apiPutRef = useRef(apiPut);
+  apiGetRef.current = apiGet;
   apiPutRef.current = apiPut;
 
+  const checkTrackingEnabled = useCallback(async () => {
+    try {
+      const data = await apiGetRef.current('/users/me/tracking');
+      return data.location_tracking_enabled === true;
+    } catch {
+      return trackingEnabled.current; // keep current state on error
+    }
+  }, []);
+
   const sendLocation = useCallback(async () => {
+    // Re-verify tracking is still enabled before each send
+    const enabled = await checkTrackingEnabled();
+    trackingEnabled.current = enabled;
+    if (!enabled) return;
+
     const pos = currentPos.current;
     if (!pos) return;
 
@@ -81,34 +100,31 @@ export default function useLocationTracker({ role, apiPut, enabled = true }) {
     } catch {
       // silent — retry next interval
     }
-  }, []);
+  }, [checkTrackingEnabled]);
 
   useEffect(() => {
-    if (role !== 'COMMERCIAL' || !enabled) {
-      // Cleanup if role changes away from COMMERCIAL
-      if (watchId.current) {
-        Geolocation.clearWatch({ id: watchId.current }).catch(() => {});
-        watchId.current = null;
-      }
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+    if (role !== 'COMMERCIAL') {
+      cleanup();
       return;
     }
 
     let cancelled = false;
 
     async function start() {
+      // First check if tracking is enabled by user preference
+      const enabled = await checkTrackingEnabled();
+      trackingEnabled.current = enabled;
+      if (cancelled || !enabled) return; // don't request GPS if tracking is off
+
       try {
         // Request permission (Android shows system dialog on first call)
         const perm = await Geolocation.checkPermissions();
         if (perm.location !== 'granted') {
           const req = await Geolocation.requestPermissions();
-          if (req.location !== 'granted') return; // user denied
+          if (req.location !== 'granted') return;
         }
 
-        // Start watching with moderate accuracy (good balance)
+        // Start watching with moderate accuracy
         const id = await Geolocation.watchPosition(
           { enableHighAccuracy: false, timeout: 15000, maximumAge: 30000 },
           (position, err) => {
@@ -124,13 +140,12 @@ export default function useLocationTracker({ role, apiPut, enabled = true }) {
         );
         watchId.current = id;
 
-        // Immediately try to send on start
-        // Wait 3s for first position fix, then send
+        // Initial send after first position fix
         setTimeout(() => {
           if (!cancelled) sendLocation();
         }, 3000);
 
-        // Periodic upload
+        // Periodic upload with preference re-check
         intervalRef.current = setInterval(() => {
           if (!cancelled) sendLocation();
         }, TRACK_INTERVAL_MS);
@@ -144,14 +159,18 @@ export default function useLocationTracker({ role, apiPut, enabled = true }) {
 
     return () => {
       cancelled = true;
-      if (watchId.current) {
-        Geolocation.clearWatch({ id: watchId.current }).catch(() => {});
-        watchId.current = null;
-      }
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+      cleanup();
     };
-  }, [role, enabled, sendLocation]);
+  }, [role, checkTrackingEnabled, sendLocation]);
+
+  function cleanup() {
+    if (watchId.current) {
+      Geolocation.clearWatch({ id: watchId.current }).catch(() => {});
+      watchId.current = null;
+    }
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }
 }

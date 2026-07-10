@@ -115,6 +115,15 @@ function IconClose() {
   );
 }
 
+function IconSettings() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="10" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M10 2.5v2M10 15.5v2M3.5 10h2M14.5 10h2M5.05 4.05l1.42 1.42M13.53 14.53l1.42 1.42M4.05 15.95l1.42-1.42M14.53 5.47l1.42-1.42" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function IconBenefits() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -143,6 +152,7 @@ const ICON_MAP = {
   commercials: IconCommercials,
   benefits: IconBenefits,
   prelevement: IconPrelevement,
+  settings: IconSettings,
   logout: IconLogout,
 };
 
@@ -212,7 +222,7 @@ function AppLayout({ children }) {
   const role = user?.role;
 
   // GPS tracking for COMMERCIAL users → real-time map on SUPER_ADMIN dashboard
-  useLocationTracker({ role, apiPut });
+  useLocationTracker({ role, apiGet, apiPut });
 
   const navItems = [];
   if (role === 'SUPER_ADMIN') {
@@ -235,6 +245,7 @@ function AppLayout({ children }) {
   } else if (role === 'COMMERCIAL') {
     navItems.push({ to: '/livraisons', label: 'Mes livraisons', icon: 'livraisons' });
     navItems.push({ to: '/historique', label: 'Historique', icon: 'historique' });
+    navItems.push({ to: '/settings', label: 'Paramètres', icon: 'settings' });
   }
 
   function getInitials(name) {
@@ -261,6 +272,7 @@ function AppLayout({ children }) {
     if (path.startsWith('/benefits')) return 'Bénéfices & Rentabilité';
     if (path.startsWith('/prelevements')) return 'Prélèvements';
     if (path.startsWith('/historique')) return 'Historique';
+    if (path.startsWith('/settings')) return 'Paramètres';
     return '';
   }
 

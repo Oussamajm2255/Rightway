@@ -1,4 +1,5 @@
 const { validationResult } = require('express-validator');
+const pool = require('../db/pool');
 const userModel = require('../models/user');
 const { hashPassword, verifyPassword } = require('../utils/password');
 
@@ -203,4 +204,58 @@ async function listCommercials(req, res) {
   }
 }
 
-module.exports = { listUsers, getUser, createUser, updateUser, deactivateUser, listCommercials };
+/**
+ * GET /api/users/me/tracking
+ * Returns the current user's location tracking preference.
+ * Accessible by any authenticated user (all roles).
+ */
+async function getTrackingSettings(req, res) {
+  try {
+    const { rows } = await pool.query(
+      'SELECT location_tracking_enabled FROM users WHERE id = $1',
+      [req.user.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable' });
+    res.json({ location_tracking_enabled: rows[0].location_tracking_enabled });
+  } catch (err) {
+    console.error('getTrackingSettings error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+/**
+ * PUT /api/users/me/tracking
+ * Toggle the current user's location tracking on/off.
+ * Only COMMERCIAL users can enable tracking.
+ */
+async function updateTrackingSettings(req, res) {
+  const { enabled } = req.body;
+
+  if (typeof enabled !== 'boolean') {
+    return res.status(400).json({ error: 'Le champ "enabled" (boolean) est obligatoire' });
+  }
+
+  // Only COMMERCIAL role can enable tracking
+  if (enabled && req.user.role !== 'COMMERCIAL') {
+    return res.status(403).json({ error: 'Seuls les commerciaux peuvent activer le suivi de localisation' });
+  }
+
+  try {
+    await pool.query(
+      'UPDATE users SET location_tracking_enabled = $1 WHERE id = $2',
+      [enabled, req.user.id]
+    );
+
+    // If disabling, clear their stored location for privacy
+    if (!enabled) {
+      await pool.query('DELETE FROM commercial_locations WHERE user_id = $1', [req.user.id]);
+    }
+
+    res.json({ location_tracking_enabled: enabled });
+  } catch (err) {
+    console.error('updateTrackingSettings error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+module.exports = { listUsers, getUser, createUser, updateUser, deactivateUser, listCommercials, getTrackingSettings, updateTrackingSettings };

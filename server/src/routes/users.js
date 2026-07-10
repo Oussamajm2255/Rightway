@@ -9,6 +9,8 @@ const {
   updateUser,
   deactivateUser,
   listCommercials,
+  getTrackingSettings,
+  updateTrackingSettings,
 } = require('../controllers/users');
 
 // All user routes require authentication + SUPER_ADMIN role
@@ -16,6 +18,12 @@ router.use(authenticate);
 
 // GET /api/users/commercials — must be before /:id
 router.get('/commercials', listCommercials);
+
+// GET /api/users/me/tracking — current user's tracking preference (all roles)
+router.get('/me/tracking', getTrackingSettings);
+
+// PUT /api/users/me/tracking — toggle location tracking (COMMERCIAL only)
+router.put('/me/tracking', updateTrackingSettings);
 
 // GET /api/users
 router.get('/', authorize('SUPER_ADMIN'), listUsers);
