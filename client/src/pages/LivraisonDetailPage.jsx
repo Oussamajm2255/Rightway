@@ -1162,6 +1162,7 @@ function LivraisonDetailPage() {
                       <th>PU TTC</th>
                       <th style={{ textAlign: 'center' }}>Qté</th>
                       {showVendu && <th style={{ textAlign: 'center' }}>Vendu</th>}
+                      <th style={{ textAlign: 'right' }}>Montant</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1177,14 +1178,16 @@ function LivraisonDetailPage() {
                           <td className="td-price">{formatDT(item.prix_ttc)}</td>
                           <td className="td-qty">{item.qte_chargee}</td>
                           {showVendu && <td className="td-qty">{item.qte_vendue}</td>}
+                          <td className="td-price">{formatDT(item.qte_chargee * Number(item.prix_ttc))}</td>
                         </tr>
                         ))}
                         <tr className="cat-subtotal" style={{ background: catCol.bg, borderLeftColor: catCol.bar, borderTopColor: catCol.bar }}>
-                          <td colSpan="4" style={{ color: catCol.text, textAlign: 'center', fontWeight: 700 }}>
+                          <td colSpan="5" style={{ color: catCol.text, textAlign: 'center', fontWeight: 700 }}>
                             Sous-total {cat}
                           </td>
                           <td className="td-qty">{catItems.reduce((s,i) => s + i.qte_chargee, 0)}</td>
                           {showVendu && <td className="td-qty">{catItems.reduce((s,i) => s + i.qte_vendue, 0)}</td>}
+                          <td className="td-price" style={{ fontWeight: 700 }}>{formatDT(catItems.reduce((s,i) => s + i.qte_chargee * Number(i.prix_ttc), 0))}</td>
                         </tr>
                       </Fragment>
                       );
@@ -1225,6 +1228,10 @@ function LivraisonDetailPage() {
                                 <b>{item.qte_vendue}</b>
                               </div>
                             )}
+                            <div>
+                              <span>Montant</span>
+                              <b>{formatDT(item.qte_chargee * Number(item.prix_ttc))}</b>
+                            </div>
                           </div>
                         </article>
                       ))}
@@ -1233,6 +1240,7 @@ function LivraisonDetailPage() {
                         <span>Sous-total</span>
                         Chargé <b>{catItems.reduce((s, i) => s + i.qte_chargee, 0)}</b>
                         {showVendu && <> · Vendu <b>{catItems.reduce((s, i) => s + i.qte_vendue, 0)}</b></>}
+                        · Montant <b>{formatDT(catItems.reduce((s, i) => s + i.qte_chargee * Number(i.prix_ttc), 0))}</b>
                       </div>
                     </section>
                   );

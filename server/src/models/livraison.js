@@ -164,7 +164,7 @@ async function findById(id) {
   const { rows: items } = await pool.query(
     `SELECT li.*, p.barcode, p.name AS product_name, p.category
      FROM livraison_items li
-     JOIN products p ON li.product_id = p.id
+     LEFT JOIN products p ON li.product_id = p.id
      WHERE li.livraison_id = $1
      ORDER BY p.category, p.name`,
     [id]
