@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const pushSubscriptionModel = require('../models/pushSubscription');
+const deviceTokenModel = require('../models/deviceToken');
 const { vapidPublicKey } = require('../services/pushService');
 
 // GET /api/push/vapid-public-key — expose VAPID public key to client for subscription
@@ -44,6 +45,32 @@ router.post('/unsubscribe', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error('[push] unsubscribe error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+});
+
+// POST /api/push/device-token — register a native (FCM) device token
+router.post('/device-token', async (req, res) => {
+  try {
+    const { token, platform } = req.body;
+    if (!token) return res.status(400).json({ error: 'token required' });
+    await deviceTokenModel.upsert(req.user.id, token, platform || 'android');
+    console.log(`[push] User ${req.user.id} registered device token`);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[push] device-token error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+});
+
+// DELETE /api/push/device-token — remove a native device token (on logout)
+router.delete('/device-token', async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (token) await deviceTokenModel.remove(token);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[push] device-token delete error:', err);
     res.status(500).json({ error: 'Erreur interne du serveur' });
   }
 });

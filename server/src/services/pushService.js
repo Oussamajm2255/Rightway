@@ -17,8 +17,15 @@ if (vapidPublicKey && vapidPrivateKey) {
  * Falls back silently if push fails (notification is still in DB).
  */
 async function sendToUser(user_id, { title, body, url, tag }) {
+  // Native FCM push (Android app tray notifications) — runs independently of
+  // web-push/VAPID so it works even if VAPID isn't configured.
+  try {
+    const fcm = require('./fcmService');
+    fcm.sendToUser(user_id, { title, body, url, tag }).catch(() => {});
+  } catch (_) { /* fcm unavailable — not critical */ }
+
+  // Web push (browser PWA) — requires VAPID.
   if (!vapidPublicKey || !vapidPrivateKey) {
-    console.warn('[push] VAPID not configured, skipping push');
     return;
   }
 

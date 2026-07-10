@@ -171,6 +171,18 @@ const migrations = [
     confirmed_at TIMESTAMPTZ
   )`,
   `CREATE INDEX IF NOT EXISTS idx_retour_creation_log_livraison ON livraison_retour_creation_log(livraison_id)`,
+
+  // Native push (FCM) device tokens — for the Android app's tray notifications.
+  // Separate from web push_subscriptions (which use VAPID p256dh/auth keys).
+  `CREATE TABLE IF NOT EXISTS device_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token TEXT NOT NULL UNIQUE,
+    platform VARCHAR(20) DEFAULT 'android',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_device_tokens_user ON device_tokens(user_id)`,
 ];
 
 async function runMigrations() {

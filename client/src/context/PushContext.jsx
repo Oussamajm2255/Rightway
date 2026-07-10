@@ -1,6 +1,10 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { useAuth } from './AuthContext';
 import { apiGet } from '../lib/api';
+import { initNativePush } from '../lib/nativePush';
+
+const isNative = Capacitor.isNativePlatform();
 
 const PushContext = createContext(null);
 
@@ -104,15 +108,18 @@ export function PushProvider({ children }) {
     }
   }, [subscribe]);
 
-  // Auto-request permission when user logs in
+  // Auto-request permission when user logs in.
+  // Native (Android app) → FCM; browser → web-push.
   useEffect(() => {
-    if (user) {
-      // Small delay so the UI renders before permission dialog
-      const timer = setTimeout(() => {
+    if (!user) return;
+    const timer = setTimeout(() => {
+      if (isNative) {
+        initNativePush();
+      } else {
         requestPermission();
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
   }, [user, requestPermission]);
 
   // Listen for SW messages (notification clicks)
