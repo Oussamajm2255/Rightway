@@ -210,7 +210,7 @@ app.use('/api/push', pushRoutes);
 app.use('/api/commercials', commercialsRoutes);
 app.use('/api/benefits', benefitsRoutes);
 app.use('/api/prelevements', prelevementsRoutes);
-app.use('/api/commercials/locations', commercialLocationsRoutes);
+app.use('/api/commercials', commercialLocationsRoutes);
 
 // ============================================================
 // SPA FALLBACK (production) / 404 (dev)

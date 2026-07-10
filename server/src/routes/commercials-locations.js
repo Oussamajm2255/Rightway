@@ -6,7 +6,7 @@ const { getAllLocations, updateLocation } = require('../controllers/commercials-
 router.use(authenticate);
 
 // SUPER_ADMIN views all commercial locations on the dashboard map
-router.get('/', authorize('SUPER_ADMIN'), getAllLocations);
+router.get('/locations', authorize('SUPER_ADMIN'), getAllLocations);
 
 // COMMERCIAL updates their own GPS location from mobile app
 router.put('/location', authorize('COMMERCIAL'), updateLocation);
