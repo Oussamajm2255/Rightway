@@ -13,14 +13,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-function getInitials(fullName) {
-  if (!fullName) return '?';
-  const parts = fullName.trim().split(/\s+/);
-  return parts.length >= 2
-    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-    : (parts[0]?.[0] || '?').toUpperCase();
-}
-
 function relativeLabel(isoStr) {
   if (!isoStr) return '';
   const diff = (Date.now() - new Date(isoStr).getTime()) / 1000;
@@ -30,13 +22,37 @@ function relativeLabel(isoStr) {
   return `Il y a ${Math.floor(diff / 86400)}j`;
 }
 
-function createMarkerIcon(initials) {
+function createMarkerIcon(fullName, city) {
+  const escapedName = fullName
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+  const escapedCity = (city || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
   return L.divIcon({
     className: 'commercial-marker',
-    html: `<div class="marker-pin">${initials}</div>`,
-    iconSize: [36, 36],
-    iconAnchor: [18, 18],
-    popupAnchor: [0, -20],
+    html: `
+      <div class="marker-wrap">
+        <div class="marker-pin">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+        </div>
+        <div class="marker-label-box">
+          <span class="marker-name">${escapedName}</span>
+          <span class="marker-city">${escapedCity}</span>
+        </div>
+      </div>
+    `,
+    iconSize: [160, 62],
+    iconAnchor: [80, 62],
+    popupAnchor: [0, -34],
   });
 }
 
@@ -75,12 +91,12 @@ export default function CommercialsMap() {
     return () => clearInterval(timer);
   }, [lastFetch]);
 
-  // Build marker icons (memoized)
+  // Build marker icons (cached per location)
   const markerIcons = {};
-  function getIcon(name) {
-    const key = name || '?';
+  function getIcon(name, city) {
+    const key = `${name}||${city || ''}`;
     if (!markerIcons[key]) {
-      markerIcons[key] = createMarkerIcon(getInitials(name));
+      markerIcons[key] = createMarkerIcon(name, city);
     }
     return markerIcons[key];
   }
@@ -129,7 +145,7 @@ export default function CommercialsMap() {
               <Marker
                 key={loc.user_id}
                 position={[loc.latitude, loc.longitude]}
-                icon={getIcon(loc.full_name)}
+                icon={getIcon(loc.full_name, loc.location_name)}
               >
                 <Popup>
                   <div className="cm-popup">
