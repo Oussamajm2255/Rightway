@@ -80,7 +80,7 @@ function ProductsPage() {
 
   return (
     <div className="products-page">
-      <div className="page-header">
+      <div className="brand-masthead">
         <div>
           <h1 className="page-title">Produits</h1>
           <p className="page-subtitle">Gérez le catalogue des produits</p>

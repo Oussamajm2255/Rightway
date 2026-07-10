@@ -237,7 +237,7 @@ function LivraisonsListPage() {
 
   return (
     <div className="livraisons-page">
-      <div className="page-header">
+      <div className="brand-masthead">
         <div>
           <h1 className="page-title">Livraisons</h1>
           <p className="page-subtitle">Toutes les livraisons</p>

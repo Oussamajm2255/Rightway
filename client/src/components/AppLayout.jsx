@@ -154,6 +154,7 @@ function AppLayout({ children }) {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifLoading, setNotifLoading] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -166,6 +167,14 @@ function AppLayout({ children }) {
   useEffect(() => { fetchNotifications(); }, [fetchNotifications]);
   useEffect(() => { setMobileMenuOpen(false); }, [location]);
   useEffect(() => { setNotifOpen(false); }, [location]);
+
+  // Track scroll position for topbar shadow
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 0);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   async function handleMarkAllRead() {
     try {
@@ -254,7 +263,7 @@ function AppLayout({ children }) {
   return (
     <div className="app-layout">
       {/* Top Bar */}
-      <header className="topbar">
+      <header className={`topbar${scrolled ? ' topbar-scrolled' : ''}`}>
         <div className="topbar-left">
           <button
             className="hamburger"
@@ -373,7 +382,9 @@ function AppLayout({ children }) {
 
         {/* Main Content */}
         <main className="main-content">
-          {children}
+          <div className="page-transition" key={location.key}>
+            {children}
+          </div>
         </main>
       </div>
 

@@ -263,6 +263,15 @@ function SalesPage() {
   if (loading) {
     return (
       <div className="sales-page">
+        <div className="brand-masthead">
+          <div>
+            <h1 className="page-title">Déclaration des ventes</h1>
+            <p className="page-subtitle">Enregistrez les ventes de la tournée</p>
+          </div>
+          <button className="btn btn-outline btn-sm" onClick={() => navigate(`/livraisons/${id}`)}>
+            ← Retour à la livraison
+          </button>
+        </div>
         <div className="sales-topbar">
           <div className="sales-topbar-inner">
             <div className="sales-ca-block">
@@ -291,6 +300,17 @@ function SalesPage() {
 
   return (
     <div className="sales-page">
+      {/* ─── Brand Masthead ─── */}
+      <div className="brand-masthead">
+        <div>
+          <h1 className="page-title">Déclaration des ventes</h1>
+          <p className="page-subtitle">Enregistrez les ventes de la tournée</p>
+        </div>
+        <button className="btn btn-outline btn-sm" onClick={() => navigate(`/livraisons/${id}`)}>
+          ← Retour à la livraison
+        </button>
+      </div>
+
       {/* ─── Top Bar ─── */}
       <div className="sales-topbar">
         <div className="sales-topbar-inner">

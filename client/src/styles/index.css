@@ -910,6 +910,16 @@ textarea.form-input {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Page transition wrapper */
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page-transition {
+  animation: pageFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 /* Alert card (action-oriented) */
 .alert-card {
   display: flex;
@@ -960,6 +970,77 @@ textarea.form-input {
   margin-bottom: var(--space-6);
   flex-wrap: wrap;
   gap: var(--space-4);
+}
+
+/* Brand Masthead — matches Dashboard .dash-topbar aesthetic */
+.brand-masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--color-ink);
+  border-bottom: 2px solid var(--color-red);
+  border-radius: 0;
+  margin: 0 0 var(--space-6);
+}
+
+.brand-masthead .page-title {
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin: 0;
+}
+
+.brand-masthead .page-subtitle {
+  font-size: 11px;
+  color: #9A9AA2;
+  letter-spacing: 0.03em;
+  margin-top: 4px;
+}
+
+.brand-masthead .btn-outline {
+  color: #fff;
+  border-color: #2A2A2E;
+  background: transparent;
+}
+
+.brand-masthead .btn-outline:hover {
+  background: #fff;
+  color: var(--color-ink);
+  border-color: #fff;
+}
+
+.brand-masthead .btn-primary {
+  background: var(--color-red);
+  border-color: var(--color-red);
+  color: #fff;
+}
+
+.brand-masthead .btn-primary:hover {
+  background: var(--color-red-hover);
+  border-color: var(--color-red-hover);
+}
+
+.brand-masthead .btn-ghost {
+  color: #9A9AA2;
+}
+
+.brand-masthead .btn-ghost:hover {
+  color: #fff;
+}
+
+/* Compact variant for detail pages */
+.brand-masthead-compact {
+  padding: 12px 24px;
+}
+
+.brand-masthead-compact .page-title {
+  font-size: 16px;
 }
 
 .page-title {
@@ -1130,6 +1211,22 @@ textarea.form-input {
 
   .page-header {
     flex-direction: column;
+  }
+
+  .brand-masthead {
+    padding: 14px 16px;
+  }
+
+  .brand-masthead .page-title {
+    font-size: 17px;
+  }
+
+  .brand-masthead-compact {
+    padding: 10px 16px;
+  }
+
+  .brand-masthead-compact .page-title {
+    font-size: 14px;
   }
 
   .filters-bar {

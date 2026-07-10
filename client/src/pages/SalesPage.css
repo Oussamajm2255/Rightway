@@ -458,7 +458,7 @@
   white-space: nowrap;
   letter-spacing: var(--tracking-tight);
 }
-.btn-valider:hover { background: #A0760A; }
+.btn-valider:hover { background: var(--color-red-hover); }
 .btn-valider:active { transform: scale(.94); }
 .btn-valider-confirmed {
   animation: validatePop .5s cubic-bezier(.4,0,.2,1);

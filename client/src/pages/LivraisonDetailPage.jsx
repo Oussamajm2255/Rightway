@@ -464,56 +464,43 @@ function LivraisonDetailPage() {
 
   return (
     <div className="livraison-detail">
-      <button className="btn btn-ghost btn-sm" onClick={() => navigate('/livraisons')} style={{ marginBottom: 'var(--space-4)' }}>
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0}}>
-          <path d="M9 2.5L4.5 7l4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        Retour aux livraisons
-      </button>
-
-      {!loading && isAdmin && (isEnCours || isEnRetour) && livraison?.confirmed_by_commercial_at && (
-        <button
-          className="btn btn-primary btn-sm"
-          onClick={() => navigate(`/livraisons/${id}/realtime`)}
-          style={{ marginBottom: 'var(--space-4)', marginLeft: 'var(--space-2)' }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0, marginRight:'var(--space-1)'}}>
-            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
-            <path d="M12 6v6l4 2" />
-          </svg>
-          Suivre la livraison en temps réel
-        </button>
-      )}
-
-      {!loading && isAdmin && livraison?.confirmed_by_commercial_at && (
-        <button
-          className="btn btn-outline-primary btn-sm"
-          onClick={handlePrintBonSortie}
-          style={{ marginBottom: 'var(--space-4)', marginLeft: 'var(--space-2)' }}
-        >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0, marginRight:'var(--space-1)'}}>
-            <path d="M4 1.5h6a1 1 0 011 1V5h1a1 1 0 011 1v4a1 1 0 01-1 1h-1v2.5H3V11H2a1 1 0 01-1-1V6a1 1 0 011-1h1V2.5a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M5 5.5h4M5 8h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-          </svg>
-          Bon de Sortie
-        </button>
-      )}
-
-      {!loading && user?.role === 'SUPER_ADMIN' && (
-        <button
-          className="btn btn-outline-danger btn-sm"
-          onClick={() => setShowArchive(true)}
-          style={{ marginBottom: 'var(--space-4)', marginLeft: 'var(--space-2)' }}
-        >
-          Archiver
-        </button>
-      )}
+      {/* Brand Masthead with back link */}
+      <div className="brand-masthead brand-masthead-compact">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button className="btn btn-ghost btn-sm" onClick={() => navigate('/livraisons')} style={{ color: '#9A9AA2', padding: 0 }}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0}}>
+              <path d="M9 2.5L4.5 7l4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Retour
+          </button>
+          {!loading && livraison && (
+            <>
+              <h1 className="page-title" style={{ margin: 0 }}>{livraison.reference}</h1>
+              <StatusBadge status={livraison.status} />
+            </>
+          )}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {!loading && isAdmin && (isEnCours || isEnRetour) && livraison?.confirmed_by_commercial_at && (
+            <button className="btn btn-outline btn-sm" onClick={() => navigate(`/livraisons/${id}/realtime`)}>
+              Suivre en temps réel
+            </button>
+          )}
+          {!loading && isAdmin && livraison?.confirmed_by_commercial_at && (
+            <button className="btn btn-outline btn-sm" onClick={handlePrintBonSortie}>
+              Bon de Sortie
+            </button>
+          )}
+          {!loading && user?.role === 'SUPER_ADMIN' && (
+            <button className="btn btn-outline btn-sm" onClick={() => setShowArchive(true)}>
+              Archiver
+            </button>
+          )}
+        </div>
+      </div>
 
       {loading ? (
         <>
-          <div className="page-header">
-            <div><h1 className="page-title skeleton skeleton-heading" /></div>
-          </div>
           <div className="detail-grid">
             <div className="skeleton skeleton-card" />
             <div className="skeleton skeleton-card" />
@@ -521,14 +508,6 @@ function LivraisonDetailPage() {
         </>
       ) : livraison ? (
         <>
-          <div className="page-header">
-            <div>
-              <h1 className="page-title">{livraison.reference}</h1>
-              <p className="page-subtitle">Créée le {formatDateTime(livraison.created_at)}</p>
-            </div>
-            <StatusBadge status={livraison.status} />
-          </div>
-
           {success && <div className="success-banner">{success}</div>}
 
       {/* Status Timeline */}

@@ -362,7 +362,7 @@ function StockPage() {
 
   return (
     <div className="stock-page">
-      <div className="page-header">
+      <div className="brand-masthead">
         <div>
           <h1 className="page-title">Stock du Dépôt</h1>
           <p className="page-subtitle">Gérez et surveillez les niveaux de stock</p>

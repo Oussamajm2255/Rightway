@@ -69,7 +69,7 @@ function HistoriquePage() {
 
   return (
     <div className="historique-page">
-      <div className="page-header">
+      <div className="brand-masthead">
         <div>
           <h1 className="page-title">Historique</h1>
           <p className="page-subtitle">Consultez les livraisons passées</p>

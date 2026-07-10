@@ -107,7 +107,7 @@ function UsersPage() {
 
   return (
     <div className="users-page">
-      <div className="page-header">
+      <div className="brand-masthead">
         <div>
           <h1 className="page-title">Utilisateurs</h1>
           <p className="page-subtitle">Gérez les comptes Admin et Commercial</p>

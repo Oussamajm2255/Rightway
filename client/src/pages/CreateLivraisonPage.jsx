@@ -136,7 +136,7 @@ function CreateLivraisonPage() {
   if (loadingData) {
     return (
       <div className="create-livraison">
-        <div className="page-header">
+        <div className="brand-masthead">
           <div>
             <h1 className="page-title">Nouvelle livraison</h1>
             <p className="page-subtitle">Créez un bon de sortie pour un commercial</p>
@@ -152,7 +152,7 @@ function CreateLivraisonPage() {
 
   return (
     <div className="create-livraison">
-      <div className="page-header">
+      <div className="brand-masthead">
         <div>
           <h1 className="page-title">Nouvelle livraison</h1>
           <p className="page-subtitle">Créez un bon de sortie pour un commercial</p>
