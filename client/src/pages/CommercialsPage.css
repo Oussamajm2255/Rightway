@@ -3,11 +3,20 @@
    Based on design team demo — adapted to Right Way design system
    ================================================================ */
 
-/* ── 12-color palette (shared with realtime monitor) ── */
+/* ── Brand palette ── */
 :root {
-  --cp0: #2a78d6; --cp1: #0f9e6a; --cp2: #c98500; --cp3: #7c3aed;
-  --cp4: #dc2626; --cp5: #db2777; --cp6: #d95926; --cp7: #16a34a;
-  --cp8: #0891b2; --cp9: #9333ea; --cp10: #e11d48; --cp11: #65a30d;
+  --cp0: var(--color-ink);
+  --cp1: var(--color-red);
+  --cp2: var(--color-ink-soft);
+  --cp3: var(--color-ink);
+  --cp4: var(--color-red);
+  --cp5: var(--color-ink-soft);
+  --cp6: var(--color-ink);
+  --cp7: var(--color-red);
+  --cp8: var(--color-ink-soft);
+  --cp9: var(--color-ink);
+  --cp10: var(--color-red);
+  --cp11: var(--color-ink-soft);
 }
 
 /* ── PAGE SHELL ── */
@@ -106,13 +115,13 @@
   flex-shrink: 0;
 }
 .comm-btn-primary {
-  background: var(--cp0);
+  background: var(--color-red);
   color: #fff;
-  border-color: var(--cp0);
+  border-color: var(--color-red);
 }
 .comm-btn-primary:hover {
-  background: #1a68c6;
-  border-color: #1a68c6;
+  background: var(--color-red-hover);
+  border-color: var(--color-red-hover);
   color: #fff;
 }
 .comm-btn-sm {
@@ -120,9 +129,9 @@
   font-size: 11px;
 }
 .comm-btn.active {
-  background: var(--cp0);
+  background: var(--color-ink);
   color: #fff;
-  border-color: var(--cp0);
+  border-color: var(--color-ink);
 }
 
 /* ── TABS ── */
@@ -192,6 +201,7 @@
   top: 0; left: 0; right: 0;
   height: 3px;
   border-radius: 12px 12px 0 0;
+  background: var(--accent);
 }
 .comm-kpi-icon {
   width: 34px;
@@ -269,8 +279,8 @@
   color: var(--color-text-tertiary);
 }
 .comm-search-input:focus {
-  border-color: var(--cp0);
-  box-shadow: 0 0 0 3px rgba(42, 120, 214, 0.10);
+  border-color: var(--color-ink);
+  box-shadow: 0 0 0 3px rgba(10, 10, 11, 0.10);
 }
 .comm-select-wrap select {
   padding: 7px 28px 7px 10px;
@@ -365,6 +375,7 @@
   top: 0; left: 0; right: 0;
   height: 3px;
   border-radius: 12px 12px 0 0;
+  background: var(--cc);
 }
 .cc-top {
   display: flex;
@@ -706,8 +717,8 @@
 }
 .comm-filter-select:focus,
 .comm-filter-input:focus {
-  border-color: var(--cp0);
-  box-shadow: 0 0 0 3px rgba(42, 120, 214, 0.10);
+  border-color: var(--color-ink);
+  box-shadow: 0 0 0 3px rgba(10, 10, 11, 0.10);
 }
 
 /* ── SUMMARY CARD ── */
@@ -949,12 +960,6 @@
 @media (max-width: 640px) {
   .comm-page {
     padding: var(--space-4) 14px 40px;
-  }
-  .comm-topbar {
-    margin-bottom: var(--space-4);
-  }
-  .comm-page-title {
-    font-size: 17px;
   }
   .comm-kpi-grid {
     grid-template-columns: repeat(2, 1fr);

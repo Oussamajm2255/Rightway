@@ -4,11 +4,11 @@ import { apiGet } from '../lib/api';
 import { Chart } from 'chart.js/auto';
 import './CommercialsPage.css';
 
-/* ─── 12-Color Palette ─── */
+/* ─── Brand Palette ─── */
 const PALETTE = [
-  '#2a78d6', '#0f9e6a', '#c98500', '#7c3aed',
-  '#dc2626', '#db2777', '#d95926', '#16a34a',
-  '#0891b2', '#9333ea', '#e11d48', '#65a30d',
+  '#0A0A0B',  // ink
+  '#E10600',  // red
+  '#26262B',  // ink-soft
 ];
 
 const MONTH_LABELS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun'];

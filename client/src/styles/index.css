@@ -984,6 +984,9 @@ textarea.form-input {
   border-bottom: 2px solid var(--color-red);
   border-radius: 0;
   margin: 0 0 var(--space-6);
+  position: sticky;
+  top: 52px;
+  z-index: 400;
 }
 
 .brand-masthead .page-title {
