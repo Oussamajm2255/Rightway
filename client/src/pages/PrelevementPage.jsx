@@ -788,13 +788,17 @@ function RecurringModal({ categories, commercials, onClose }) {
 /* ===== Settings Modal ===== */
 function SettingsModal({ onClose }) {
   const [day, setDay] = useState(1);
+  const [forceTracking, setForceTracking] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     apiGet('/prelevements/settings')
-      .then(res => setDay(res.settings?.salary_generation_day || 1))
+      .then(res => {
+        setDay(res.settings?.salary_generation_day || 1);
+        setForceTracking(res.settings?.force_location_tracking === true);
+      })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
@@ -803,7 +807,10 @@ function SettingsModal({ onClose }) {
     setError('');
     setSaving(true);
     try {
-      await apiPut('/prelevements/settings', { salary_generation_day: parseInt(day) });
+      await apiPut('/prelevements/settings', {
+        salary_generation_day: parseInt(day),
+        force_location_tracking: forceTracking,
+      });
       toast?.success?.("Paramètres enregistrés.");
       onClose();
     } catch (e) {
@@ -825,6 +832,22 @@ function SettingsModal({ onClose }) {
             <input className="prel-form-input" type="number" min="1" max="28" value={day} onChange={e => setDay(e.target.value)} />
             <p style={{ fontSize: '0.8rem', color: 'var(--color-text-tertiary)' }}>
               Les prélèvements de salaires seront générés automatiquement chaque mois à ce jour en statut "EN ATTENTE".
+            </p>
+
+            <div style={{ borderTop: '1px solid var(--color-border, rgba(0,0,0,0.1))', margin: '8px 0 4px' }} />
+
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontWeight: 500 }}>
+              <input
+                type="checkbox"
+                checked={forceTracking}
+                onChange={e => setForceTracking(e.target.checked)}
+                style={{ marginTop: '3px', width: '18px', height: '18px', flexShrink: 0 }}
+              />
+              <span>Suivi GPS obligatoire pour tous les commerciaux</span>
+            </label>
+            <p style={{ fontSize: '0.8rem', color: 'var(--color-text-tertiary)' }}>
+              Lorsque activé, la position de tous les commerciaux est suivie automatiquement,
+              sans qu'ils aient à l'activer depuis leur téléphone (conformément à l'autorisation GPS signée).
             </p>
           </div>
         )}

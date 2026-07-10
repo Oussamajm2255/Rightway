@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS global_settings (
   id SERIAL PRIMARY KEY,
   salary_generation_day INTEGER DEFAULT 1 CHECK (salary_generation_day BETWEEN 1 AND 28),
+  force_location_tracking BOOLEAN NOT NULL DEFAULT false,
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 

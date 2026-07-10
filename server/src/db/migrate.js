@@ -107,6 +107,11 @@ const migrations = [
   )`,
   `INSERT INTO global_settings (id, salary_generation_day) VALUES (1, 1) ON CONFLICT (id) DO NOTHING`,
 
+  // Company-wide forced GPS tracking. When ON, the STE owner (SUPER_ADMIN)
+  // tracks every commercial regardless of their personal in-app toggle —
+  // backed by the signed consent the commercials gave to allow GPS use.
+  `ALTER TABLE global_settings ADD COLUMN IF NOT EXISTS force_location_tracking BOOLEAN NOT NULL DEFAULT false`,
+
   // Livraison ecarts (discrepancy declarations)
   `CREATE TABLE IF NOT EXISTS livraison_ecarts (
     id            SERIAL PRIMARY KEY,

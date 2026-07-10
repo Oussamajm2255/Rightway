@@ -16,7 +16,10 @@ async function getAllLocations(req, res) {
       FROM users u
       LEFT JOIN commercial_locations cl ON u.id = cl.user_id
       WHERE u.role = 'COMMERCIAL'
-        AND u.location_tracking_enabled = true
+        AND (
+          u.location_tracking_enabled = true
+          OR COALESCE((SELECT force_location_tracking FROM global_settings WHERE id = 1), false) = true
+        )
       ORDER BY u.full_name
     `);
 
@@ -56,12 +59,17 @@ async function updateLocation(req, res) {
   }
 
   try {
-    // Check tracking opt-in
+    // Check tracking opt-in — allowed if the commercial opted in themselves
+    // OR the company-wide forced-tracking switch is on (signed GPS consent).
     const { rows: userRows } = await pool.query(
       'SELECT location_tracking_enabled FROM users WHERE id = $1',
       [userId]
     );
-    if (!userRows[0] || !userRows[0].location_tracking_enabled) {
+    const { rows: gs } = await pool.query(
+      'SELECT force_location_tracking FROM global_settings WHERE id = 1'
+    );
+    const forced = gs[0]?.force_location_tracking === true;
+    if (!userRows[0] || (!userRows[0].location_tracking_enabled && !forced)) {
       return res.status(403).json({ error: 'Suivi de localisation désactivé. Activez-le dans Paramètres.' });
     }
 

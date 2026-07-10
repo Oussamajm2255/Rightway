@@ -599,9 +599,9 @@ async function generateRecurring(req, res) {
 // ═══════════════════════════════════════════════
 async function getSettings(req, res) {
   try {
-    const { rows } = await pool.query('SELECT salary_generation_day FROM global_settings WHERE id = 1');
+    const { rows } = await pool.query('SELECT salary_generation_day, force_location_tracking FROM global_settings WHERE id = 1');
     if (rows.length === 0) {
-      return res.json({ settings: { salary_generation_day: 1 } });
+      return res.json({ settings: { salary_generation_day: 1, force_location_tracking: false } });
     }
     res.json({ settings: rows[0] });
   } catch (err) {
@@ -612,15 +612,16 @@ async function getSettings(req, res) {
 
 async function updateSettings(req, res) {
   try {
-    const { salary_generation_day } = req.body;
+    const { salary_generation_day, force_location_tracking } = req.body;
     if (salary_generation_day < 1 || salary_generation_day > 28) {
       return res.status(400).json({ error: 'Le jour doit être compris entre 1 et 28.' });
     }
+    const forceTracking = force_location_tracking === true;
     const { rows } = await pool.query(`
-      INSERT INTO global_settings (id, salary_generation_day) VALUES (1, $1)
-      ON CONFLICT (id) DO UPDATE SET salary_generation_day = $1, updated_at = NOW()
-      RETURNING salary_generation_day
-    `, [salary_generation_day]);
+      INSERT INTO global_settings (id, salary_generation_day, force_location_tracking) VALUES (1, $1, $2)
+      ON CONFLICT (id) DO UPDATE SET salary_generation_day = $1, force_location_tracking = $2, updated_at = NOW()
+      RETURNING salary_generation_day, force_location_tracking
+    `, [salary_generation_day, forceTracking]);
     res.json({ settings: rows[0] });
   } catch (err) {
     console.error('updateSettings error:', err);

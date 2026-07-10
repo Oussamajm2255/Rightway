@@ -216,7 +216,16 @@ async function getTrackingSettings(req, res) {
       [req.user.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Utilisateur introuvable' });
-    res.json({ location_tracking_enabled: rows[0].location_tracking_enabled });
+
+    // Company-wide forced tracking (SUPER_ADMIN switch) overrides a
+    // commercial's personal toggle — they signed consent to allow GPS use.
+    const { rows: gs } = await pool.query(
+      'SELECT force_location_tracking FROM global_settings WHERE id = 1'
+    );
+    const forced = req.user.role === 'COMMERCIAL' && gs[0]?.force_location_tracking === true;
+    const enabled = forced || rows[0].location_tracking_enabled === true;
+
+    res.json({ location_tracking_enabled: enabled, forced });
   } catch (err) {
     console.error('getTrackingSettings error:', err);
     res.status(500).json({ error: 'Erreur interne du serveur' });

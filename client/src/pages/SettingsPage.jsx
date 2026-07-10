@@ -4,6 +4,7 @@ import './SettingsPage.css';
 
 export default function SettingsPage() {
   const [trackingEnabled, setTrackingEnabled] = useState(false);
+  const [forced, setForced] = useState(false);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
   const [error, setError] = useState('');
@@ -13,6 +14,7 @@ export default function SettingsPage() {
       try {
         const data = await apiGet('/users/me/tracking');
         setTrackingEnabled(data.location_tracking_enabled);
+        setForced(data.forced === true);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -51,7 +53,8 @@ export default function SettingsPage() {
         <p className="settings-subtitle">Gérez vos préférences de confidentialité et de compte</p>
       </div>
 
-      {/* ─── GPS Tracking Card ─── */}
+      {/* ─── GPS Tracking Card — hidden when tracking is enforced company-wide ─── */}
+      {!forced && (
       <div className="settings-card">
         <div className="settings-card-header">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -107,6 +110,7 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }
