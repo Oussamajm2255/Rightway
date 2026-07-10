@@ -4,11 +4,11 @@ import { apiGet } from '../lib/api';
 import { Chart } from 'chart.js/auto';
 import './RealtimeMonitorPage.css';
 
-/* ─── Category Color Palette (12 colors, cycle through) ─── */
+/* ─── Brand Category Palette ─── */
 const CATEGORY_COLORS = [
-  '#2a78d6', '#0f9e6a', '#c98500', '#7c3aed',
-  '#dc2626', '#db2777', '#d95926', '#16a34a',
-  '#0891b2', '#9333ea', '#e11d48', '#65a30d',
+  '#0A0A0B',  // ink
+  '#E10600',  // red
+  '#26262B',  // ink-soft
 ];
 
 function formatDT(value) {
@@ -22,11 +22,11 @@ function formatInt(value) {
 }
 
 function getStatusPill(pct) {
-  if (pct >= 100) return { bg: 'rgba(13,123,75,0.12)', color: '#0a7a52', label: 'Épuisé' };
-  if (pct >= 80)  return { bg: 'rgba(13,123,75,0.10)', color: '#0a7a52', label: 'Très bon' };
-  if (pct >= 50)  return { bg: 'rgba(201,133,0,0.10)',  color: '#946000', label: 'En cours' };
-  if (pct >= 20)  return { bg: 'rgba(207,17,36,0.10)',  color: '#b91c1c', label: 'Lent' };
-  return { bg: 'rgba(94,111,125,0.08)', color: '#52566a', label: 'Départ' };
+  if (pct >= 100) return { bg: 'rgba(225,6,0,0.12)', color: '#E10600', label: 'Épuisé' };
+  if (pct >= 80)  return { bg: 'rgba(10,10,11,0.08)', color: '#0A0A0B', label: 'Très bon' };
+  if (pct >= 50)  return { bg: 'rgba(38,38,43,0.08)', color: '#26262B', label: 'En cours' };
+  if (pct >= 20)  return { bg: 'rgba(225,6,0,0.08)', color: '#E10600', label: 'Lent' };
+  return { bg: 'rgba(10,10,11,0.05)', color: '#525566', label: 'Départ' };
 }
 
 export default function RealtimeMonitorPage() {
@@ -217,6 +217,12 @@ export default function RealtimeMonitorPage() {
   if (loading) {
     return (
       <div className="realtime-shell">
+        <div className="brand-masthead">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span className="live-badge"><span className="live-dot" />Live</span>
+            <h1 className="page-title">Real-time Distribution</h1>
+          </div>
+        </div>
         <div className="realtime-loading">Chargement du dashboard...</div>
       </div>
     );
@@ -225,16 +231,20 @@ export default function RealtimeMonitorPage() {
   if (error) {
     return (
       <div className="realtime-shell">
-        <div className="realtime-topbar">
-          <button
-            className="btn btn-ghost btn-sm"
-            onClick={() => navigate(`/livraisons/${id}`)}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
-              <path d="M9 2.5L4.5 7l4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Retour
-          </button>
+        <div className="brand-masthead">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => navigate(`/livraisons/${id}`)}
+              style={{ padding: 0 }}
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+                <path d="M9 2.5L4.5 7l4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Retour
+            </button>
+            <h1 className="page-title">Real-time Distribution</h1>
+          </div>
         </div>
         <div className="error-banner">{error}</div>
       </div>
@@ -244,6 +254,12 @@ export default function RealtimeMonitorPage() {
   if (!data) {
     return (
       <div className="realtime-shell">
+        <div className="brand-masthead">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span className="live-badge"><span className="live-dot" />Live</span>
+            <h1 className="page-title">Real-time Distribution</h1>
+          </div>
+        </div>
         <div className="realtime-empty">Aucune donnée disponible pour cette livraison.</div>
       </div>
     );
@@ -254,24 +270,24 @@ export default function RealtimeMonitorPage() {
   return (
     <div className="realtime-shell">
       {/* ── TOP BAR ── */}
-      <div className="realtime-topbar">
-        <div className="realtime-brand">
+      <div className="brand-masthead">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <span className="live-badge">
             <span className="live-dot" />
             Live
           </span>
           <div>
-            <div className="realtime-title">Real-time Distribution</div>
-            <div className="realtime-subtitle">
+            <h1 className="page-title">Real-time Distribution</h1>
+            <p className="page-subtitle">
               Livraison #{livraison.reference} · {categories.length} famille{categories.length !== 1 ? 's' : ''} produit
-            </div>
+            </p>
           </div>
         </div>
-        <div className="realtime-topbar-right">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <div className={`realtime-clock ${tickFlash ? 'realtime-ticking' : ''}`}>
             {clock}
           </div>
-          <button className="btn btn-outline btn-sm" onClick={handleRefresh}>
+          <button className="btn btn-outline btn-sm" onClick={handleRefresh} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0118.8-4.3M22 12.5a10 10 0 01-18.8 4.2" />
             </svg>
@@ -280,7 +296,6 @@ export default function RealtimeMonitorPage() {
           <button
             className="btn btn-ghost btn-sm"
             onClick={() => navigate(`/livraisons/${id}`)}
-            style={{ marginLeft: 'var(--space-1)' }}
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
               <path d="M9 2.5L4.5 7l4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -292,29 +307,29 @@ export default function RealtimeMonitorPage() {
 
       {/* ── KPI ROW ── */}
       <div className="realtime-kpi-grid">
-        <div className="kpi-card" style={{ '--kpi-accent': '#2a78d6' }}>
+        <div className="kpi-card" style={{ '--kpi-accent': 'var(--color-ink)' }}>
           <div className="kpi-label">Stock livraison</div>
           <div className="kpi-val">{formatInt(overall.total_stock)}</div>
           <div className="kpi-sub">unités expédiées</div>
         </div>
-        <div className="kpi-card" style={{ '--kpi-accent': '#0f9e6a' }}>
+        <div className="kpi-card" style={{ '--kpi-accent': 'var(--color-red)' }}>
           <div className="kpi-label">Unités vendues</div>
-          <div className="kpi-val" style={{ color: '#0f9e6a' }}>{formatInt(overall.total_sold)}</div>
+          <div className="kpi-val" style={{ color: 'var(--color-red)' }}>{formatInt(overall.total_sold)}</div>
           <div className="kpi-sub">ventes confirmées</div>
         </div>
-        <div className="kpi-card" style={{ '--kpi-accent': '#8b5cf6' }}>
+        <div className="kpi-card" style={{ '--kpi-accent': 'var(--color-ink-soft)' }}>
           <div className="kpi-label">Restantes</div>
           <div className="kpi-val">{formatInt(overall.total_remaining)}</div>
           <div className="kpi-sub">en circulation</div>
         </div>
-        <div className="kpi-card" style={{ '--kpi-accent': '#eda100' }}>
+        <div className="kpi-card" style={{ '--kpi-accent': 'var(--color-ink)' }}>
           <div className="kpi-label">CA Total TTC</div>
-          <div className="kpi-val" style={{ color: '#c98500' }}>{formatDT(overall.total_ca)}</div>
+          <div className="kpi-val" style={{ color: 'var(--color-red)' }}>{formatDT(overall.total_ca)}</div>
           <div className="kpi-sub">Dinars tunisiens</div>
         </div>
-        <div className="kpi-card" style={{ '--kpi-accent': '#dc2626' }}>
+        <div className="kpi-card" style={{ '--kpi-accent': 'var(--color-red)' }}>
           <div className="kpi-label">Taux d'écoulement</div>
-          <div className="kpi-val" style={{ color: '#dc2626' }}>{overall.sell_through_pct}%</div>
+          <div className="kpi-val" style={{ color: 'var(--color-ink)' }}>{overall.sell_through_pct}%</div>
           <div className="kpi-sub">de la livraison totale</div>
         </div>
       </div>
