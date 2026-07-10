@@ -28,6 +28,7 @@ const CommercialsPage = lazy(() => import('./pages/CommercialsPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const PrelevementPage = lazy(() => import('./pages/PrelevementPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const AdminSettingsPage = lazy(() => import('./pages/AdminSettingsPage'));
 
 function PageLoader() {
   return (
@@ -204,6 +205,16 @@ function AppRoutesInner() {
           <ProtectedRoute>
             <RoleGuard roles={['COMMERCIAL']}>
               <SettingsPage />
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/parametres"
+        element={
+          <ProtectedRoute>
+            <RoleGuard roles={['SUPER_ADMIN']}>
+              <AdminSettingsPage />
             </RoleGuard>
           </ProtectedRoute>
         }

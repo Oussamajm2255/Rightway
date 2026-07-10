@@ -235,6 +235,7 @@ function AppLayout({ children }) {
     navItems.push({ to: '/benefits', label: 'Bénéfices', icon: 'benefits' });
     navItems.push({ to: '/prelevements', label: 'Prélèvements', icon: 'prelevement' });
     navItems.push({ to: '/historique', label: 'Historique', icon: 'historique' });
+    navItems.push({ to: '/parametres', label: 'Paramètres', icon: 'settings' });
   } else if (role === 'DIRECTEUR_COMMERCIAL') {
     navItems.push({ to: '/stock', label: 'Stock', icon: 'stock' });
     navItems.push({ to: '/livraisons', label: 'Livraisons', icon: 'livraisons' });
@@ -272,6 +273,7 @@ function AppLayout({ children }) {
     if (path.startsWith('/benefits')) return 'Bénéfices & Rentabilité';
     if (path.startsWith('/prelevements')) return 'Prélèvements';
     if (path.startsWith('/historique')) return 'Historique';
+    if (path.startsWith('/parametres')) return 'Paramètres';
     if (path.startsWith('/settings')) return 'Paramètres';
     return '';
   }

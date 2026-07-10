@@ -165,6 +165,14 @@
   margin: 12px 0 0;
 }
 
+/* ─── Saved confirmation ─── */
+.settings-saved {
+  color: #0a7d33;
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0 0 12px;
+}
+
 /* ─── Privacy note ─── */
 .tracking-privacy-note {
   display: flex;
