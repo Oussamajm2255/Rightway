@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Suspense, lazy, useEffect } from 'react';
+import { Suspense, lazy } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleGuard from './components/RoleGuard';
@@ -40,15 +40,13 @@ function PageLoader() {
 function AppRoutes() {
   const { user, loading } = useAuth();
 
-  // Hide the premium loader once auth resolves
-  useEffect(() => {
-    if (!loading && window.RightWayLoader) {
-      window.RightWayLoader.hide();
-    }
-  }, [loading]);
-
   if (loading) {
-    return null; /* RightWayLoader overlay is already visible */
+    return (
+      <div className="app-shell">
+        <h1>Right Way</h1>
+        <p>Chargement...</p>
+      </div>
+    );
   }
 
   return (
