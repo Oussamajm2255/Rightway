@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { apiGet, apiPost, apiPut, openPdf } from '../lib/api';
 import { formatDate, formatDateTime } from '../lib/utils';
 import { useCategoryPalette } from '../context/CategoryPaletteContext';
+import './LivraisonsPage.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
