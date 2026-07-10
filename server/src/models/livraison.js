@@ -166,7 +166,7 @@ async function findById(id) {
      FROM livraison_items li
      LEFT JOIN products p ON li.product_id = p.id
      WHERE li.livraison_id = $1
-     ORDER BY p.category, p.name`,
+     ORDER BY p.category NULLS LAST, p.name NULLS LAST, li.product_id`,
     [id]
   );
   livraison.items = items;
