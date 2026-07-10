@@ -91,7 +91,10 @@ export default function CommercialsMap() {
     return () => clearInterval(timer);
   }, [lastFetch]);
 
-  // Build marker icons (cached per location)
+  // Split: those with actual GPS data vs opted-in but waiting for first signal
+  const withGps = locations.filter((l) => l.has_location);
+  const pending = locations.filter((l) => !l.has_location);
+
   const markerIcons = {};
   function getIcon(name, city) {
     const key = `${name}||${city || ''}`;
@@ -100,6 +103,13 @@ export default function CommercialsMap() {
     }
     return markerIcons[key];
   }
+
+  const hasAny = locations.length > 0;
+  const mapLabel = withGps.length === 0 && pending.length > 0
+    ? `${pending.length} commercial${pending.length > 1 ? 'aux' : ''} en attente de position`
+    : withGps.length === 0
+      ? 'Aucun commercial localisé'
+      : null;
 
   return (
     <div className="commercials-map-card">
@@ -120,12 +130,12 @@ export default function CommercialsMap() {
       {/* ─── Map ─── */}
       <div className="cm-map-wrap">
         {error ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+          <div className="cm-empty-state">
             <span className="cm-empty">Impossible de charger les positions</span>
           </div>
-        ) : locations.length === 0 ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-            <span className="cm-empty">Aucun commercial localisé</span>
+        ) : withGps.length === 0 ? (
+          <div className="cm-empty-state">
+            <span className="cm-empty">{mapLabel}</span>
           </div>
         ) : (
           <MapContainer
@@ -141,7 +151,7 @@ export default function CommercialsMap() {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             />
-            {locations.map((loc) => (
+            {withGps.map((loc) => (
               <Marker
                 key={loc.user_id}
                 position={[loc.latitude, loc.longitude]}
@@ -161,6 +171,27 @@ export default function CommercialsMap() {
           </MapContainer>
         )}
       </div>
+
+      {/* ─── Pending: opted-in but no GPS data yet ─── */}
+      {pending.length > 0 && (
+        <div className="cm-pending">
+          <div className="cm-pending-header">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <span>En attente de position ({pending.length})</span>
+          </div>
+          <div className="cm-pending-list">
+            {pending.map((loc) => (
+              <div key={loc.user_id} className="cm-pending-item">
+                <span className="cm-pending-name">{loc.full_name}</span>
+                <span className="cm-pending-badge">Signal GPS attendu</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

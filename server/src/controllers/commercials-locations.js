@@ -1,20 +1,20 @@
 const pool = require('../db/pool');
 
 // GET /api/commercials/locations
-// Returns COMMERCIAL users' locations — only those who opted in
+// Returns all COMMERCIAL users who opted in — those with GPS data and those still pending
 async function getAllLocations(req, res) {
   try {
     const { rows } = await pool.query(`
       SELECT
-        cl.user_id,
+        u.id AS user_id,
         cl.latitude,
         cl.longitude,
         cl.location_name,
         cl.updated_at,
         u.full_name,
         u.is_active
-      FROM commercial_locations cl
-      JOIN users u ON cl.user_id = u.id
+      FROM users u
+      LEFT JOIN commercial_locations cl ON u.id = cl.user_id
       WHERE u.role = 'COMMERCIAL'
         AND u.location_tracking_enabled = true
       ORDER BY u.full_name
@@ -23,11 +23,12 @@ async function getAllLocations(req, res) {
     const locations = rows.map(r => ({
       user_id: r.user_id,
       full_name: r.full_name,
-      latitude: Number(r.latitude),
-      longitude: Number(r.longitude),
-      location_name: r.location_name,
+      latitude: r.latitude != null ? Number(r.latitude) : null,
+      longitude: r.longitude != null ? Number(r.longitude) : null,
+      location_name: r.location_name || null,
       updated_at: r.updated_at,
       is_active: r.is_active,
+      has_location: r.latitude != null && r.longitude != null,
     }));
 
     res.json({ locations });
