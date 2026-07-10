@@ -113,11 +113,14 @@ export default function useLocationTracker({ role, apiGet, apiPut }) {
               longitude: pos.coords.longitude,
             };
           },
-          () => {}, // silent on error
+          () => {}, // silent on error — permission may not be granted yet
           { enableHighAccuracy: false, timeout: 15000, maximumAge: 30000 }
         );
         watchId.current = id;
       }
+
+      // Only mark GPS as active if a watch was successfully established
+      if (watchId.current == null) return;
 
       gpsActive.current = true;
 
