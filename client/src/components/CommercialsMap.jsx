@@ -13,6 +13,15 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
+// A commercial who hasn't reported for this long is flagged "hors ligne"
+// (GPS turned off, permission revoked, or app closed).
+const STALE_MS = 30 * 60 * 1000; // 30 minutes
+
+function isStale(isoStr) {
+  if (!isoStr) return false;
+  return Date.now() - new Date(isoStr).getTime() > STALE_MS;
+}
+
 function relativeLabel(isoStr) {
   if (!isoStr) return '';
   const diff = (Date.now() - new Date(isoStr).getTime()) / 1000;
@@ -91,8 +100,12 @@ export default function CommercialsMap() {
     return () => clearInterval(timer);
   }, [lastFetch]);
 
-  // Split: those with actual GPS data vs opted-in but waiting for first signal
-  const withGps = locations.filter((l) => l.has_location);
+  // Split three ways:
+  //  - live:    reporting a fresh position → shown on the map
+  //  - offline: had a position but went silent > 30 min → GPS disabled / app closed
+  //  - pending: never sent a position yet
+  const withGps = locations.filter((l) => l.has_location && !isStale(l.updated_at));
+  const offline = locations.filter((l) => l.has_location && isStale(l.updated_at));
   const pending = locations.filter((l) => !l.has_location);
 
   const markerIcons = {};
@@ -119,6 +132,11 @@ export default function CommercialsMap() {
           <span className="cm-live-dot" />
           <h2>Suivi en direct</h2>
           <span className="cm-live-text">Live</span>
+          {offline.length > 0 && (
+            <span className="cm-offline-count">
+              ⚠ {offline.length} hors ligne
+            </span>
+          )}
         </div>
         <span className="cm-refresh">
           {lastFetch
@@ -171,6 +189,32 @@ export default function CommercialsMap() {
           </MapContainer>
         )}
       </div>
+
+      {/* ─── Offline: had a position but GPS went silent > 30 min ─── */}
+      {offline.length > 0 && (
+        <div className="cm-pending cm-offline">
+          <div className="cm-pending-header">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10.68 5A9 9 0 0121 12M2 8.82a15 15 0 014.17-2.65" />
+              <path d="M10.66 5c4.28.61 8.34 3.28 10.34 8" />
+              <line x1="1" y1="1" x2="23" y2="23" />
+              <line x1="12" y1="20" x2="12.01" y2="20" />
+            </svg>
+            <span>Hors ligne — GPS désactivé ({offline.length})</span>
+          </div>
+          <div className="cm-pending-list">
+            {offline.map((loc) => (
+              <div key={loc.user_id} className="cm-pending-item cm-offline-item">
+                <span className="cm-pending-name">{loc.full_name}</span>
+                <span className="cm-offline-badge">
+                  Dernière position {relativeLabel(loc.updated_at)}
+                  {loc.location_name ? ` · ${loc.location_name}` : ''}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ─── Pending: opted-in but no GPS data yet ─── */}
       {pending.length > 0 && (

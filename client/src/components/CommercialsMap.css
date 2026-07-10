@@ -310,6 +310,36 @@
   white-space: nowrap;
 }
 
+/* ─── Offline (GPS disabled) ─── */
+.cm-offline-count {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--color-red);
+  padding: 2px 9px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  margin-left: 4px;
+}
+
+.cm-offline {
+  background: rgba(225, 6, 0, 0.05);
+}
+
+.cm-offline-item {
+  border-color: rgba(225, 6, 0, 0.25);
+}
+
+.cm-offline-badge {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--color-red);
+  background: rgba(225, 6, 0, 0.08);
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
 @media (max-width: 480px) {
   .cm-map-wrap {
     height: 260px;
