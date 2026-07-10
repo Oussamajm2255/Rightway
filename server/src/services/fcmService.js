@@ -1,4 +1,5 @@
-const admin = require('firebase-admin');
+const { initializeApp, cert, getApps } = require('firebase-admin/app');
+const { getMessaging } = require('firebase-admin/messaging');
 const deviceTokenModel = require('../models/deviceToken');
 
 // Initialize Firebase Admin from the FIREBASE_SERVICE_ACCOUNT env var,
@@ -16,13 +17,13 @@ function init() {
     const creds = JSON.parse(raw);
     // Railway/env often escape the private key newlines — restore them.
     if (creds.private_key) creds.private_key = creds.private_key.replace(/\\n/g, '\n');
-    admin.initializeApp({ credential: admin.credential.cert(creds) });
+    if (getApps().length === 0) {
+      initializeApp({ credential: cert(creds) });
+    }
     ready = true;
     console.log('[fcm] Firebase Admin initialized');
     return true;
   } catch (err) {
-    // Already initialized elsewhere → treat as ready.
-    if (err.code === 'app/duplicate-app') { ready = true; return true; }
     console.error('[fcm] init failed:', err.message);
     return false;
   }
@@ -57,7 +58,7 @@ async function sendToUser(user_id, { title, body, url, tag }) {
   };
 
   try {
-    const resp = await admin.messaging().sendEachForMulticast(message);
+    const resp = await getMessaging().sendEachForMulticast(message);
     // Prune tokens that FCM reports as permanently invalid.
     resp.responses.forEach((r, i) => {
       if (!r.success) {
