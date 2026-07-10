@@ -16,6 +16,8 @@ function UsersPage() {
   const [deleteError, setDeleteError] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [togglingRem, setTogglingRem] = useState(null); // id of user being toggled
+  const [editingSalary, setEditingSalary] = useState(null); // { userId, value }
+  const [savingSalary, setSavingSalary] = useState(null); // userId being saved
 
   async function handleChangeRemuneration(userId, newType) {
     setTogglingRem(userId);
@@ -26,6 +28,33 @@ function UsersPage() {
       setError(err.message);
     } finally {
       setTogglingRem(null);
+    }
+  }
+
+  function startEditSalary(userId, currentAmount) {
+    setEditingSalary({ userId, value: currentAmount != null ? String(currentAmount) : '' });
+  }
+
+  function cancelEditSalary() {
+    setEditingSalary(null);
+  }
+
+  async function saveSalary(userId) {
+    if (!editingSalary || editingSalary.userId !== userId) return;
+    const raw = editingSalary.value.trim();
+    if (raw === '') {
+      cancelEditSalary();
+      return;
+    }
+    setSavingSalary(userId);
+    try {
+      await apiPut(`/users/${userId}`, { salary_amount: parseFloat(raw) });
+      cancelEditSalary();
+      fetchUsers();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSavingSalary(null);
     }
   }
 
@@ -198,7 +227,34 @@ function UsersPage() {
                           </button>
                         </div>
                         {user.remuneration_type === 'SALAIRE' && (
-                          <div className="rem-salary">{formatDT(user.salary_amount)}</div>
+                          editingSalary?.userId === user.id ? (
+                            <div className="rem-salary-edit">
+                              <input
+                                className="rem-salary-input"
+                                type="number"
+                                step="0.001"
+                                min="0"
+                                value={editingSalary.value}
+                                onChange={(e) => setEditingSalary({ userId: user.id, value: e.target.value })}
+                                onBlur={() => saveSalary(user.id)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') saveSalary(user.id);
+                                  if (e.key === 'Escape') cancelEditSalary();
+                                }}
+                                autoFocus
+                                disabled={savingSalary === user.id}
+                              />
+                              {savingSalary === user.id && <span className="rem-saving-spinner" />}
+                            </div>
+                          ) : (
+                            <div
+                              className="rem-salary rem-salary-clickable"
+                              onClick={() => startEditSalary(user.id, user.salary_amount)}
+                              title="Cliquer pour modifier le salaire"
+                            >
+                              {formatDT(user.salary_amount)}
+                            </div>
+                          )
                         )}
                       </>
                     ) : (
