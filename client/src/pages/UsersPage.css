@@ -5,8 +5,87 @@
   padding: var(--space-6);
 }
 
+/* ===== Rémunération Segmented Toggle ===== */
+.rem-toggle {
+  display: inline-flex;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.rem-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.rem-toggle-btn:first-child {
+  border-right: 1px solid var(--color-border);
+}
+
+.rem-toggle-btn:hover:not(:disabled):not(.active) {
+  background: var(--color-surface-hover);
+  color: var(--color-text-secondary);
+}
+
+.rem-toggle-btn.active {
+  color: #fff;
+  cursor: default;
+}
+
+.rem-toggle-btn.active.commission {
+  background: var(--color-ink);
+}
+
+.rem-toggle-btn.active.salaire {
+  background: var(--color-red);
+}
+
+.rem-toggle-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.rem-toggle-btn .rem-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* Salary amount below toggle in table */
+.rem-salary {
+  font-size: 0.75rem;
+  margin-top: 5px;
+  font-weight: var(--weight-semibold);
+  color: var(--color-red);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== Responsive ===== */
 @media (max-width: 768px) {
   .users-page {
     padding: var(--space-4);
+  }
+
+  .rem-toggle-btn {
+    padding: 3px 8px;
+    font-size: 0.7rem;
+    gap: 3px;
+  }
+
+  .rem-toggle-btn .rem-icon {
+    width: 12px;
+    height: 12px;
   }
 }

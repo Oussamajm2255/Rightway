@@ -171,27 +171,34 @@ function UsersPage() {
                   <td data-label="Rémunération">
                     {(user.role === 'COMMERCIAL' || user.role === 'MAGASINIER' || user.role === 'DIRECTEUR_COMMERCIAL') ? (
                       <>
-                        <select
-                          className="form-input form-input-sm"
-                          style={{ 
-                            padding: '2px 24px 2px 8px', 
-                            fontSize: '0.85rem', 
-                            height: 'auto',
-                            borderColor: user.remuneration_type === 'SALAIRE' ? 'var(--color-warning)' : 'var(--color-success)',
-                            color: user.remuneration_type === 'SALAIRE' ? 'var(--color-warning)' : 'var(--color-success)',
-                            backgroundColor: 'transparent'
-                          }}
-                          value={user.remuneration_type || 'COMMISSION'}
-                          onChange={(e) => handleChangeRemuneration(user.id, e.target.value)}
-                          disabled={togglingRem === user.id}
-                        >
-                          <option value="COMMISSION">💰 Commission</option>
-                          <option value="SALAIRE">💼 Salaire</option>
-                        </select>
+                        <div className="rem-toggle">
+                          <button
+                            className={`rem-toggle-btn commission${(user.remuneration_type || 'COMMISSION') === 'COMMISSION' ? ' active' : ''}`}
+                            onClick={() => handleChangeRemuneration(user.id, 'COMMISSION')}
+                            disabled={togglingRem === user.id}
+                            title="Commission"
+                          >
+                            <svg className="rem-icon" viewBox="0 0 14 14" fill="none">
+                              <path d="M2 12L5.5 7.5L8 10L12 4.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M9.5 4.5H12V7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                            Commission
+                          </button>
+                          <button
+                            className={`rem-toggle-btn salaire${user.remuneration_type === 'SALAIRE' ? ' active' : ''}`}
+                            onClick={() => handleChangeRemuneration(user.id, 'SALAIRE')}
+                            disabled={togglingRem === user.id}
+                            title="Salaire"
+                          >
+                            <svg className="rem-icon" viewBox="0 0 14 14" fill="none">
+                              <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.2"/>
+                              <path d="M7 4V10M5 5.5H8.2C9 5.5 9.8 6.2 9.8 7C9.8 7.8 9 8.5 8.2 8.5H5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                            Salaire
+                          </button>
+                        </div>
                         {user.remuneration_type === 'SALAIRE' && (
-                          <div style={{ fontSize: '0.8rem', marginTop: '4px', fontWeight: 600, color: 'var(--color-warning)' }}>
-                            {formatDT(user.salary_amount)}
-                          </div>
+                          <div className="rem-salary">{formatDT(user.salary_amount)}</div>
                         )}
                       </>
                     ) : (
@@ -380,10 +387,30 @@ function UserFormModal({ user, onClose, onSaved }) {
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Rémunération</label>
-                <select name="remuneration_type" className="form-input" value={formData.remuneration_type} onChange={handleChange}>
-                  <option value="COMMISSION">Commission</option>
-                  <option value="SALAIRE">Salaire</option>
-                </select>
+                <div className="rem-toggle">
+                  <button
+                    type="button"
+                    className={`rem-toggle-btn commission${formData.remuneration_type === 'COMMISSION' ? ' active' : ''}`}
+                    onClick={() => setFormData(prev => ({ ...prev, remuneration_type: 'COMMISSION' }))}
+                  >
+                    <svg className="rem-icon" viewBox="0 0 14 14" fill="none">
+                      <path d="M2 12L5.5 7.5L8 10L12 4.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M9.5 4.5H12V7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Commission
+                  </button>
+                  <button
+                    type="button"
+                    className={`rem-toggle-btn salaire${formData.remuneration_type === 'SALAIRE' ? ' active' : ''}`}
+                    onClick={() => setFormData(prev => ({ ...prev, remuneration_type: 'SALAIRE' }))}
+                  >
+                    <svg className="rem-icon" viewBox="0 0 14 14" fill="none">
+                      <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.2"/>
+                      <path d="M7 4V10M5 5.5H8.2C9 5.5 9.8 6.2 9.8 7C9.8 7.8 9 8.5 8.2 8.5H5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Salaire
+                  </button>
+                </div>
               </div>
               
               {formData.remuneration_type === 'SALAIRE' && (
