@@ -331,7 +331,7 @@ function AppLayout({ children }) {
         <div className="sidebar-spacer" />
         <aside className={`sidebar ${mobileMenuOpen ? 'open' : ''}`}>
           <div className="sidebar-brand" onClick={() => { navigate('/'); setMobileMenuOpen(false); }}>
-            <div className="sidebar-logo">Right Way</div>
+            <div className="sidebar-logo">Right Way<span className="logo-accent">.</span></div>
             <div className="sidebar-subtitle">STE RIGHT WAY FOR TRADING</div>
           </div>
 
