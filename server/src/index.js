@@ -81,7 +81,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'], // React style={{}} requires inline style attributes
       imgSrc: ["'self'", 'data:', 'blob:', 'https://*.tile.openstreetmap.org', 'https://unpkg.com'],
       fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-      connectSrc: ["'self'"],
+      connectSrc: ["'self'", 'https://nominatim.openstreetmap.org'],
       frameAncestors: ["'none'"],
       formAction: ["'self'"],
     },

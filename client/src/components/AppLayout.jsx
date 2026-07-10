@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { apiGet, apiPut } from '../lib/api';
+import useLocationTracker from '../lib/useLocationTracker';
 import './AppLayout.css';
 
 /* ===== SVG Icon Components ===== */
@@ -209,6 +210,9 @@ function AppLayout({ children }) {
   }
 
   const role = user?.role;
+
+  // GPS tracking for COMMERCIAL users → real-time map on SUPER_ADMIN dashboard
+  useLocationTracker({ role, apiPut });
 
   const navItems = [];
   if (role === 'SUPER_ADMIN') {
