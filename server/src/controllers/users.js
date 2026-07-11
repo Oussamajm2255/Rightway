@@ -213,7 +213,7 @@ async function deactivateUser(req, res) {
  */
 async function listCommercials(req, res) {
   try {
-    const users = await userModel.findAll({ roles: ['COMMERCIAL', 'DIRECTEUR_COMMERCIAL'], is_active: true });
+    const users = await userModel.findAll({ roles: ['COMMERCIAL', 'DIRECTEUR_COMMERCIAL', 'MAGASINIER'], is_active: true });
     res.json({ users });
   } catch (err) {
     console.error('listCommercials error:', err);
