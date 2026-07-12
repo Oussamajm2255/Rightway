@@ -41,8 +41,11 @@ async function sendToUser(user_id, { title, body, url, tag }) {
   const tokens = await deviceTokenModel.findByUser(user_id);
   if (tokens.length === 0) return;
 
+  // FCM multicast accepts at most 500 tokens per call — cap defensively.
+  const batch = tokens.slice(0, 500);
+
   const message = {
-    tokens: tokens.map((t) => t.token),
+    tokens: batch.map((t) => t.token),
     notification: { title, body },
     data: { url: url || '/', tag: tag || 'rightway' },
     android: {
@@ -67,7 +70,7 @@ async function sendToUser(user_id, { title, body, url, tag }) {
           code.includes('registration-token-not-registered') ||
           code.includes('invalid-argument')
         ) {
-          deviceTokenModel.remove(tokens[i].token).catch(() => {});
+          deviceTokenModel.remove(batch[i].token).catch(() => {});
         }
       }
     });

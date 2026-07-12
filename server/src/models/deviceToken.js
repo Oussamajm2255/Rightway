@@ -24,8 +24,15 @@ async function findByUser(user_id) {
   return rows;
 }
 
-async function remove(token) {
-  await pool.query('DELETE FROM device_tokens WHERE token = $1', [token]);
+// Remove a token. When user_id is given (logout), scope the delete to that
+// user so a request can only detach its own device. When omitted (FCM pruning
+// of an invalid token), remove it unconditionally.
+async function remove(token, user_id = null) {
+  if (user_id) {
+    await pool.query('DELETE FROM device_tokens WHERE token = $1 AND user_id = $2', [token, user_id]);
+  } else {
+    await pool.query('DELETE FROM device_tokens WHERE token = $1', [token]);
+  }
 }
 
 module.exports = { upsert, findByUser, remove };

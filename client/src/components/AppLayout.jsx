@@ -175,7 +175,25 @@ function AppLayout({ children }) {
     } catch { /* ignore */ }
   }, []);
 
-  useEffect(() => { fetchNotifications(); }, [fetchNotifications]);
+  // Keep the notification bell live: initial fetch, poll while visible,
+  // refetch when the app returns to foreground, and refetch instantly when a
+  // native push arrives while the app is open (Android suppresses the tray
+  // banner in the foreground, so this is how the user sees it).
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(() => {
+      if (!document.hidden) fetchNotifications();
+    }, 60000);
+    const onPush = () => fetchNotifications();
+    const onVisible = () => { if (!document.hidden) fetchNotifications(); };
+    window.addEventListener('rightway:refresh-notifications', onPush);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('rightway:refresh-notifications', onPush);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [fetchNotifications]);
   useEffect(() => { setMobileMenuOpen(false); }, [location]);
   useEffect(() => { setNotifOpen(false); }, [location]);
 

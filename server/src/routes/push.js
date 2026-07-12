@@ -3,6 +3,7 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const pushSubscriptionModel = require('../models/pushSubscription');
 const deviceTokenModel = require('../models/deviceToken');
+const fcmService = require('../services/fcmService');
 const { vapidPublicKey } = require('../services/pushService');
 
 // GET /api/push/vapid-public-key — expose VAPID public key to client for subscription
@@ -67,10 +68,25 @@ router.post('/device-token', async (req, res) => {
 router.delete('/device-token', async (req, res) => {
   try {
     const { token } = req.body;
-    if (token) await deviceTokenModel.remove(token);
+    if (token) await deviceTokenModel.remove(token, req.user.id);
     res.json({ ok: true });
   } catch (err) {
     console.error('[push] device-token delete error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+});
+
+// GET /api/push/status — diagnostics: is native push configured on the server,
+// and does the server hold a device token for the current user?
+router.get('/status', async (req, res) => {
+  try {
+    const tokens = await deviceTokenModel.findByUser(req.user.id);
+    res.json({
+      fcm_ready: fcmService.isReady(),
+      web_push_ready: !!vapidPublicKey,
+      device_tokens: tokens.length,
+    });
+  } catch (err) {
     res.status(500).json({ error: 'Erreur interne du serveur' });
   }
 });

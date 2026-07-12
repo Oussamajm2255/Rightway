@@ -56,6 +56,13 @@ jobs:
       - name: Sync Capacitor (regenerates plugin modules + copies web)
         run: npx cap sync android
 
+      - name: Bump versionCode from run number
+        working-directory: client/android/app
+        run: |
+          sed -i -E "s/versionCode [0-9]+/versionCode $((100 + GITHUB_RUN_NUMBER))/" build.gradle
+          sed -i -E "s/versionName \"[^\"]+\"/versionName \"1.1.${GITHUB_RUN_NUMBER}\"/" build.gradle
+          grep -E "versionCode|versionName" build.gradle
+
       - name: Build debug APK
         working-directory: client/android
         run: |

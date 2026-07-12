@@ -68,10 +68,17 @@ export async function initNativePush() {
         console.warn('[native-push] registration error:', err?.error);
       });
 
+      // Push arrived while the app is in the FOREGROUND — Android suppresses the
+      // tray banner here, so refresh the in-app bell so the user still sees it.
+      PushNotifications.addListener('pushNotificationReceived', () => {
+        try { window.dispatchEvent(new Event('rightway:refresh-notifications')); } catch (_) {}
+      });
+
       // User tapped the notification → open the relevant screen.
+      // Only follow same-origin app paths ("/livraisons/…"), never an external URL.
       PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
         const url = action?.notification?.data?.url;
-        if (url && url !== '/') {
+        if (typeof url === 'string' && url.startsWith('/') && url !== '/') {
           window.location.assign(url);
         }
       });
