@@ -922,7 +922,11 @@ textarea.form-input {
 }
 
 .page-transition {
-  animation: pageFadeIn 0.25s ease-out both;
+  /* NB: no `both` fill-mode. `both` keeps the element in its animation fill
+     phase forever, which makes Chromium/WebView hold a persistent stacking
+     context — that traps fixed modals BELOW the root-level bottom-nav no
+     matter their z-index. Default fill drops the context once the fade ends. */
+  animation: pageFadeIn 0.25s ease-out;
 }
 
 /* Alert card (action-oriented) */
