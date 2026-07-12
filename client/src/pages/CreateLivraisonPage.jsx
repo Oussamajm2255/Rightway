@@ -303,58 +303,117 @@ function CreateLivraisonPage() {
               <div><span>Véhicule:</span> {selectedCommercial.vehicle_name} — {selectedCommercial.vehicle_plate}</div>
             </div>
 
-            <div className="preview-table-wrap">
-            <table className="preview-table">
-              <thead>
-                <tr>
-                  <th>Code-barres</th>
-                  <th>Catégorie</th>
-                  <th>Produit</th>
-                  <th>PU TTC</th>
-                  <th>Qté</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.entries(
-                  getSelectedProducts().reduce((acc, p) => {
-                    const cat = p.category || 'Sans catégorie';
-                    (acc[cat] = acc[cat] || []).push(p);
-                    return acc;
-                  }, {})
-                ).map(([cat, catItems]) => {
-                  const catCol = getColor(cat);
-                  return (
-                    <Fragment key={cat}>
-                      {catItems.map((p) => (
-                        <tr key={p.id} style={{ background: catCol.bg, borderLeftColor: catCol.bar }}>
-                          <td className="td-code">{p.barcode || p.id}</td>
-                          <td><span className="cat-pill" style={{ background: catCol.bg, color: catCol.text }}>{cat}</span></td>
-                          <td>{p.name}</td>
-                          <td className="td-price">{formatDT(p.selling_price_ttc)}</td>
-                          <td className="td-qty">{selectedItems[p.id]}</td>
-                          <td className="td-price">{formatDT(selectedItems[p.id] * Number(p.selling_price_ttc))}</td>
+            {(() => {
+              const groupedItems = Object.entries(
+                getSelectedProducts().reduce((acc, p) => {
+                  const cat = p.category || 'Sans catégorie';
+                  (acc[cat] = acc[cat] || []).push(p);
+                  return acc;
+                }, {})
+              );
+
+              return (
+                <>
+                  {/* Desktop: full table */}
+                  <div className="table-container load-table-view">
+                    <table className="preview-table">
+                      <thead>
+                        <tr>
+                          <th>Code-barres</th>
+                          <th>Catégorie</th>
+                          <th>Produit</th>
+                          <th>PU TTC</th>
+                          <th>Qté</th>
+                          <th>Total</th>
                         </tr>
-                      ))}
-                      <tr className="cat-subtotal" style={{ background: catCol.bg, borderLeftColor: catCol.bar, borderTopColor: catCol.bar }}>
-                        <td colSpan="4" style={{ color: catCol.text, textAlign: 'center', fontWeight: 700 }}>
-                          Sous-total {cat}
-                        </td>
-                        <td className="td-qty">{catItems.reduce((s, p) => s + selectedItems[p.id], 0)}</td>
-                        <td className="td-price">{formatDT(catItems.reduce((s, p) => s + (selectedItems[p.id] * Number(p.selling_price_ttc)), 0))}</td>
-                      </tr>
-                    </Fragment>
-                  );
-                })}
-              </tbody>
-              <tfoot>
-                <tr>
-                  <td colSpan="5" style={{ textAlign: 'right', fontWeight: '600' }}>Total</td>
-                  <td className="td-price" style={{ fontWeight: '700' }}>{formatDT(getTotal())}</td>
-                </tr>
-              </tfoot>
-            </table>
-            </div>
+                      </thead>
+                      <tbody>
+                        {groupedItems.map(([cat, catItems]) => {
+                          const catCol = getColor(cat);
+                          return (
+                            <Fragment key={cat}>
+                              {catItems.map((p) => (
+                                <tr key={p.id} style={{ background: catCol.bg, borderLeftColor: catCol.bar }}>
+                                  <td className="td-code">{p.barcode || p.id}</td>
+                                  <td><span className="cat-pill" style={{ background: catCol.bg, color: catCol.text }}>{cat}</span></td>
+                                  <td>{p.name}</td>
+                                  <td className="td-price">{formatDT(p.selling_price_ttc)}</td>
+                                  <td className="td-qty">{selectedItems[p.id]}</td>
+                                  <td className="td-price">{formatDT(selectedItems[p.id] * Number(p.selling_price_ttc))}</td>
+                                </tr>
+                              ))}
+                              <tr className="cat-subtotal" style={{ background: catCol.bg, borderLeftColor: catCol.bar, borderTopColor: catCol.bar }}>
+                                <td colSpan="4" style={{ color: catCol.text, textAlign: 'center', fontWeight: 700 }}>
+                                  Sous-total {cat}
+                                </td>
+                                <td className="td-qty">{catItems.reduce((s, p) => s + selectedItems[p.id], 0)}</td>
+                                <td className="td-price">{formatDT(catItems.reduce((s, p) => s + (selectedItems[p.id] * Number(p.selling_price_ttc)), 0))}</td>
+                              </tr>
+                            </Fragment>
+                          );
+                        })}
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <td colSpan="5" style={{ textAlign: 'right', fontWeight: '600' }}>Total</td>
+                          <td className="td-price" style={{ fontWeight: '700' }}>{formatDT(getTotal())}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+
+                  {/* Mobile: card list (no horizontal scroll) */}
+                  <div className="load-cards-view">
+                    {groupedItems.map(([cat, catItems]) => {
+                      const catCol = getColor(cat);
+                      return (
+                        <section className="load-cat-group" key={cat}>
+                          <header className="load-cat-head">
+                            <span className="cat-pill" style={{ background: catCol.bg, color: catCol.text }}>{cat}</span>
+                            <span className="load-cat-count">{catItems.length} produit{catItems.length > 1 ? 's' : ''}</span>
+                          </header>
+
+                          {catItems.map((p) => (
+                            <article key={p.id} className="load-card" style={{ borderLeftColor: catCol.bar }}>
+                              <div className="load-card-top">
+                                <span className="load-card-name">{p.name}</span>
+                                <span className="load-card-code">{p.barcode || p.id}</span>
+                              </div>
+                              <div className="load-card-stats">
+                                <div>
+                                  <span>PU TTC</span>
+                                  <b>{formatDT(p.selling_price_ttc)}</b>
+                                </div>
+                                <div>
+                                  <span>Qté</span>
+                                  <b>{selectedItems[p.id]}</b>
+                                </div>
+                                <div>
+                                  <span>Total</span>
+                                  <b>{formatDT(selectedItems[p.id] * Number(p.selling_price_ttc))}</b>
+                                </div>
+                              </div>
+                            </article>
+                          ))}
+
+                          <div className="load-cat-subtotal">
+                            <span>Sous-total</span>
+                            Chargé <b>{catItems.reduce((s, p) => s + selectedItems[p.id], 0)}</b>
+                            · Montant <b>{formatDT(catItems.reduce((s, p) => s + (selectedItems[p.id] * Number(p.selling_price_ttc)), 0))}</b>
+                          </div>
+                        </section>
+                      );
+                    })}
+
+                    {/* Grand total for mobile */}
+                    <div className="preview-total-bar" style={{ marginTop: 'var(--space-2)' }}>
+                      <span>{getSelectedProducts().length} produit(s)</span>
+                      <strong>Total: {formatDT(getTotal())}</strong>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
           </div>
 
           <div className="step-actions">
