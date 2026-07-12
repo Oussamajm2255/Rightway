@@ -51,6 +51,11 @@ function CreateLivraisonPage() {
     loadData();
   }, []);
 
+  // Scroll to top on every step change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [step]);
+
   function handleSelectCommercial(com) {
     setSelectedCommercial(com);
     setError('');
