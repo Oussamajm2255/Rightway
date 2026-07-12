@@ -391,6 +391,7 @@
   background: rgba(10, 10, 11, 0.45);
   animation: sheetBackdropIn 0.28s ease-out;
   -webkit-tap-highlight-color: transparent;
+  will-change: opacity;
 }
 
 @keyframes sheetBackdropIn {
@@ -416,6 +417,8 @@
   animation: sheetSlideUp 0.32s cubic-bezier(0.32, 0.72, 0, 1);
   /* Clear the bottom nav + gesture bar */
   padding-bottom: calc(56px + var(--safe-bottom) + var(--space-2));
+  /* Promote to own GPU layer — transform/opacity animations become compositor-only */
+  will-change: transform;
 }
 
 @keyframes sheetSlideUp {

@@ -241,19 +241,25 @@ function AppLayout({ children }) {
 
       if (offset > threshold) {
         // Coordinated dismiss: inline transition from current drag offset → off-screen.
-        // Unlike CSS animation keyframes, inline transitions start from whatever
-        // translateY the user dragged to — no visual jump.
-        sheet.style.transition = 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)';
-        sheet.style.transform = 'translateY(100%)';
-        const backdrop = backdropRef.current;
-        if (backdrop) {
-          backdrop.style.transition = 'opacity 0.28s ease-out';
-          backdrop.style.opacity = '0';
-        }
+        // Wrapped in rAF so the browser sees the transition property before the new
+        // transform target — avoids a frame where the compositor hasn't registered
+        // the transition, which would produce a jump.  With will-change:transform on
+        // the sheet, this runs entirely on the compositor.
+        requestAnimationFrame(() => {
+          sheet.style.transition = 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)';
+          sheet.style.transform = 'translateY(100%)';
+          const backdrop = backdropRef.current;
+          if (backdrop) {
+            backdrop.style.transition = 'opacity 0.28s ease-out';
+            backdrop.style.opacity = '0';
+          }
+        });
         setSheetClosing(true);
       } else {
-        sheet.style.transition = 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)';
-        sheet.style.transform = 'translateY(0)';
+        requestAnimationFrame(() => {
+          sheet.style.transition = 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)';
+          sheet.style.transform = 'translateY(0)';
+        });
       }
     };
 
