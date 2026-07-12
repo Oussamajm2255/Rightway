@@ -6,6 +6,7 @@ import RoleGuard from './components/RoleGuard';
 import SessionExpiryModal from './components/SessionExpiryModal';
 import AppLayout from './components/AppLayout';
 import ErrorBoundary from './components/ErrorBoundary';
+import TruckLoader from './components/TruckLoader';
 import { ToastProvider } from './context/ToastContext';
 import { PushProvider } from './context/PushContext';
 import { CategoryPaletteProvider } from './context/CategoryPaletteContext';
@@ -30,25 +31,11 @@ const PrelevementPage = lazy(() => import('./pages/PrelevementPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const AdminSettingsPage = lazy(() => import('./pages/AdminSettingsPage'));
 
-function PageLoader() {
-  return (
-    <div className="app-shell">
-      <h1>Right Way</h1>
-      <p>Chargement...</p>
-    </div>
-  );
-}
-
 function AppRoutes() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="app-shell">
-        <h1>Right Way</h1>
-        <p>Chargement...</p>
-      </div>
-    );
+    return <TruckLoader />;
   }
 
   return (
@@ -59,7 +46,7 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <AppLayout>
-              <Suspense fallback={<PageLoader />}>
+              <Suspense fallback={<TruckLoader fullscreen={false} />}>
                 <AppRoutesInner />
               </Suspense>
             </AppLayout>
