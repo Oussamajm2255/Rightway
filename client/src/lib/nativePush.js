@@ -3,13 +3,19 @@ import { PushNotifications } from '@capacitor/push-notifications';
 
 // Native (Android/FCM) push. No-op in the browser — there the PWA web-push
 // path in PushContext handles notifications instead.
+//
+// A device's FCM token is physical (one per phone). It must always belong to
+// the user CURRENTLY logged in on that phone — otherwise the previous user's
+// notifications keep landing on this device. So we re-send the token to the
+// server on every login, and detach it on logout.
 
-let started = false;
+let listenersAdded = false;
+let lastToken = null;
 
-async function registerToken(value) {
+async function postToken(value) {
   try {
     const jwt = localStorage.getItem('rightway_token');
-    if (!jwt) return;
+    if (!jwt || !value) return;
     await fetch('/api/push/device-token', {
       method: 'POST',
       headers: {
@@ -24,8 +30,7 @@ async function registerToken(value) {
 }
 
 export async function initNativePush() {
-  if (!Capacitor.isNativePlatform() || started) return;
-  started = true;
+  if (!Capacitor.isNativePlatform()) return;
 
   try {
     // Ask for permission (Android 13+ shows the system prompt).
@@ -38,42 +43,68 @@ export async function initNativePush() {
       return;
     }
 
-    // High-importance channel → heads-up notifications with sound, like social apps.
-    try {
-      await PushNotifications.createChannel({
-        id: 'rightway_default',
-        name: 'Notifications Right Way',
-        description: 'Alertes livraisons, ventes et activité',
-        importance: 5, // MAX → pops as a heads-up banner
-        visibility: 1,
-        vibration: true,
-        sound: 'default',
+    // Add channel + listeners exactly once per app launch.
+    if (!listenersAdded) {
+      // High-importance channel → heads-up notifications with sound, like social apps.
+      try {
+        await PushNotifications.createChannel({
+          id: 'rightway_default',
+          name: 'Notifications Right Way',
+          description: 'Alertes livraisons, ventes et activité',
+          importance: 5, // MAX → pops as a heads-up banner
+          visibility: 1,
+          vibration: true,
+          sound: 'default',
+        });
+      } catch (_) { /* channels unsupported on very old Android — ignore */ }
+
+      // FCM device token arrives here (on first register + whenever it rotates).
+      PushNotifications.addListener('registration', (token) => {
+        lastToken = token.value;
+        postToken(token.value); // bind this device to whoever is logged in NOW
       });
-    } catch (_) { /* channels unsupported on very old Android — ignore */ }
 
-    await PushNotifications.removeAllListeners();
+      PushNotifications.addListener('registrationError', (err) => {
+        console.warn('[native-push] registration error:', err?.error);
+      });
 
-    // FCM device token arrives here (and again whenever it rotates).
-    PushNotifications.addListener('registration', (token) => {
-      registerToken(token.value);
-    });
+      // User tapped the notification → open the relevant screen.
+      PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+        const url = action?.notification?.data?.url;
+        if (url && url !== '/') {
+          window.location.assign(url);
+        }
+      });
 
-    PushNotifications.addListener('registrationError', (err) => {
-      console.warn('[native-push] registration error:', err?.error);
-    });
+      listenersAdded = true;
+    }
 
-    // User tapped the notification → open the relevant screen.
-    PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
-      const url = action?.notification?.data?.url;
-      if (url && url !== '/') {
-        window.location.assign(url);
-      }
-    });
-
+    // Re-register on every login. register() re-fires the 'registration' event
+    // with the (cached) token, re-binding this device to the current user.
     await PushNotifications.register();
-    console.log('[native-push] registered');
+
+    // If we already hold the token from a previous registration this session,
+    // bind it immediately too (covers account switches without a token rotation).
+    if (lastToken) postToken(lastToken);
   } catch (err) {
     console.warn('[native-push] init failed:', err?.message);
-    started = false; // allow a retry on next login
   }
+}
+
+// Detach this device's token from the user on logout, so the logged-out user
+// stops receiving pushes here. Best-effort; must run BEFORE the JWT is cleared.
+export async function unregisterNativePush() {
+  if (!Capacitor.isNativePlatform() || !lastToken) return;
+  try {
+    const jwt = localStorage.getItem('rightway_token');
+    if (!jwt) return;
+    await fetch('/api/push/device-token', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${jwt}`,
+      },
+      body: JSON.stringify({ token: lastToken }),
+    });
+  } catch (_) { /* best-effort */ }
 }

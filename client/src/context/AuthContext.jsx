@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { apiPost, apiGet } from '../lib/api';
+import { unregisterNativePush } from '../lib/nativePush';
 
 const AuthContext = createContext(null);
 
@@ -25,6 +26,10 @@ export function AuthProvider({ children }) {
   const [logoutSubmitting, setLogoutSubmitting] = useState(false);
 
   const executeLogout = useCallback(() => {
+    // Detach this device's push token from the user FIRST (needs the JWT,
+    // which we're about to clear). Fire-and-forget — the request is initiated
+    // synchronously with the current token before removal below.
+    unregisterNativePush();
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(EXPIRES_AT_KEY);
