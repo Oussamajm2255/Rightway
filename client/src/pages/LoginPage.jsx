@@ -1,15 +1,27 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './LoginPage.css';
 
+const REMEMBER_KEY = 'rightway_remembered_email';
+const REMEMBER_PREF_KEY = 'rightway_remember_me';
+
 function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  // On mount, restore saved email + remember-me preference
+  useEffect(() => {
+    const savedEmail = localStorage.getItem(REMEMBER_KEY);
+    const savedPref = localStorage.getItem(REMEMBER_PREF_KEY);
+    if (savedEmail) setEmail(savedEmail);
+    if (savedPref === 'true') setRememberMe(true);
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -23,6 +35,16 @@ function LoginPage() {
     setSubmitting(true);
     try {
       await login(email, password);
+
+      // Persist or clear credentials based on checkbox
+      if (rememberMe) {
+        localStorage.setItem(REMEMBER_KEY, email);
+        localStorage.setItem(REMEMBER_PREF_KEY, 'true');
+      } else {
+        localStorage.removeItem(REMEMBER_KEY);
+        localStorage.removeItem(REMEMBER_PREF_KEY);
+      }
+
       navigate('/');
     } catch (err) {
       setError(err.message || 'Échec de la connexion. Veuillez réessayer.');
@@ -70,6 +92,15 @@ function LoginPage() {
               autoComplete="current-password"
             />
           </div>
+
+          <label className="login-remember">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+            />
+            <span>Se souvenir de moi</span>
+          </label>
 
           <button
             type="submit"
