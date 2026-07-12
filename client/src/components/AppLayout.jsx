@@ -618,17 +618,17 @@ function AppLayout({ children }) {
             })}
           </nav>
 
-          <div className="sidebar-footer">
-            <div className="sidebar-user">
-              <div className="sidebar-avatar">{getInitials(user?.full_name)}</div>
-              <div className="sidebar-user-info">
-                <div className="sidebar-user-name">{user?.full_name}</div>
-                <div className="sidebar-user-role">{getRoleLabel(role)}</div>
-              </div>
+          <div className="sidebar-identity-card">
+            <div className="sic-avatar-ring">
+              <div className="sic-avatar">{getInitials(user?.full_name)}</div>
             </div>
-            <button className="nav-item logout-btn" onClick={requestLogout}>
-              <span className="nav-icon"><IconLogout /></span>
-              <span className="nav-label">Déconnexion</span>
+            <div className="sic-name">{user?.full_name}</div>
+            <span className="sic-role-badge">{getRoleLabel(role)}</span>
+            <button className="sic-logout" onClick={requestLogout}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
+              </svg>
+              Déconnexion
             </button>
           </div>
         </aside>
