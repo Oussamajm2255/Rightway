@@ -769,7 +769,9 @@ textarea.form-input {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  /* Above the sticky brand-masthead (9999) and bottom-nav (600) so modals
+     always sit over page chrome — never covered by them. */
+  z-index: 10000;
   padding: var(--space-4);
   animation: modalOverlayIn var(--transition-base) ease-out;
 }

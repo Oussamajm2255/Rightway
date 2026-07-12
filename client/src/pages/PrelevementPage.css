@@ -204,7 +204,8 @@
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,.4);
-  z-index: 1000;
+  /* Above the sticky brand-masthead (9999) so modals aren't covered */
+  z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
