@@ -480,6 +480,11 @@
   font-weight: var(--weight-medium);
 }
 
+/* ===== Preview card list — default hidden on desktop ===== */
+.load-cards-view {
+  display: none;
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
   .create-livraison {
@@ -582,10 +587,6 @@
 }
 
 /* ===== Preview card list (mobile) — same pattern as Produits chargés ===== */
-.load-cards-view {
-  display: none;
-}
-
 .load-cat-group {
   display: flex;
   flex-direction: column;
