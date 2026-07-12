@@ -245,6 +245,21 @@
   outline-offset: 2px;
 }
 
+/* ── Auto-login spinner ── */
+.login-auto-spinner {
+  width: 28px;
+  height: 28px;
+  margin: 0 auto;
+  border: 2.5px solid var(--color-border);
+  border-top-color: var(--color-red);
+  border-radius: 50%;
+  animation: loginSpin 0.7s linear infinite;
+}
+
+@keyframes loginSpin {
+  to { transform: rotate(360deg); }
+}
+
 /* ── Footer ── */
 .login-page .login-footer {
   text-align: center;

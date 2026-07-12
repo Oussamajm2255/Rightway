@@ -34,6 +34,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(EXPIRES_AT_KEY);
     localStorage.removeItem('rightway_remembered_email');
+    localStorage.removeItem('rightway_remembered_pass');
     localStorage.removeItem('rightway_remember_me');
     setToken(null);
     setUser(null);
