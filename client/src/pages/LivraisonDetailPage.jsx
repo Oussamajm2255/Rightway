@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, Fragment } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { apiGet, apiPost, apiPut, openPdf } from '../lib/api';
@@ -25,16 +25,15 @@ function LivraisonDetailPage() {
   const [success, setSuccess] = useState('');
   const [showTerminer, setShowTerminer] = useState(searchParams.get('action') === 'terminer');
   const [showTerminerPassword, setShowTerminerPassword] = useState(false);
-  const actionConsumed = useRef(false);
 
-  // Clean URL params that trigger business actions so browser back/forward
-  // never re-triggers Terminer, Confirmer, or other sensitive flows.
-  useEffect(() => {
-    if (!actionConsumed.current && searchParams.get('action')) {
-      actionConsumed.current = true;
+  // Clean the ?action=terminer query param from the URL.
+  // Called when the user explicitly dismisses the modal (cancel/backdrop)
+  // or when the flow completes — never eagerly, or it races showTerminer.
+  function cleanTerminerUrl() {
+    if (searchParams.get('action')) {
       navigate(`/livraisons/${id}`, { replace: true });
     }
-  }, [searchParams, navigate, id]);
+  }
   const [terminerSummary, setTerminerSummary] = useState(null);
   const [showConfirmerRetour, setShowConfirmerRetour] = useState(false);
   const [showConfirmSortie, setShowConfirmSortie] = useState(false);
@@ -120,6 +119,7 @@ function LivraisonDetailPage() {
       setLivraison(data.livraison);
       setTerminerSummary(data);
       setShowTerminerPassword(false);
+      cleanTerminerUrl();
       setSuccess(data.message);
     } catch (err) {
       setActionError(err.message);
@@ -1340,7 +1340,7 @@ function LivraisonDetailPage() {
 
       {/* Pre-terminer summary (step 1) */}
       {showTerminer && (
-        <div className="modal-overlay" onClick={() => setShowTerminer(false)}>
+        <div className="modal-overlay" onClick={() => { setShowTerminer(false); cleanTerminerUrl(); }}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '680px' }}>
             <h3 className="modal-title">Résumé avant clôture</h3>
             <p style={{ marginBottom: 'var(--space-3)' }}><strong>{livraison.reference}</strong></p>
@@ -1423,7 +1423,7 @@ function LivraisonDetailPage() {
             })()}
 
             <div className="modal-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => setShowTerminer(false)}>Annuler</button>
+              <button type="button" className="btn btn-secondary" onClick={() => { setShowTerminer(false); cleanTerminerUrl(); }}>Annuler</button>
               <button
                 type="button"
                 className="btn btn-primary"
