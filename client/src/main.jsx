@@ -9,6 +9,14 @@ import './styles/index.css';
 // Capacitor WebView may cache env(safe-area-inset-*) across orientation
 // changes.  We read the live values via a sentinel element and push them
 // as CSS custom properties on <html> — inline style beats :root rules.
+//
+// The capacitor-native body class is a CSS-only hook so that critical
+// elements (bottom-nav) can use max(env(…), 24px) directly in CSS — no
+// JS dependency for the safety floor.
+if (Capacitor.isNativePlatform()) {
+  document.body.classList.add('capacitor-native');
+}
+
 function applySafeInsets() {
   const s = document.createElement('div');
   s.style.cssText =

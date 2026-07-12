@@ -827,6 +827,14 @@
   scrollbar-width: none;
 }
 
+/* Capacitor APK: CSS-native safety floor — env() is resolved directly
+   by the WebView renderer, no JS dependency.  The 24 px minimum keeps
+   nav items clear of the Android gesture bar even when the sentinel
+   approach reads 0. */
+body.capacitor-native .bottom-nav {
+  padding-bottom: max(env(safe-area-inset-bottom, 24px), 24px);
+}
+
 .bottom-nav::-webkit-scrollbar {
   display: none;
 }
