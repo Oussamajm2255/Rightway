@@ -3,22 +3,18 @@
    Premium fixed-sidebar architecture with clean drawer mobile pattern
    ================================================================ */
 
-/* ===== Layout Shell ===== */
-.app-layout {
-  /* Status-bar / notch height on edge-to-edge Android (0 elsewhere) */
+/* Safe-area insets — defined at :root so JS can override them on
+   resize/orientationchange via document.documentElement.style. */
+:root {
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ===== Layout Shell ===== */
+.app-layout {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-}
-
-/* Capacitor APK: env() may return 0 on Android when the native theme
-   doesn't enable edge-to-edge.  Force a 24 dp minimum so the topbar
-   never overlaps the system status bar. */
-body.capacitor-native .app-layout {
-  --safe-top: max(env(safe-area-inset-top, 24px), 24px);
-  --safe-bottom: max(env(safe-area-inset-bottom, 24px), 24px);
 }
 
 /* ===== Topbar ===== */

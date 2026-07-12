@@ -349,7 +349,7 @@ export default function BenefitsPage() {
               </div>
             )}
 
-            <div className="table-scroll cards-on-mobile">
+            <div className="table-scroll benefits-table-view">
               <table className="data-table">
                 <thead>
                   <tr>
@@ -411,6 +411,66 @@ export default function BenefitsPage() {
                   </tfoot>
                 )}
               </table>
+            </div>
+
+            {/* Mobile: card list */}
+            <div className="benefits-cards-view">
+              {loading && products.length === 0 ? (
+                <div className="empty-state">Chargement…</div>
+              ) : products.length === 0 ? (
+                <div className="empty-state">{Icon.search}<p>Aucun produit ne correspond aux critères de recherche.</p></div>
+              ) : (
+                products.map((p) => {
+                  const benefitClass = p.benefit > 0 ? 'val-positive' : p.benefit < 0 ? 'val-negative' : 'val-neutral';
+                  const mClass = marginClass(p.margin_pct);
+                  const marginFillW = Math.min(Math.abs(p.margin_pct), 100);
+                  const cColors = getColor(p.category);
+                  return (
+                    <article key={p.id} className="ben-card" style={{ borderLeftColor: cColors.bar }}>
+                      <div className="ben-card-top">
+                        <div className="ben-card-identity">
+                          <span className="ben-card-code">{p.id}</span>
+                          <span className="ben-card-name">{p.name}</span>
+                        </div>
+                        {p.category && (
+                          <span className="cat-badge" style={{ background: cColors.bg, color: cColors.text, flexShrink: 0 }}>{p.category}</span>
+                        )}
+                      </div>
+                      <div className="ben-card-pricing">
+                        <span>PA {fmtDT(p.purchase_price)}</span>
+                        <span>PV {fmtDT(p.selling_price_ttc)}</span>
+                      </div>
+                      <div className="ben-card-stats">
+                        <div>
+                          <span>Qté Vendue</span>
+                          <b>{fmtInt(p.total_sold)}</b>
+                        </div>
+                        <div>
+                          <span>CA</span>
+                          <b>{p.ca > 0 ? fmtDT(p.ca) : '—'}</b>
+                        </div>
+                        <div>
+                          <span>Coût</span>
+                          <b>{p.cost > 0 ? fmtDT(p.cost) : '—'}</b>
+                        </div>
+                      </div>
+                      <div className="ben-card-bottom">
+                        <div className="ben-card-benefit">
+                          <span>Bénéfice</span>
+                          <b className={benefitClass}>{fmtDT(p.benefit)}</b>
+                        </div>
+                        <div className="ben-card-margin">
+                          <span className="ben-card-margin-label">Marge</span>
+                          <div className={`margin-cell ${mClass}`} style={{ padding: 0, background: 'none' }}>
+                            <div className="margin-track"><div className="margin-fill" style={{ width: marginFillW + '%' }} /></div>
+                            <span className="margin-pct">{fmtPct(p.margin_pct)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })
+              )}
             </div>
 
             {/* PAGINATION */}

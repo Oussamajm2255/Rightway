@@ -518,13 +518,14 @@ select.filter-input { cursor: pointer; }
   max-height: 100%;
 }
 
-/* ─── Responsive ─── */
-@media (max-width: 900px) {
-  .kpi-grid-4 { grid-template-columns: repeat(2, 1fr); }
-  .kpi-grid-5 { grid-template-columns: repeat(3, 1fr); }
-  .filters-bar { flex-direction: column; align-items: flex-start; }
-  .filters-right { margin-left: 0; }
-  .filter-search { min-width: 160px; }
+/* ===== Desktop table view (hidden on mobile) ===== */
+.benefits-table-view {
+  /* visible by default */
+}
+
+/* ===== Mobile card view (hidden on desktop) ===== */
+.benefits-cards-view {
+  display: none;
 }
 
 @media (max-width: 768px) {
@@ -532,6 +533,159 @@ select.filter-input { cursor: pointer; }
   .chart-card { padding: 14px; }
   .chart-card-header h3 { font-size: 12px; }
   .chart-wrap { max-height: 420px; }
+
+  .benefits-table-view {
+    display: none;
+  }
+
+  .benefits-cards-view {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+}
+
+/* ─── Benefit card ─── */
+.ben-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ben-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.ben-card-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.ben-card-code {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+.ben-card-name {
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-md);
+  color: var(--color-text);
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.ben-card-pricing {
+  display: flex;
+  gap: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+.ben-card-pricing span {
+  white-space: nowrap;
+}
+
+.ben-card-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-3);
+}
+
+.ben-card-stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ben-card-stats span {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.ben-card-stats b {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+/* Benefit highlight section */
+.ben-card-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  background: var(--color-page);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+}
+
+.ben-card-benefit {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ben-card-benefit span {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+.ben-card-benefit b {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.ben-card-margin {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  justify-content: flex-end;
+}
+
+.ben-card-margin-label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 900px) {
+  .kpi-grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .kpi-grid-5 { grid-template-columns: repeat(3, 1fr); }
+  .filters-bar { flex-direction: column; align-items: flex-start; }
+  .filters-right { margin-left: 0; }
+  .filter-search { min-width: 160px; }
 }
 
 @media (max-width: 640px) {

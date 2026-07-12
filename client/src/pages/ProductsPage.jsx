@@ -126,71 +126,130 @@ function ProductsPage() {
         <div className="empty-state">
           <p>Aucun produit trouvé.</p>
         </div>
-      ) : (
-        <div className="table-container cards-on-mobile">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Code</th>
-                <th>Code-barres</th>
-                <th>Nom</th>
-                <th>Catégorie</th>
-                <th>Prix d'achat</th>
-                <th>Prix vente TTC</th>
-                <th>Statut</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(
-                products.reduce((acc, product) => {
-                  const cat = product.category || 'Sans catégorie';
-                  (acc[cat] = acc[cat] || []).push(product);
-                  return acc;
-                }, {})
-              ).map(([cat, catItems]) => {
+      ) : (() => {
+        const grouped = Object.entries(
+          products.reduce((acc, product) => {
+            const cat = product.category || 'Sans catégorie';
+            (acc[cat] = acc[cat] || []).push(product);
+            return acc;
+          }, {})
+        );
+        return (
+          <>
+            {/* Desktop: full table */}
+            <div className="table-container products-table-view">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Code</th>
+                    <th>Code-barres</th>
+                    <th>Nom</th>
+                    <th>Catégorie</th>
+                    <th>Prix d'achat</th>
+                    <th>Prix vente TTC</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {grouped.map(([cat, catItems]) => {
+                    const catCol = getColor(cat);
+                    return (
+                      <Fragment key={cat}>
+                        {catItems.map((product) => (
+                          <tr key={product.id} className={!product.is_active ? 'row-inactive' : ''} style={{ background: catCol.bg, borderLeftColor: catCol.bar }}>
+                            <td className="td-code" data-label="Code">{product.id}</td>
+                            <td data-label="Code-barres">{product.barcode}</td>
+                            <td className="td-name" data-label="Nom">{product.name}</td>
+                            <td data-label="Catégorie">
+                              <span className="cat-pill" style={{ background: catCol.bg, color: catCol.text }}>{cat}</span>
+                            </td>
+                            <td className="td-price" data-label="Prix d'achat">{formatDT(product.purchase_price)}</td>
+                            <td className="td-price" data-label="Prix vente TTC">{formatDT(product.selling_price_ttc)}</td>
+                            <td data-label="Statut">
+                              <span className={`status-dot ${product.is_active ? 'active' : 'inactive'}`} />
+                              {product.is_active ? 'Actif' : 'Archivé'}
+                            </td>
+                            <td className="td-actions">
+                              <button
+                                className="btn btn-sm btn-outline"
+                                onClick={() => handleEdit(product)}
+                              >
+                                Modifier
+                              </button>
+                              {product.is_active && (
+                                <button
+                                  className="btn btn-sm btn-outline-danger"
+                                  onClick={() => handleArchive(product)}
+                                >
+                                  Archiver
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile: card list grouped by category */}
+            <div className="products-cards-view">
+              {grouped.map(([cat, catItems]) => {
                 const catCol = getColor(cat);
                 return (
-                  <Fragment key={cat}>
+                  <section className="prod-cat-group" key={cat}>
+                    <header className="prod-cat-head">
+                      <span className="cat-pill" style={{ background: catCol.bg, color: catCol.text }}>{cat}</span>
+                      <span className="prod-cat-count">{catItems.length} produit{catItems.length > 1 ? 's' : ''}</span>
+                    </header>
                     {catItems.map((product) => (
-                      <tr key={product.id} className={!product.is_active ? 'row-inactive' : ''} style={{ background: catCol.bg, borderLeftColor: catCol.bar }}>
-                        <td className="td-code" data-label="Code">{product.id}</td>
-                        <td data-label="Code-barres">{product.barcode}</td>
-                        <td className="td-name" data-label="Nom">{product.name}</td>
-                        <td data-label="Catégorie">
+                      <article key={product.id} className="prod-card" style={{ borderLeftColor: catCol.bar }}>
+                        <div className="prod-card-bar">
                           <span className="cat-pill" style={{ background: catCol.bg, color: catCol.text }}>{cat}</span>
-                        </td>
-                        <td className="td-price" data-label="Prix d'achat">{formatDT(product.purchase_price)}</td>
-                        <td className="td-price" data-label="Prix vente TTC">{formatDT(product.selling_price_ttc)}</td>
-                        <td data-label="Statut">
-                          <span className={`status-dot ${product.is_active ? 'active' : 'inactive'}`} />
-                          {product.is_active ? 'Actif' : 'Archivé'}
-                        </td>
-                        <td className="td-actions">
-                          <button
-                            className="btn btn-sm btn-outline"
-                            onClick={() => handleEdit(product)}
-                          >
+                          <div className="prod-card-status">
+                            <span className={`status-dot ${product.is_active ? 'active' : 'inactive'}`} />
+                            {product.is_active ? 'Actif' : 'Archivé'}
+                          </div>
+                        </div>
+                        <div className="prod-card-body">
+                          <span className="prod-card-code">{product.id}</span>
+                          <span className="prod-card-name">{product.name}</span>
+                          {product.barcode && (
+                            <span className="prod-card-barcode">{product.barcode}</span>
+                          )}
+                        </div>
+                        <div className="prod-card-stats">
+                          <div>
+                            <span>Prix d'achat</span>
+                            <b>{formatDT(product.purchase_price)}</b>
+                          </div>
+                          <div>
+                            <span>Prix vente TTC</span>
+                            <b>{formatDT(product.selling_price_ttc)}</b>
+                          </div>
+                        </div>
+                        <div className="prod-card-actions">
+                          <button className="btn btn-sm btn-outline" onClick={() => handleEdit(product)}>
                             Modifier
                           </button>
                           {product.is_active && (
-                            <button
-                              className="btn btn-sm btn-outline-danger"
-                              onClick={() => handleArchive(product)}
-                            >
+                            <button className="btn btn-sm btn-outline-danger" onClick={() => handleArchive(product)}>
                               Archiver
                             </button>
                           )}
-                        </td>
-                      </tr>
+                        </div>
+                      </article>
                     ))}
-                  </Fragment>
+                  </section>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
-      )}
+            </div>
+          </>
+        );
+      })()}
 
       {showForm && (
         <ProductFormModal
