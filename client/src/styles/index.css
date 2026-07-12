@@ -1427,15 +1427,35 @@ textarea.form-input {
    pinned while the body scrolls, and the actions clear the gesture
    area (safe-area inset). Desktop keeps the centered card.
    ================================================================ */
+/* Pure-transform slide → runs entirely on the compositor (max FPS). */
 @keyframes sheetUp {
-  from { transform: translateY(100%); opacity: 0.5; }
-  to   { transform: translateY(0);    opacity: 1; }
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+@keyframes modalBackdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 @media (max-width: 600px) {
   .modal-overlay {
     align-items: flex-end;
     padding: 0;
+    /* The dark backdrop lives on ::before so the sheet's slide stays a pure,
+       compositor-only transform. No backdrop blur → buttery on mobile. */
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .modal-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: rgba(10, 10, 11, 0.5);
+    animation: modalBackdropIn 0.28s ease-out;
+    will-change: opacity;
   }
 
   .modal-card,
@@ -1448,7 +1468,12 @@ textarea.form-input {
     margin: 0;
     padding: 0 var(--space-4);
     border-radius: 18px 18px 0 0;
-    animation: sheetUp 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+    /* GPU-composited glide, same iOS-sheet easing as the notification sheet.
+       will-change promotes it to its own layer so the transform never repaints. */
+    animation: sheetUp 0.34s cubic-bezier(0.32, 0.72, 0, 1);
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
   }
 
   /* Pinned title + grab handle */
