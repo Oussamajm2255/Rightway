@@ -173,7 +173,7 @@ body.capacitor-native .app-layout {
 
 .notif-dropdown {
   position: fixed;
-  top: 56px;
+  top: calc(56px + var(--safe-top));
   right: var(--space-4);
   width: 380px;
   max-height: 460px;
