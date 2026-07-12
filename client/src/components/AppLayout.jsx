@@ -238,6 +238,98 @@ function AppLayout({ children }) {
     return `Il y a ${diffD}j`;
   }
 
+  function groupNotificationsByDate(notifs) {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today.getTime() - 86400000);
+    const weekAgo = new Date(today.getTime() - 7 * 86400000);
+    const groups = [];
+    for (const n of notifs) {
+      const d = new Date(n.created_at);
+      if (d >= today) {
+        if (!groups[0]) groups[0] = { label: "Aujourd'hui", items: [] };
+        groups[0].items.push(n);
+      } else if (d >= yesterday) {
+        if (!groups[1]) groups[1] = { label: 'Hier', items: [] };
+        groups[1].items.push(n);
+      } else if (d >= weekAgo) {
+        if (!groups[2]) groups[2] = { label: 'Cette semaine', items: [] };
+        groups[2].items.push(n);
+      } else {
+        if (!groups[3]) groups[3] = { label: 'Plus ancien', items: [] };
+        groups[3].items.push(n);
+      }
+    }
+    return groups.filter(Boolean);
+  }
+
+  async function handleNotifClick(n) {
+    // Optimistically mark as read for instant feedback
+    if (!n.is_read) {
+      setNotifications((prev) =>
+        prev.map((item) => (item.id === n.id ? { ...item, is_read: true } : item))
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+      apiPut(`/notifications/${n.id}/read`, {}).catch(() => {});
+    }
+    if (n.livraison_id) navigate(`/livraisons/${n.livraison_id}`);
+    setNotifOpen(false);
+  }
+
+  /* Shared notification content (used by both desktop dropdown and mobile sheet) */
+  function renderNotifList() {
+    if (notifLoading) {
+      return (
+        <div className="notif-list">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="notif-skeleton">
+              <div className="notif-skel-line notif-skel-line--long" />
+              <div className="notif-skel-line notif-skel-line--short" />
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (notifications.length === 0) {
+      return (
+        <div className="notif-empty">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" opacity="0.25">
+            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />
+          </svg>
+          <p>Aucune notification</p>
+        </div>
+      );
+    }
+
+    const groups = groupNotificationsByDate(notifications);
+    return (
+      <div className="notif-list">
+        {groups.map((group, gi) => (
+          <div key={gi} className="notif-group">
+            <div className="notif-group-header">
+              <span>{group.label}</span>
+              <span className="notif-group-count">{group.items.length}</span>
+            </div>
+            {group.items.map((n) => (
+              <div
+                key={n.id}
+                className={`notif-item ${!n.is_read ? 'unread' : ''}`}
+                onClick={() => handleNotifClick(n)}
+              >
+                {!n.is_read && <span className="notif-unread-dot" />}
+                <div className="notif-item-content">
+                  <div className="notif-msg">{n.message}</div>
+                  <div className="notif-time">{formatRelativeTime(n.created_at)}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   const role = user?.role;
 
   // GPS tracking for COMMERCIAL users → real-time map on SUPER_ADMIN dashboard
@@ -334,9 +426,10 @@ function AppLayout({ children }) {
         </div>
       </header>
 
-      {/* Notification Dropdown */}
+      {/* Notification Dropdown (Desktop) + Bottom Sheet (Mobile) */}
       {notifOpen && (
         <>
+          {/* Desktop: dropdown from bell icon */}
           <div className="notif-backdrop" onClick={() => setNotifOpen(false)} />
           <div className="notif-dropdown">
             <div className="notif-header">
@@ -347,30 +440,22 @@ function AppLayout({ children }) {
                 </button>
               )}
             </div>
-            <div className="notif-list">
-              {notifLoading ? (
-                <div className="notif-empty">Chargement...</div>
-              ) : notifications.length === 0 ? (
-                <div className="notif-empty">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.3">
-                    <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />
-                    <line x1="3" y1="3" x2="21" y2="21" />
-                  </svg>
-                  <p>Aucune notification</p>
-                </div>
-              ) : (
-                notifications.map((n) => (
-                  <div
-                    key={n.id}
-                    className={`notif-item ${!n.is_read ? 'unread' : ''}`}
-                    onClick={() => { if (n.livraison_id) navigate(`/livraisons/${n.livraison_id}`); setNotifOpen(false); }}
-                  >
-                    <div className="notif-msg">{n.message}</div>
-                    <div className="notif-time">{formatRelativeTime(n.created_at)}</div>
-                  </div>
-                ))
+            {renderNotifList()}
+          </div>
+
+          {/* Mobile: bottom sheet */}
+          <div className="notif-sheet-backdrop" onClick={() => setNotifOpen(false)} />
+          <div className="notif-sheet">
+            <div className="notif-sheet-handle" />
+            <div className="notif-sheet-header">
+              <h2 className="notif-sheet-title">Notifications</h2>
+              {unreadCount > 0 && (
+                <button className="notif-sheet-mark-all" onClick={handleMarkAllRead}>
+                  Tout marquer comme lu
+                </button>
               )}
             </div>
+            {renderNotifList()}
           </div>
         </>
       )}

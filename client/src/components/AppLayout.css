@@ -270,6 +270,249 @@ body.capacitor-native .app-layout {
   gap: var(--space-3);
 }
 
+/* ===== Notification Skeleton Loading ===== */
+.notif-skeleton {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.notif-skel-line {
+  height: 10px;
+  border-radius: 4px;
+  background: var(--color-border);
+  animation: notifShimmer 1.6s ease-in-out infinite;
+}
+
+.notif-skel-line--long {
+  width: 85%;
+  margin-bottom: 8px;
+}
+
+.notif-skel-line--short {
+  width: 45%;
+}
+
+@keyframes notifShimmer {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+/* ===== Date Group Headers ===== */
+.notif-group {
+  /* container for a date group */
+}
+
+.notif-group-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.notif-group-count {
+  font-size: 11px;
+  background: var(--color-border);
+  color: var(--color-text-secondary);
+  padding: 1px 7px;
+  border-radius: 99px;
+  font-weight: var(--weight-medium);
+}
+
+/* ===== Unread Dot (mobile, inside sheet only) ===== */
+.notif-unread-dot {
+  display: none; /* hidden on desktop — left border handles unread */
+}
+
+.notif-sheet .notif-unread-dot {
+  display: block;
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary, #E10600);
+  margin-top: 5px;
+  margin-right: var(--space-2);
+}
+
+/* Wrapper for message + time alongside the dot */
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  border-bottom: 1px solid var(--color-border);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.notif-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-item:last-child {
+  border-bottom: none;
+}
+
+.notif-item:hover {
+  background: var(--color-surface-hover);
+}
+
+.notif-item:active {
+  transform: scale(0.985);
+}
+
+.notif-item.unread {
+  background: var(--color-primary-subtle);
+  border-left: 3px solid var(--color-primary);
+  padding-left: calc(var(--space-4) - 3px);
+}
+
+.notif-item.unread:hover {
+  background: var(--color-primary-subtle-hover);
+}
+
+/* ================================================================
+   MOBILE NOTIFICATION BOTTOM SHEET
+   ================================================================ */
+
+/* Backdrop for the bottom sheet */
+.notif-sheet-backdrop {
+  display: none; /* hidden on desktop */
+  position: fixed;
+  inset: 0;
+  z-index: 799;
+  background: rgba(10, 10, 11, 0.45);
+  animation: sheetBackdropIn 0.28s ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@keyframes sheetBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Bottom sheet panel */
+.notif-sheet {
+  display: none; /* hidden on desktop */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 85vh;
+  background: var(--color-surface);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -4px 24px rgba(10, 10, 11, 0.18), 0 -1px 4px rgba(10, 10, 11, 0.08);
+  z-index: 800;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: sheetSlideUp 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  /* Clear the bottom nav + gesture bar */
+  padding-bottom: calc(56px + var(--safe-bottom) + var(--space-2));
+}
+
+@keyframes sheetSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Drag handle pill */
+.notif-sheet-handle {
+  width: 32px;
+  height: 4px;
+  border-radius: 100px;
+  background: var(--color-border-strong, #D1D5DB);
+  margin: var(--space-3) auto var(--space-1);
+  flex-shrink: 0;
+}
+
+/* Sheet header */
+.notif-sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2) var(--space-4) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.notif-sheet-title {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  margin: 0;
+  color: var(--color-text);
+}
+
+.notif-sheet-mark-all {
+  background: none;
+  border: none;
+  font-size: var(--text-sm);
+  color: var(--color-primary, #E10600);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+
+.notif-sheet-mark-all:hover {
+  background: var(--color-primary-subtle);
+}
+
+/* Inside the sheet: unread items use dot, no left border */
+.notif-sheet .notif-item.unread {
+  border-left: none;
+  padding-left: var(--space-4);
+}
+
+/* Inside the sheet: group headers match sheet bg */
+.notif-sheet .notif-group-header {
+  background: var(--color-surface);
+}
+
+/* ================================================================
+   VISIBILITY: Desktop = dropdown / Mobile = bottom sheet
+   ================================================================ */
+
+/* Desktop (≥769px): show dropdown, hide sheet */
+@media (min-width: 769px) {
+  .notif-sheet-backdrop,
+  .notif-sheet {
+    display: none !important;
+  }
+}
+
+/* Mobile (<769px): show sheet, hide dropdown */
+@media (max-width: 768px) {
+  .notif-dropdown,
+  .notif-backdrop {
+    display: none !important;
+  }
+
+  .notif-sheet-backdrop {
+    display: block;
+  }
+
+  .notif-sheet {
+    display: flex;
+  }
+}
+
 /* ================================================================
    SIDEBAR — Fixed Desktop / Drawer Mobile
    ================================================================ */
