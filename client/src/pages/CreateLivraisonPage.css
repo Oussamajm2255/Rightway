@@ -684,7 +684,7 @@
   font-size: var(--text-xs);
   color: var(--color-text-secondary);
   padding: var(--space-2) var(--space-4);
-  background: var(--color-surface-hover);
+  border-left: 3px solid transparent;
   border-radius: var(--radius-md);
 }
 

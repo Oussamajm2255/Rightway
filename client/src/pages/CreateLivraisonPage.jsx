@@ -396,8 +396,8 @@ function CreateLivraisonPage() {
                             </article>
                           ))}
 
-                          <div className="load-cat-subtotal">
-                            <span>Sous-total</span>
+                          <div className="load-cat-subtotal" style={{ borderLeftColor: catCol.bar, background: catCol.bg }}>
+                            <span style={{ color: catCol.text }}>Sous-total</span>
                             Chargé <b>{catItems.reduce((s, p) => s + selectedItems[p.id], 0)}</b>
                             · Montant <b>{formatDT(catItems.reduce((s, p) => s + (selectedItems[p.id] * Number(p.selling_price_ttc)), 0))}</b>
                           </div>
