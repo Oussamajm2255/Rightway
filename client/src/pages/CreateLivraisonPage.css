@@ -526,7 +526,38 @@
   }
 
   .preview-card {
-    padding: var(--space-4);
+    padding: var(--space-3);
+    margin-left: calc(-1 * var(--space-4));
+    margin-right: calc(-1 * var(--space-4));
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  /* ── Scrollable preview table ── */
+  .preview-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 calc(-1 * var(--space-3));
+    padding: 0 var(--space-3);
+  }
+
+  .preview-table {
+    min-width: 600px;
+    font-size: var(--text-xs);
+  }
+
+  .preview-table th,
+  .preview-table td {
+    padding: 0.4375rem 0.5rem;
+    white-space: nowrap;
+  }
+
+  .preview-table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--color-surface);
+    z-index: 1;
   }
 
   .step-actions {

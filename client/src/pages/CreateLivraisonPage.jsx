@@ -303,6 +303,7 @@ function CreateLivraisonPage() {
               <div><span>Véhicule:</span> {selectedCommercial.vehicle_name} — {selectedCommercial.vehicle_plate}</div>
             </div>
 
+            <div className="preview-table-wrap">
             <table className="preview-table">
               <thead>
                 <tr>
@@ -353,6 +354,7 @@ function CreateLivraisonPage() {
                 </tr>
               </tfoot>
             </table>
+            </div>
           </div>
 
           <div className="step-actions">
