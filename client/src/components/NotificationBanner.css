@@ -1,0 +1,99 @@
+.notif-banner {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(440px, calc(100vw - 20px));
+  z-index: 2000;
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  background: var(--color-ink, #0A0A0B);
+  color: #fff;
+  border-radius: 14px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.25);
+  padding: 4px;
+  animation: notifBannerIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.notif-banner-leaving {
+  animation: notifBannerOut 0.24s ease forwards;
+}
+
+@keyframes notifBannerIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-16px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes notifBannerOut {
+  from { opacity: 1; transform: translateX(-50%) translateY(0); }
+  to { opacity: 0; transform: translateX(-50%) translateY(-16px); }
+}
+
+.notif-banner-inner {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  padding: 9px 6px 9px 11px;
+  color: inherit;
+  min-width: 0;
+}
+
+.notif-banner-icon {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--color-red, #E10600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.notif-banner-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+.notif-banner-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notif-banner-body {
+  font-size: 12.5px;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.72);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notif-banner-close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 0 8px;
+  border-radius: 10px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.notif-banner-close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}

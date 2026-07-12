@@ -69,9 +69,19 @@ export async function initNativePush() {
       });
 
       // Push arrived while the app is in the FOREGROUND — Android suppresses the
-      // tray banner here, so refresh the in-app bell so the user still sees it.
-      PushNotifications.addListener('pushNotificationReceived', () => {
-        try { window.dispatchEvent(new Event('rightway:refresh-notifications')); } catch (_) {}
+      // tray banner here, so refresh the in-app bell AND show our own heads-up
+      // banner so the user still sees it, like a social app.
+      PushNotifications.addListener('pushNotificationReceived', (notif) => {
+        try {
+          window.dispatchEvent(new Event('rightway:refresh-notifications'));
+          window.dispatchEvent(new CustomEvent('rightway:notification', {
+            detail: {
+              title: notif?.title || 'Right Way',
+              body: notif?.body || '',
+              url: notif?.data?.url || '/',
+            },
+          }));
+        } catch (_) {}
       });
 
       // User tapped the notification → open the relevant screen.

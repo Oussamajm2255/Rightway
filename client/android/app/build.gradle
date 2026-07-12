@@ -16,10 +16,29 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            // Populated only when the CI provides the keystore via env vars
+            // (decoded from GitHub Secrets). Never committed to the repo.
+            def ksPath = System.getenv("RELEASE_KEYSTORE_FILE")
+            if (ksPath) {
+                storeFile file(ksPath)
+                storeType "PKCS12"
+                storePassword System.getenv("RELEASE_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("RELEASE_KEY_ALIAS")
+                keyPassword System.getenv("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // Sign with the release key when it's available; otherwise leave
+            // unsigned (debug builds are unaffected).
+            if (System.getenv("RELEASE_KEYSTORE_FILE")) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }

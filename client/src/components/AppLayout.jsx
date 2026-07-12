@@ -3,6 +3,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { apiGet, apiPut } from '../lib/api';
 import useLocationTracker from '../lib/useLocationTracker';
+import NotificationBanner from './NotificationBanner';
 import './AppLayout.css';
 
 /* ===== SVG Icon Components ===== */
@@ -298,6 +299,9 @@ function AppLayout({ children }) {
 
   return (
     <div className="app-layout">
+      {/* In-app heads-up banner for foreground push notifications */}
+      <NotificationBanner />
+
       {/* Top Bar */}
       <header className={`topbar${scrolled ? ' topbar-scrolled' : ''}`}>
         <div className="topbar-left">
