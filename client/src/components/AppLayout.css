@@ -13,6 +13,14 @@
   flex-direction: column;
 }
 
+/* Capacitor APK: env() may return 0 on Android when the native theme
+   doesn't enable edge-to-edge.  Force a 24 dp minimum so the topbar
+   never overlaps the system status bar. */
+body.capacitor-native .app-layout {
+  --safe-top: max(env(safe-area-inset-top, 24px), 24px);
+  --safe-bottom: max(env(safe-area-inset-bottom, 24px), 24px);
+}
+
 /* ===== Topbar ===== */
 .topbar {
   position: fixed;
