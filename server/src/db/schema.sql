@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS users (
   salary_amount NUMERIC(10,3) DEFAULT 0,
   failed_login_attempts INTEGER DEFAULT 0,
   locked_until TIMESTAMPTZ,
+  password_last_changed TIMESTAMPTZ,
   last_login_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

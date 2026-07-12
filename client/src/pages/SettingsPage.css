@@ -212,3 +212,110 @@
     padding: 14px 16px;
   }
 }
+
+/* ─── Password change form ─── */
+.pw-field {
+  margin-bottom: 16px;
+}
+
+.pw-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 6px;
+}
+
+.pw-input-wrap {
+  position: relative;
+}
+
+.pw-input {
+  width: 100%;
+  padding: 11px 42px 11px 14px;
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--color-text);
+  background: var(--color-ink);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pw-input::placeholder {
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+}
+
+.pw-input:focus {
+  border-color: var(--color-red);
+  box-shadow: 0 0 0 3px rgba(225, 6, 0, 0.12);
+}
+
+.pw-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pw-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  transition: color 0.12s;
+}
+
+.pw-toggle:hover {
+  color: var(--color-text);
+}
+
+/* ─── Submit button ─── */
+.pw-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 10px 22px;
+  font-family: var(--font-family);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--color-red);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.pw-submit:hover:not(:disabled) {
+  background: #C00500;
+}
+
+.pw-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ─── Inline spinner ─── */
+.pw-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: pwSpin 0.55s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pwSpin {
+  to { transform: rotate(360deg); }
+}

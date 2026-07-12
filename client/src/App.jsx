@@ -190,9 +190,7 @@ function AppRoutesInner() {
         path="/settings"
         element={
           <ProtectedRoute>
-            <RoleGuard roles={['COMMERCIAL']}>
-              <SettingsPage />
-            </RoleGuard>
+            <SettingsPage />
           </ProtectedRoute>
         }
       />

@@ -1,6 +1,7 @@
 const pool = require('../db/pool');
-const { verifyPassword } = require('../utils/password');
+const { hashPassword, verifyPassword } = require('../utils/password');
 const { signToken, verifyToken, canRefreshToken } = require('../utils/jwt');
+const { validationResult } = require('express-validator');
 
 /**
  * POST /api/auth/login
@@ -155,4 +156,55 @@ async function refresh(req, res) {
   }
 }
 
-module.exports = { login, me, refresh };
+/**
+ * PUT /api/auth/password
+ * Body: { currentPassword, newPassword }
+ * Authenticated — any role can change their own password.
+ * On success the client MUST discard the current JWT (forced re-auth).
+ */
+async function changePassword(req, res) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: errors.array()[0].msg });
+    }
+
+    const { currentPassword, newPassword } = req.body;
+
+    // Fetch the current hash for the authenticated user
+    const { rows } = await pool.query(
+      'SELECT password_hash FROM users WHERE id = $1',
+      [req.user.id]
+    );
+
+    if (!rows[0]) {
+      return res.status(404).json({ error: 'Utilisateur introuvable.' });
+    }
+
+    // Verify the current password is correct
+    const valid = await verifyPassword(currentPassword, rows[0].password_hash);
+    if (!valid) {
+      return res.status(401).json({ error: 'Mot de passe actuel incorrect.' });
+    }
+
+    // Reject if new password is identical to current
+    const same = await verifyPassword(newPassword, rows[0].password_hash);
+    if (same) {
+      return res.status(400).json({ error: 'Le nouveau mot de passe doit être différent de l\'actuel.' });
+    }
+
+    // Hash and persist
+    const hash = await hashPassword(newPassword);
+    await pool.query(
+      'UPDATE users SET password_hash = $1, password_last_changed = NOW() WHERE id = $2',
+      [hash, req.user.id]
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('changePassword error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+module.exports = { login, me, refresh, changePassword };

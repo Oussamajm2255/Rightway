@@ -172,6 +172,10 @@ const migrations = [
   )`,
   `CREATE INDEX IF NOT EXISTS idx_retour_creation_log_livraison ON livraison_retour_creation_log(livraison_id)`,
 
+  // Password change tracking — records when the user last changed their
+  // password.  Populated by PUT /api/auth/password, used for audit.
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS password_last_changed TIMESTAMPTZ`,
+
   // Native push (FCM) device tokens — for the Android app's tray notifications.
   // Separate from web push_subscriptions (which use VAPID p256dh/auth keys).
   `CREATE TABLE IF NOT EXISTS device_tokens (
