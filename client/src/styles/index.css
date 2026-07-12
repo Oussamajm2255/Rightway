@@ -1409,3 +1409,76 @@ textarea.form-input {
     border-bottom: none;
   }
 }
+
+/* ================================================================
+   PREMIUM MOBILE MODALS — bottom sheet
+   ------------------------------------------------------------
+   On phones every .modal-card docks to the bottom as a sheet: a grab
+   handle signals the affordance, the title and the action bar stay
+   pinned while the body scrolls, and the actions clear the gesture
+   area (safe-area inset). Desktop keeps the centered card.
+   ================================================================ */
+@keyframes sheetUp {
+  from { transform: translateY(100%); opacity: 0.5; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@media (max-width: 600px) {
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal-card,
+  .modal-card.modal-form,
+  .modal-card.modal-adjust,
+  .modal-card.modal-adjust-multi {
+    width: 100%;
+    max-width: 100%;
+    max-height: 92vh;
+    margin: 0;
+    padding: 0 var(--space-4);
+    border-radius: 18px 18px 0 0;
+    animation: sheetUp 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Pinned title + grab handle */
+  .modal-card > .modal-title {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    margin: 0 calc(-1 * var(--space-4)) var(--space-3);
+    padding: 20px var(--space-4) 12px;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .modal-card > .modal-title::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--color-border-strong);
+  }
+
+  /* Pinned action bar, clearing the gesture area */
+  .modal-card > .modal-actions,
+  .modal-card > form > .modal-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 4;
+    margin: var(--space-4) calc(-1 * var(--space-4)) 0;
+    padding: var(--space-3) var(--space-4) calc(env(safe-area-inset-bottom, 0px) + var(--space-3));
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+  }
+  .modal-card .modal-actions .btn {
+    flex: 1;
+    justify-content: center;
+    padding-top: 0.7rem;
+    padding-bottom: 0.7rem;
+  }
+}

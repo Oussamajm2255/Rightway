@@ -452,6 +452,38 @@
   }
 }
 
+/* Phones: drop the decorative →/= operator columns so the confirmation
+   table fits without horizontal scroll, and tighten spacing. */
+@media (max-width: 600px) {
+  .confirm-table th[aria-hidden="true"],
+  .confirm-table td[aria-hidden="true"] {
+    display: none;
+  }
+  .confirm-table {
+    font-size: 12.5px;
+  }
+  .confirm-table thead th,
+  .confirm-table tbody td,
+  .confirm-table tfoot td {
+    padding: 0.45rem 0.4rem;
+  }
+  .confirm-num-after {
+    font-size: 0.9rem;
+  }
+  .confirm-product-code {
+    display: none;
+  }
+  .confirm-table-wrap {
+    max-height: 42vh;
+  }
+
+  /* Add/Remove operation toggle stacks cleanly on narrow screens */
+  .toggle-btn {
+    padding: 0.55rem 0.5rem;
+    font-size: 0.8rem;
+  }
+}
+
 /* ===== Responsive: table (desktop) ↔ cards (mobile) ===== */
 .stock-cards-view,
 .journal-cards-view {

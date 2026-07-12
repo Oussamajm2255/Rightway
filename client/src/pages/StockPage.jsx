@@ -682,7 +682,7 @@ function StockPage() {
                         style={{ marginBottom: 'var(--space-3)' }}
                       />
 
-                      <div style={{ maxHeight: '450px', overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-3)', background: 'var(--color-bg-tertiary)' }}>
+                      <div style={{ maxHeight: 'min(450px, 46vh)', overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-3)', background: 'var(--color-bg-tertiary)' }}>
                         {(() => {
                           const lowerSearch = multiSearchTerm.toLowerCase();
                           const filteredStock = stock.filter(s =>
@@ -709,7 +709,7 @@ function StockPage() {
                                 <span className="category-header-count">{products.length} produit{products.length > 1 ? 's' : ''}</span>
                               </div>
 
-                              <div className="products-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-3)' }}>
+                              <div className="products-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))', gap: 'var(--space-3)' }}>
                                 {products.map((product) => {
                                   const qtyVal = multiItemsMap[product.id] || '';
                                   const isSelected = qtyVal > 0;
