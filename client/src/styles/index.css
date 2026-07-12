@@ -995,7 +995,10 @@ textarea.form-input {
   margin: 0 0 var(--space-6);
   position: sticky;
   top: calc(52px + var(--safe-top));
-  z-index: 9999;
+  /* Above scrolling page content, but BELOW the sidebar drawer (610) and its
+     backdrop (605) so the drawer covers it, and below modals (10000). The old
+     9999 only looked fine because the page-transition wrapper used to trap it. */
+  z-index: 500;
 }
 
 .brand-masthead .page-title {
