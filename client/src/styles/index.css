@@ -988,7 +988,7 @@ textarea.form-input {
   border-radius: 0;
   margin: 0 0 var(--space-6);
   position: sticky;
-  top: 52px;
+  top: calc(52px + var(--safe-top));
   z-index: 9999;
 }
 
@@ -1308,7 +1308,7 @@ textarea.form-input {
     background: none;
     border: none;
     border-radius: 0;
-    overflow: visible;
+    overflow: hidden;
   }
 
   .cards-on-mobile table,
