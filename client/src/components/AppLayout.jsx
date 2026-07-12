@@ -170,6 +170,7 @@ function AppLayout({ children }) {
 
   /* ── Bottom sheet drag-to-dismiss ── */
   const sheetRef = useRef(null);
+  const backdropRef = useRef(null);
   const dragRef = useRef({ startY: 0, dragging: false });
   const [sheetClosing, setSheetClosing] = useState(false);
 
@@ -239,6 +240,16 @@ function AppLayout({ children }) {
       const threshold = Math.min(sheet.offsetHeight * 0.25, 120);
 
       if (offset > threshold) {
+        // Coordinated dismiss: inline transition from current drag offset → off-screen.
+        // Unlike CSS animation keyframes, inline transitions start from whatever
+        // translateY the user dragged to — no visual jump.
+        sheet.style.transition = 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)';
+        sheet.style.transform = 'translateY(100%)';
+        const backdrop = backdropRef.current;
+        if (backdrop) {
+          backdrop.style.transition = 'opacity 0.28s ease-out';
+          backdrop.style.opacity = '0';
+        }
         setSheetClosing(true);
       } else {
         sheet.style.transition = 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)';
@@ -255,6 +266,11 @@ function AppLayout({ children }) {
       sheet.removeEventListener('touchend', onTouchEnd);
       sheet.style.transition = '';
       sheet.style.transform = '';
+      const backdrop = backdropRef.current;
+      if (backdrop) {
+        backdrop.style.transition = '';
+        backdrop.style.opacity = '';
+      }
     };
   }, [notifOpen]);
 
@@ -572,8 +588,8 @@ function AppLayout({ children }) {
           </div>
 
           {/* Mobile: bottom sheet */}
-          <div className={`notif-sheet-backdrop${sheetClosing ? ' notif-sheet-backdrop--closing' : ''}`} onClick={() => setNotifOpen(false)} />
-          <div className={`notif-sheet${sheetClosing ? ' notif-sheet--closing' : ''}`} ref={sheetRef}>
+          <div className="notif-sheet-backdrop" ref={backdropRef} onClick={() => { setNotifOpen(false); }} />
+          <div className="notif-sheet" ref={sheetRef}>
             <div className="notif-sheet-handle" />
             <div className="notif-sheet-header">
               <h2 className="notif-sheet-title">Notifications</h2>

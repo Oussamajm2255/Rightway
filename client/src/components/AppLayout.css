@@ -427,25 +427,6 @@
   }
 }
 
-/* Exit animations for swipe-to-dismiss */
-.notif-sheet--closing {
-  animation: sheetSlideDown 0.28s cubic-bezier(0.32, 0.72, 0, 1) forwards;
-}
-
-@keyframes sheetSlideDown {
-  from { transform: translateY(0); }
-  to   { transform: translateY(100%); }
-}
-
-.notif-sheet-backdrop--closing {
-  animation: sheetBackdropOut 0.28s ease-out forwards;
-}
-
-@keyframes sheetBackdropOut {
-  from { opacity: 1; }
-  to   { opacity: 0; }
-}
-
 /* Drag handle pill */
 .notif-sheet-handle {
   width: 32px;
