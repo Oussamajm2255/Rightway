@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { apiGet, apiPut } from '../lib/api';
@@ -168,6 +168,11 @@ function AppLayout({ children }) {
   const [notifLoading, setNotifLoading] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
+  /* ── Bottom sheet drag-to-dismiss ── */
+  const sheetRef = useRef(null);
+  const dragRef = useRef({ startY: 0, dragging: false });
+  const [sheetClosing, setSheetClosing] = useState(false);
+
   const fetchNotifications = useCallback(async () => {
     try {
       const data = await apiGet('/notifications?unread=true');
@@ -197,6 +202,66 @@ function AppLayout({ children }) {
   }, [fetchNotifications]);
   useEffect(() => { setMobileMenuOpen(false); }, [location]);
   useEffect(() => { setNotifOpen(false); }, [location]);
+
+  /* ── Drag-to-dismiss on mobile bottom sheet ── */
+  useEffect(() => {
+    if (!notifOpen) return;
+    const sheet = sheetRef.current;
+    if (!sheet) return;
+
+    const onTouchStart = (e) => {
+      // Only drag when touching the handle or header, not the scrollable list
+      if (!e.target.closest('.notif-sheet-handle') && !e.target.closest('.notif-sheet-header')) return;
+      dragRef.current = { startY: e.touches[0].clientY, dragging: true };
+      sheet.style.transition = 'none';
+    };
+
+    const onTouchMove = (e) => {
+      if (!dragRef.current.dragging) return;
+      const delta = e.touches[0].clientY - dragRef.current.startY;
+      if (delta < 0) return; // only allow dragging down
+      // Gentle resistance after 120 px to feel physical
+      const damped = delta > 120 ? 120 + (delta - 120) * 0.35 : delta;
+      sheet.style.transform = `translateY(${damped}px)`;
+    };
+
+    const onTouchEnd = () => {
+      if (!dragRef.current.dragging) return;
+      dragRef.current.dragging = false;
+      const currentTransform = sheet.style.transform;
+      const match = currentTransform.match(/translateY\(([\d.]+)px\)/);
+      const offset = match ? parseFloat(match[1]) : 0;
+      const threshold = Math.min(sheet.offsetHeight * 0.25, 120);
+
+      if (offset > threshold) {
+        setSheetClosing(true);
+      } else {
+        sheet.style.transition = 'transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)';
+        sheet.style.transform = 'translateY(0)';
+      }
+    };
+
+    sheet.addEventListener('touchstart', onTouchStart, { passive: false });
+    sheet.addEventListener('touchmove', onTouchMove, { passive: false });
+    sheet.addEventListener('touchend', onTouchEnd);
+    return () => {
+      sheet.removeEventListener('touchstart', onTouchStart);
+      sheet.removeEventListener('touchmove', onTouchMove);
+      sheet.removeEventListener('touchend', onTouchEnd);
+      sheet.style.transition = '';
+      sheet.style.transform = '';
+    };
+  }, [notifOpen]);
+
+  // When the exit animation finishes, actually close the panel
+  useEffect(() => {
+    if (!sheetClosing) return;
+    const timer = setTimeout(() => {
+      setNotifOpen(false);
+      setSheetClosing(false);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [sheetClosing]);
 
   // Track scroll position for topbar shadow
   useEffect(() => {
@@ -444,8 +509,8 @@ function AppLayout({ children }) {
           </div>
 
           {/* Mobile: bottom sheet */}
-          <div className="notif-sheet-backdrop" onClick={() => setNotifOpen(false)} />
-          <div className="notif-sheet">
+          <div className={`notif-sheet-backdrop${sheetClosing ? ' notif-sheet-backdrop--closing' : ''}`} onClick={() => setNotifOpen(false)} />
+          <div className={`notif-sheet${sheetClosing ? ' notif-sheet--closing' : ''}`} ref={sheetRef}>
             <div className="notif-sheet-handle" />
             <div className="notif-sheet-header">
               <h2 className="notif-sheet-title">Notifications</h2>
