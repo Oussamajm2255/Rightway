@@ -657,6 +657,10 @@ body.capacitor-native .app-layout {
   outline-offset: -2px;
 }
 
+.nav-item:active {
+  transform: scale(0.97);
+}
+
 .nav-item.active {
   background: rgba(225, 6, 0, 0.12);
   border-left-color: var(--color-red);
@@ -898,17 +902,24 @@ body.capacitor-native .app-layout {
     display: flex;
   }
 
-  /* Sidebar becomes off-canvas drawer */
+  /* Sidebar becomes off-canvas drawer with spring animation */
   .sidebar {
     transform: translateX(-100%);
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     box-shadow: none;
     z-index: 550;
+    width: 280px;
   }
 
   .sidebar.open {
     transform: translateX(0);
-    box-shadow: var(--shadow-xl);
+    box-shadow: 4px 0 24px rgba(10, 10, 11, 0.25), 1px 0 4px rgba(10, 10, 11, 0.1);
+  }
+
+  /* Closing animation — faster ease-in for natural dismiss feel */
+  .sidebar.open.sidebar--closing {
+    transition: transform 0.22s cubic-bezier(0.4, 0, 0.6, 1);
+    transform: translateX(-100%);
   }
 
   /* Hide spacer on mobile — sidebar overlays content */
@@ -916,20 +927,29 @@ body.capacitor-native .app-layout {
     display: none;
   }
 
-  /* Overlay backdrop */
+  /* Overlay backdrop — coordinated with drawer timing */
   .sidebar-overlay {
     display: block;
     position: fixed;
     inset: 0;
     top: calc(52px + var(--safe-top));
-    background: rgba(11, 28, 46, 0.3);
+    background: rgba(10, 10, 11, 0.5);
     z-index: 540;
-    animation: overlayIn 0.25s ease;
+    animation: sidebarOverlayIn 0.28s ease-out;
   }
 
-  @keyframes overlayIn {
+  @keyframes sidebarOverlayIn {
     from { opacity: 0; }
     to { opacity: 1; }
+  }
+
+  .sidebar-overlay--closing {
+    animation: sidebarOverlayOut 0.22s ease-out forwards;
+  }
+
+  @keyframes sidebarOverlayOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
   }
 
   .main-content {

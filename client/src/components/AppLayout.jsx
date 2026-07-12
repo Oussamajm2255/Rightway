@@ -173,6 +173,11 @@ function AppLayout({ children }) {
   const dragRef = useRef({ startY: 0, dragging: false });
   const [sheetClosing, setSheetClosing] = useState(false);
 
+  /* ── Sidebar drawer drag-to-close ── */
+  const sidebarRef = useRef(null);
+  const sidebarDragRef = useRef({ startX: 0, dragging: false });
+  const [sidebarClosing, setSidebarClosing] = useState(false);
+
   const fetchNotifications = useCallback(async () => {
     try {
       const data = await apiGet('/notifications?unread=true');
@@ -262,6 +267,64 @@ function AppLayout({ children }) {
     }, 300);
     return () => clearTimeout(timer);
   }, [sheetClosing]);
+
+  /* ── Sidebar drag-to-close (mobile) ── */
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const sidebar = sidebarRef.current;
+    if (!sidebar) return;
+
+    const onTouchStart = (e) => {
+      sidebarDragRef.current = { startX: e.touches[0].clientX, dragging: true };
+      sidebar.style.transition = 'none';
+    };
+
+    const onTouchMove = (e) => {
+      if (!sidebarDragRef.current.dragging) return;
+      const delta = e.touches[0].clientX - sidebarDragRef.current.startX;
+      if (delta > 0) return; // only drag left to close
+      const absDelta = Math.abs(delta);
+      const damped = absDelta > 80 ? 80 + (absDelta - 80) * 0.3 : absDelta;
+      sidebar.style.transform = `translateX(-${damped}px)`;
+    };
+
+    const onTouchEnd = () => {
+      if (!sidebarDragRef.current.dragging) return;
+      sidebarDragRef.current.dragging = false;
+      const transform = sidebar.style.transform;
+      const match = transform.match(/translateX\(-?([\d.]+)px\)/);
+      const offset = match ? parseFloat(match[1]) : 0;
+      const threshold = Math.min(sidebar.offsetWidth * 0.3, 80);
+
+      if (offset > threshold) {
+        setSidebarClosing(true);
+      } else {
+        sidebar.style.transition = 'transform 0.28s cubic-bezier(0.16, 1, 0.3, 1)';
+        sidebar.style.transform = '';
+      }
+    };
+
+    sidebar.addEventListener('touchstart', onTouchStart, { passive: false });
+    sidebar.addEventListener('touchmove', onTouchMove, { passive: false });
+    sidebar.addEventListener('touchend', onTouchEnd);
+    return () => {
+      sidebar.removeEventListener('touchstart', onTouchStart);
+      sidebar.removeEventListener('touchmove', onTouchMove);
+      sidebar.removeEventListener('touchend', onTouchEnd);
+      sidebar.style.transition = '';
+      sidebar.style.transform = '';
+    };
+  }, [mobileMenuOpen]);
+
+  // Sidebar closing: wait for exit animation then actually close
+  useEffect(() => {
+    if (!sidebarClosing) return;
+    const timer = setTimeout(() => {
+      setMobileMenuOpen(false);
+      setSidebarClosing(false);
+    }, 280);
+    return () => clearTimeout(timer);
+  }, [sidebarClosing]);
 
   // Track scroll position for topbar shadow
   useEffect(() => {
@@ -464,7 +527,7 @@ function AppLayout({ children }) {
         <div className="topbar-left">
           <button
             className="hamburger"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            onClick={() => { if (mobileMenuOpen) setSidebarClosing(true); else setMobileMenuOpen(true); }}
             aria-label={mobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -528,7 +591,10 @@ function AppLayout({ children }) {
       <div className="app-body">
         {/* Sidebar Desktop */}
         <div className="sidebar-spacer" />
-        <aside className={`sidebar ${mobileMenuOpen ? 'open' : ''}`}>
+        <aside
+          className={`sidebar ${mobileMenuOpen ? 'open' : ''}${sidebarClosing ? ' sidebar--closing' : ''}`}
+          ref={sidebarRef}
+        >
           <div className="sidebar-brand" onClick={() => { navigate('/'); setMobileMenuOpen(false); }}>
             <div className="sidebar-logo">Right Way<span className="logo-accent">.</span></div>
             <div className="sidebar-subtitle">STE RIGHT WAY FOR TRADING</div>
@@ -568,7 +634,12 @@ function AppLayout({ children }) {
         </aside>
 
         {/* Mobile overlay */}
-        {mobileMenuOpen && <div className="sidebar-overlay" onClick={() => setMobileMenuOpen(false)} />}
+        {mobileMenuOpen && (
+          <div
+            className={`sidebar-overlay${sidebarClosing ? ' sidebar-overlay--closing' : ''}`}
+            onClick={() => setSidebarClosing(true)}
+          />
+        )}
 
         {/* Main Content */}
         <main className="main-content">
