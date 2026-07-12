@@ -576,8 +576,8 @@ function StockPage() {
                       );
                     })}
 
-                    <div className="stock-cat-subtotal">
-                      <span>Sous-total</span>
+                    <div className="stock-cat-subtotal" style={{ borderLeftColor: catCol.bar, background: catCol.bg }}>
+                      <span style={{ color: catCol.text }}>Sous-total</span>
                       Dépôt <b>{catItems.reduce((s, i) => s + i.quantity, 0)}</b>
                       · Mobile <b>{catItems.reduce((s, i) => s + (i.in_transit || 0), 0)}</b>
                       · Virtuel <b>{catItems.reduce((s, i) => s + (i.virtual_stock || 0), 0)}</b>

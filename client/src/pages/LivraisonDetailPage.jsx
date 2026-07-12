@@ -913,61 +913,67 @@ function LivraisonDetailPage() {
             <div className="yellow-banner">En attente de confirmation de l'Admin.</div>
           )}
 
-          <div className="table-container">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Code</th>
-                  <th>Catégorie</th>
-                  <th>Article</th>
-                  <th style={{ textAlign: 'center' }}>Qté Sortie</th>
-                  <th style={{ textAlign: 'center' }}>Qté Vendue</th>
-                  <th style={{ textAlign: 'center' }}>Qté Retour</th>
-                  <th>PU TTC</th>
-                  <th style={{ textAlign: 'right' }}>Montant Vendu</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.entries(
-                  livraison.items.reduce((acc, item) => {
-                    const cat = item.category || 'Sans catégorie';
-                    (acc[cat] = acc[cat] || []).push(item);
-                    return acc;
-                  }, {})
-                ).map(([cat, catItems]) => {
-                  const catCol = getColor(cat);
-                  return (
-                  <Fragment key={cat}>
-                    {catItems.map((item) => {
-                      const qte_retour = item.qte_chargee - item.qte_vendue;
-                      return (
-                      <tr key={item.id} style={{ background: catCol.bg, borderLeftColor: catCol.bar }}>
-                        <td className="td-code">{item.product_id}</td>
-                        <td><span className="cat-pill" style={{ background: catCol.bg, color: catCol.text }}>{item.category || 'Sans catégorie'}</span></td>
-                        <td>{item.product_name}</td>
-                        <td className="td-qty">{item.qte_chargee}</td>
-                        <td className="td-qty">{item.qte_vendue}</td>
-                        <td className="td-qty">{qte_retour}</td>
-                        <td className="td-price">{formatDT(item.prix_ttc)}</td>
-                        <td className="td-price">{formatDT(item.qte_vendue * Number(item.prix_ttc))}</td>
+          {(() => {
+            const groupedItems = Object.entries(
+              livraison.items.reduce((acc, item) => {
+                const cat = item.category || 'Sans catégorie';
+                (acc[cat] = acc[cat] || []).push(item);
+                return acc;
+              }, {})
+            );
+
+            return (
+              <>
+                {/* Desktop: full table */}
+                <div className="table-container retour-table-view">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Code</th>
+                        <th>Catégorie</th>
+                        <th>Article</th>
+                        <th style={{ textAlign: 'center' }}>Qté Sortie</th>
+                        <th style={{ textAlign: 'center' }}>Qté Vendue</th>
+                        <th style={{ textAlign: 'center' }}>Qté Retour</th>
+                        <th>PU TTC</th>
+                        <th style={{ textAlign: 'right' }}>Montant Vendu</th>
                       </tr>
-                      );
-                    })}
-                    <tr className="cat-subtotal" style={{ background: catCol.bg, borderLeftColor: catCol.bar, borderTopColor: catCol.bar }}>
-                      <td colSpan="3" style={{ color: catCol.text, textAlign: 'center', fontWeight: 700 }}>
-                        Sous-total {cat}
-                      </td>
-                      <td className="td-qty">{catItems.reduce((s,i) => s + i.qte_chargee, 0)}</td>
-                      <td className="td-qty">{catItems.reduce((s,i) => s + i.qte_vendue, 0)}</td>
-                      <td className="td-qty">{catItems.reduce((s,i) => s + (i.qte_chargee - i.qte_vendue), 0)}</td>
-                      <td></td>
-                      <td className="td-price">{formatDT(catItems.reduce((s,i) => s + i.qte_vendue * Number(i.prix_ttc), 0))}</td>
-                    </tr>
-                  </Fragment>
-                  );
-                })}
-              </tbody>
-              <tfoot>
+                    </thead>
+                    <tbody>
+                      {groupedItems.map(([cat, catItems]) => {
+                        const catCol = getColor(cat);
+                        return (
+                        <Fragment key={cat}>
+                          {catItems.map((item) => {
+                            const qte_retour = item.qte_chargee - item.qte_vendue;
+                            return (
+                            <tr key={item.id} style={{ background: catCol.bg, borderLeftColor: catCol.bar }}>
+                              <td className="td-code">{item.product_id}</td>
+                              <td><span className="cat-pill" style={{ background: catCol.bg, color: catCol.text }}>{item.category || 'Sans catégorie'}</span></td>
+                              <td>{item.product_name}</td>
+                              <td className="td-qty">{item.qte_chargee}</td>
+                              <td className="td-qty">{item.qte_vendue}</td>
+                              <td className="td-qty">{qte_retour}</td>
+                              <td className="td-price">{formatDT(item.prix_ttc)}</td>
+                              <td className="td-price">{formatDT(item.qte_vendue * Number(item.prix_ttc))}</td>
+                            </tr>
+                            );
+                          })}
+                          <tr className="cat-subtotal" style={{ background: catCol.bg, borderLeftColor: catCol.bar, borderTopColor: catCol.bar }}>
+                            <td colSpan="3" style={{ color: catCol.text, textAlign: 'center', fontWeight: 700 }}>
+                              Sous-total {cat}
+                            </td>
+                            <td className="td-qty">{catItems.reduce((s,i) => s + i.qte_chargee, 0)}</td>
+                            <td className="td-qty">{catItems.reduce((s,i) => s + i.qte_vendue, 0)}</td>
+                            <td className="td-qty">{catItems.reduce((s,i) => s + (i.qte_chargee - i.qte_vendue), 0)}</td>
+                            <td></td>
+                            <td className="td-price">{formatDT(catItems.reduce((s,i) => s + i.qte_vendue * Number(i.prix_ttc), 0))}</td>
+                          </tr>
+                        </Fragment>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot>
                 {/* Commercial sees only the gross CA — never commission,
                     Net à reverser, or Reste à payer (net − avances would
                     reveal the commission by simple subtraction). */}
@@ -1010,6 +1016,62 @@ function LivraisonDetailPage() {
               </tfoot>
             </table>
           </div>
+
+          {/* Mobile: card list */}
+          <div className="retour-cards-view">
+            {groupedItems.map(([cat, catItems]) => {
+              const catCol = getColor(cat);
+              return (
+                <section className="load-cat-group" key={cat}>
+                  <header className="load-cat-head">
+                    <span className="cat-pill" style={{ background: catCol.bg, color: catCol.text }}>{cat}</span>
+                    <span className="load-cat-count">{catItems.length} produit{catItems.length > 1 ? 's' : ''}</span>
+                  </header>
+
+                  {catItems.map((item) => {
+                    const qte_retour = item.qte_chargee - item.qte_vendue;
+                    return (
+                    <article key={item.id} className="load-card" style={{ borderLeftColor: catCol.bar }}>
+                      <div className="load-card-top">
+                        <span className="load-card-name">{item.product_name}</span>
+                        <span className="load-card-code">{item.product_id}</span>
+                      </div>
+                      <div className="load-card-stats" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                        <div>
+                          <span>Sortie</span>
+                          <b>{item.qte_chargee}</b>
+                        </div>
+                        <div>
+                          <span>Vendu</span>
+                          <b>{item.qte_vendue}</b>
+                        </div>
+                        <div>
+                          <span>Retour</span>
+                          <b>{qte_retour}</b>
+                        </div>
+                        <div>
+                          <span>Montant</span>
+                          <b>{formatDT(item.qte_vendue * Number(item.prix_ttc))}</b>
+                        </div>
+                      </div>
+                    </article>
+                    );
+                  })}
+
+                  <div className="load-cat-subtotal" style={{ borderLeftColor: catCol.bar, background: catCol.bg }}>
+                    <span style={{ color: catCol.text }}>Sous-total</span>
+                    Sortie <b>{catItems.reduce((s, i) => s + i.qte_chargee, 0)}</b>
+                    · Vendu <b>{catItems.reduce((s, i) => s + i.qte_vendue, 0)}</b>
+                    · Retour <b>{catItems.reduce((s, i) => s + (i.qte_chargee - i.qte_vendue), 0)}</b>
+                    · Montant <b>{formatDT(catItems.reduce((s, i) => s + i.qte_vendue * Number(i.prix_ttc), 0))}</b>
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+        </>
+      );
+    })()}
 
           <div className="detail-grid" style={{ marginTop: 'var(--space-4)' }}>
             <div className="detail-card">
@@ -1216,8 +1278,8 @@ function LivraisonDetailPage() {
                         </article>
                       ))}
 
-                      <div className="load-cat-subtotal">
-                        <span>Sous-total</span>
+                      <div className="load-cat-subtotal" style={{ borderLeftColor: catCol.bar, background: catCol.bg }}>
+                        <span style={{ color: catCol.text }}>Sous-total</span>
                         Chargé <b>{catItems.reduce((s, i) => s + i.qte_chargee, 0)}</b>
                         {showVendu && <> · Vendu <b>{catItems.reduce((s, i) => s + i.qte_vendue, 0)}</b></>}
                         · Montant <b>{formatDT(catItems.reduce((s, i) => s + i.qte_chargee * Number(i.prix_ttc), 0))}</b>

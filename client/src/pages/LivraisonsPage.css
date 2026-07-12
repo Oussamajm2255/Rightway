@@ -568,8 +568,25 @@
   font-size: var(--text-xs);
   color: var(--color-text-secondary);
   padding: var(--space-2) var(--space-4);
+  border-left: 3px solid transparent;
   background: var(--color-surface-hover);
   border-radius: var(--radius-md);
+}
+
+/* ===== Detail page: "Bon de Retour" table ↔ cards ===== */
+.retour-cards-view {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .retour-table-view {
+    display: none;
+  }
+  .retour-cards-view {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+  }
 }
 
 .load-cat-subtotal > span {
