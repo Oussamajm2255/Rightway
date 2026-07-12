@@ -123,7 +123,7 @@
 /* Bottom chips — sticky filter bar above the terminer button */
 .sales-chips-bottom {
   position: sticky;
-  bottom: 68px;
+  bottom: calc(68px + env(safe-area-inset-bottom, 0px));
   z-index: 50;
   padding: var(--space-3) var(--space-6);
   margin: var(--space-4) auto 0;
@@ -530,9 +530,9 @@
   .sales-search-wrap { max-width: 100%; order: 3; flex: 1 1 100%; }
   .sales-chips { padding: var(--space-2) var(--space-4); }
   .sales-content { padding: var(--space-3) var(--space-4); }
-  .sales-terminer-wrap { bottom: 56px; z-index: 650; }
-  .sales-chips-bottom { bottom: calc(56px + 64px); }
-  .sales-page { padding-bottom: calc(56px + 5rem); }
+  .sales-terminer-wrap { bottom: calc(56px + env(safe-area-inset-bottom, 0px)); z-index: 650; }
+  .sales-chips-bottom { bottom: calc(56px + 64px + env(safe-area-inset-bottom, 0px)); }
+  .sales-page { padding-bottom: calc(56px + 5rem + env(safe-area-inset-bottom, 0px)); }
   .sales-cat-header {
     position: sticky;
     top: 52px;

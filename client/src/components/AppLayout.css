@@ -7,6 +7,7 @@
 .app-layout {
   /* Status-bar / notch height on edge-to-edge Android (0 elsewhere) */
   --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -526,7 +527,7 @@
   border-top: 2px solid var(--color-red);
   z-index: 600;
   justify-content: flex-start;
-  padding: 6px 8px env(safe-area-inset-bottom, 6px);
+  padding: 6px 8px var(--safe-bottom);
   overflow-x: auto;
   overflow-y: hidden;
   gap: 2px;
@@ -662,7 +663,8 @@
   }
 
   .main-content {
-    padding-bottom: 56px;
+    /* 56px bottom-nav height + Android gesture nav safe area */
+    padding-bottom: calc(56px + var(--safe-bottom));
   }
 
   .bottom-nav {
