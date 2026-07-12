@@ -1516,3 +1516,15 @@ textarea.form-input {
     padding-bottom: 0.7rem;
   }
 }
+
+/* ================================================================
+   LEAFLET Z-INDEX — keep map controls below the mobile sidebar
+   ------------------------------------------------------------
+   Leaflet defaults .leaflet-top / .leaflet-bottom to z-index: 1000.
+   The mobile sidebar drawer uses z-index: 800, so the zoom +/- and
+   attribution controls would bleed through. Push them down to 500.
+   ================================================================ */
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 500;
+}
