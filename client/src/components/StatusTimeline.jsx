@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import './StatusTimeline.css';
 
 /* ── Step Icons (inline SVG, 20×20) ── */
@@ -121,18 +121,18 @@ function deriveSteps(livraison) {
    ═══════════════════════════════════════════ */
 
 export default function StatusTimeline({ livraison }) {
-  const mounted = useRef(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     // Small delay so the CSS picks up the initial render for entrance animations
-    const t = setTimeout(() => { mounted.current = true; }, 50);
+    const t = setTimeout(() => { setMounted(true); }, 50);
     return () => clearTimeout(t);
   }, []);
 
   if (!livraison) return null;
 
   const steps = deriveSteps(livraison);
-  const animClass = mounted.current ? 'st-animated' : '';
+  const animClass = mounted ? 'st-animated' : '';
 
   return (
     <div className={`status-timeline ${animClass}`}>
