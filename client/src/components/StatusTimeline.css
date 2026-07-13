@@ -1,0 +1,414 @@
+/* ═══════════════════════════════════════════════════════════════
+   StatusTimeline — Premium Status Flow
+   ───────────────────────────────────────────────────────────────
+   Desktop: horizontal connected step cards
+   Mobile  (<769px): vertical cards along a left progress rail
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Wrapper ── */
+.status-timeline {
+  margin-bottom: var(--space-6);
+}
+
+/* ═══════════════════════════════════════════
+   MOBILE RAIL — hidden on desktop
+   ═══════════════════════════════════════════ */
+.st-rail {
+  display: none;
+}
+
+/* ═══════════════════════════════════════════
+   STEP CARDS — horizontal row on desktop
+   ═══════════════════════════════════════════ */
+.st-cards {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
+.st-card {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+/* Entrance animation (only after mounted) */
+.st-animated .st-card {
+  animation: stFadeUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes stFadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.st-card-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  height: 100%;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+/* ── Connector lines (desktop, between cards) ── */
+.st-connector {
+  position: absolute;
+  top: 50%;
+  right: -2px;
+  transform: translateY(-18px); /* sit at icon level */
+  width: calc(100% - 0px);
+  height: 0;
+  z-index: 0;
+}
+
+.st-connector::after {
+  content: '';
+  position: absolute;
+  top: -1.5px;
+  left: 50%;
+  width: 100%;
+  height: 3px;
+  background: var(--color-border-strong);
+  border-radius: 2px;
+  transform: translateX(-50%) scaleX(0);
+  transform-origin: left center;
+}
+
+.st-animated .st-connector::after {
+  animation: stConnect 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.st-connector--done::after {
+  background: var(--color-ink);
+}
+
+.st-animated .st-connector--done::after {
+  animation: stConnectDone 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes stConnect {
+  from { transform: translateX(-50%) scaleX(0); }
+  to   { transform: translateX(-50%) scaleX(1); }
+}
+
+@keyframes stConnectDone {
+  from { transform: translateX(-50%) scaleX(0); }
+  to   { transform: translateX(-50%) scaleX(1); }
+}
+
+/* ── State: COMPLETED ── */
+.st-card--completed .st-card-inner {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+}
+
+.st-card--completed .st-label {
+  color: #fff;
+  font-weight: var(--weight-semibold);
+}
+
+.st-card--completed .st-date {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.st-icon--completed {
+  color: #fff;
+}
+
+/* ── State: ACTIVE ── */
+.st-card--active .st-card-inner {
+  background: var(--color-surface);
+  border-color: var(--color-red);
+  border-left: 3px solid var(--color-red);
+  box-shadow: 0 0 0 0 rgba(225, 6, 0, 0);
+}
+
+.st-animated .st-card--active .st-card-inner {
+  animation: stPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes stPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(225, 6, 0, 0); }
+  50%      { box-shadow: 0 0 0 6px rgba(225, 6, 0, 0.08); }
+}
+
+.st-card--active .st-label {
+  color: var(--color-text);
+  font-weight: var(--weight-semibold);
+}
+
+.st-icon--active {
+  color: var(--color-red);
+}
+
+/* ── State: PENDING ── */
+.st-card--pending .st-card-inner {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+.st-card--pending .st-label {
+  color: var(--color-text-secondary);
+}
+
+.st-card--pending .st-date {
+  color: var(--color-text-tertiary);
+}
+
+.st-icon--pending {
+  color: var(--color-text-tertiary);
+}
+
+/* ── State: CANCELLED ── */
+.st-card--cancelled .st-card-inner {
+  background: var(--color-danger-bg);
+  border-color: var(--color-danger-border);
+}
+
+.st-card--cancelled .st-label {
+  color: var(--color-danger);
+  font-weight: var(--weight-semibold);
+  text-decoration: line-through;
+}
+
+.st-card--cancelled .st-date {
+  color: rgba(225, 6, 0, 0.6);
+}
+
+.st-icon--cancelled {
+  color: var(--color-danger);
+}
+
+/* ── Step content pieces ── */
+.st-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.st-card--completed .st-icon {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.st-card--active .st-icon {
+  background: rgba(225, 6, 0, 0.07);
+}
+
+.st-card--pending .st-icon {
+  background: var(--color-surface-hover);
+}
+
+.st-card--cancelled .st-icon {
+  background: rgba(225, 6, 0, 0.08);
+}
+
+.st-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.st-label {
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: var(--weight-medium);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.st-date {
+  font-size: 9.5px;
+  font-weight: var(--weight-medium);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.st-date--active {
+  color: var(--color-red);
+  font-weight: var(--weight-semibold);
+}
+
+.st-date--pending {
+  color: var(--color-text-tertiary);
+}
+
+/* ═══════════════════════════════════════════
+   MOBILE (<769px) — vertical left-rail layout
+   ═══════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .status-timeline {
+    position: relative;
+    padding-left: 28px;
+  }
+
+  /* Left progress rail */
+  .st-rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: absolute;
+    left: 0;
+    top: 8px;
+    bottom: 8px;
+    width: 20px;
+    z-index: 1;
+  }
+
+  .st-rail-segment {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .st-rail-segment--last {
+    flex: 0;
+  }
+
+  /* Dot on the rail */
+  .st-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--color-border-strong);
+    border: 2px solid var(--color-surface);
+    box-shadow: 0 0 0 2px var(--color-border);
+    transition: all var(--transition-base);
+  }
+
+  .st-dot--completed {
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+    box-shadow: 0 0 0 2px var(--color-ink);
+  }
+
+  .st-dot--active {
+    background: var(--color-red);
+    border-color: var(--color-red);
+    box-shadow: 0 0 0 2px var(--color-red), 0 0 8px rgba(225, 6, 0, 0.25);
+  }
+
+  .st-dot--cancelled {
+    background: var(--color-danger);
+    border-color: var(--color-danger);
+    box-shadow: 0 0 0 2px var(--color-danger);
+  }
+
+  .st-dot--pending {
+    background: var(--color-surface);
+    border-color: var(--color-border-strong);
+    box-shadow: 0 0 0 2px var(--color-border-strong);
+  }
+
+  /* Vertical line between dots */
+  .st-rail-line {
+    flex: 1;
+    width: 2px;
+    min-height: 12px;
+    background: var(--color-border-strong);
+    border-radius: 1px;
+    transition: background var(--transition-base);
+  }
+
+  .st-rail-line--done {
+    background: var(--color-ink);
+  }
+
+  /* Cards stack vertically */
+  .st-cards {
+    flex-direction: column;
+    gap: 0;
+    overflow-x: visible;
+  }
+
+  .st-card {
+    flex: none;
+    margin-bottom: 16px;
+  }
+
+  .st-card:last-child {
+    margin-bottom: 0;
+  }
+
+  .st-card-inner {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    text-align: left;
+    border-radius: var(--radius-md);
+  }
+
+  /* Mobile: active card left-border already handled by border-left */
+  /* Hide desktop connectors on mobile */
+  .st-connector {
+    display: none;
+  }
+
+  .st-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+  }
+
+  .st-body {
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .st-label {
+    font-size: 12px;
+  }
+
+  .st-date {
+    font-size: 10px;
+  }
+}
+
+/* ── Very narrow screens (<=380px) ── */
+@media (max-width: 380px) {
+  .status-timeline {
+    padding-left: 24px;
+  }
+
+  .st-rail {
+    width: 16px;
+  }
+
+  .st-dot {
+    width: 11px;
+    height: 11px;
+  }
+
+  .st-card-inner {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .st-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .st-label {
+    font-size: 11px;
+  }
+}

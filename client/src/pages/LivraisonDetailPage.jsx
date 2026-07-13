@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { apiGet, apiPost, apiPut, openPdf } from '../lib/api';
 import { formatDate, formatDateTime } from '../lib/utils';
 import { useCategoryPalette } from '../context/CategoryPaletteContext';
+import StatusTimeline from '../components/StatusTimeline';
 import './LivraisonsPage.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
@@ -511,21 +512,7 @@ function LivraisonDetailPage() {
           {success && <div className="success-banner">{success}</div>}
 
       {/* Status Timeline */}
-      <div className="status-timeline">
-        {[
-          { label: 'Créé', date: livraison.created_at, done: true },
-          { label: 'Confirmé', date: livraison.confirmed_by_commercial_at, done: !!livraison.confirmed_by_commercial_at },
-          { label: 'En cours', date: null, done: isEnCours || isEnRetour || isEnAttenteAnnulation || isAnnule || isCloture },
-          { label: 'Retour', date: livraison.end_declared_at, done: isEnRetour || isCloture },
-          { label: isAnnule ? 'Annulé' : 'Clôturé', date: livraison.closed_at, done: isAnnule || isCloture },
-        ].map((s, i, arr) => (
-          <span key={s.label} className={`timeline-step ${s.done ? 'current' : ''}`}>
-            <span className={`timeline-dot ${s.done ? ((isCloture || isAnnule) || (i < arr.length - 1 && arr[i+1].done) ? 'done' : 'active') : ''}`} />
-            <span className="timeline-label">{s.label}</span>
-            {i < arr.length - 1 && <span className="timeline-line" />}
-          </span>
-        ))}
-      </div>
+      <StatusTimeline livraison={livraison} />
 
       {/* Commercial: En cours → Terminer button */}
       {isEnCours && isAssignedCommercial && !showTerminer && (
