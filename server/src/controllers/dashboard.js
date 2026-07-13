@@ -274,6 +274,7 @@ async function superAdminDashboard(req, res) {
       else status = 'ACTIF';
 
       const ca = Number(c.ca);
+      const isSalaire = c.remuneration_type === 'SALAIRE';
       return {
         rank: i + 1,
         full_name: c.full_name,
@@ -282,7 +283,7 @@ async function superAdminDashboard(req, res) {
         ca,
         ecoulement: c.ecoulement,
         remuneration_type: c.remuneration_type || 'COMMISSION',
-        commission: Number((ca * COMMISSION_RATE).toFixed(3)),
+        commission: isSalaire ? 0 : Number((ca * COMMISSION_RATE).toFixed(3)),
         status,
       };
     });
@@ -501,6 +502,13 @@ async function commercialDashboard(req, res) {
   try {
     const commercialId = req.user.id;
 
+    // Fetch user's remuneration type first
+    const userResult = await pool.query(
+      'SELECT remuneration_type FROM users WHERE id = $1',
+      [commercialId]
+    );
+    const isSalaire = userResult.rows[0]?.remuneration_type === 'SALAIRE';
+
     const [
       caData,
       avancesData,
@@ -617,7 +625,7 @@ async function commercialDashboard(req, res) {
 
     res.json({
       ca_total: caTotal,
-      commission: Number((caTotal * COMMISSION_RATE).toFixed(3)),
+      commission: isSalaire ? 0 : Number((caTotal * COMMISSION_RATE).toFixed(3)),
       completion_rate: completionRate,
       completion_details: { cloturees, total: totalLivs },
       en_tournee: active ? 1 : 0,

@@ -473,7 +473,7 @@ export default function CommercialsPage() {
             <div className="comm-kpi-icon" style={{ background: hexAlpha(PALETTE[1], 0.1), color: PALETTE[1] }}><SvgPercent /></div>
             <div className="comm-kpi-label">Commissions</div>
             <div className="comm-kpi-val" style={{ fontSize: '18px' }}>{globals ? fmtDTShort(globals.commissions) : '—'}</div>
-            <div className="comm-kpi-sub">10% du CA global</div>
+            <div className="comm-kpi-sub">10% du CA (hors salariés)</div>
           </div>
           <div className="comm-kpi-card" style={{ '--accent': PALETTE[3 % PALETTE.length] }}>
             <div className="comm-kpi-icon" style={{ background: hexAlpha(PALETTE[3 % PALETTE.length], 0.1), color: PALETTE[3 % PALETTE.length] }}><SvgChartPie /></div>

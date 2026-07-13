@@ -365,7 +365,7 @@ function SuperAdminView({ data, navigate, user }) {
         {/* Stock hero — Depot + Chargé fused into a live total */}
         <StockHero depot={data.depot_stock_ca} charge={data.voitures_ca} navigate={navigate} />
         <div className="kpi-grid kpi-grid-3" style={{ marginTop: 'var(--space-4)' }}>
-          <KpiCard icon={Icons.percent} label="Commissions" value={fmtDT(data.commissions)} sub="10% du CA global" />
+          <KpiCard icon={Icons.percent} label="Commissions" value={fmtDT(data.commissions)} sub="10% du CA (hors salariés)" />
           <KpiCard icon={Icons.alert} label="Alertes stock" value={fmtInt(data.stock_alerts_count)} sub="produits &lt; 20 unités" accent onClick={() => navigate('/stock')} />
         </div>
 
