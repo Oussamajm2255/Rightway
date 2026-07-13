@@ -15,7 +15,7 @@
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: #0A0A0B;
+  background: #0F172A;
   min-height: 100vh;
   min-height: 100dvh;
 }
@@ -339,7 +339,7 @@
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: var(--color-ink, #0A0A0B);
+  background: var(--color-ink, #0F172A);
   min-height: 100vh;
   min-height: 100dvh;
 }

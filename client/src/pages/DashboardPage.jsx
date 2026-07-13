@@ -8,7 +8,7 @@ import CommercialsMap from '../components/CommercialsMap';
 import './DashboardPage.css';
 
 // ─── Palette (Editorial Terminal: ink · red · grey) ───
-const INK = '#0A0A0B', INK_SOFT = '#57575E', GREY = '#9A9AA2', GREY_LT = '#C9C8C4', RED = '#E10600';
+const INK = '#0F172A', INK_SOFT = '#57575E', GREY = '#9A9AA2', GREY_LT = '#C9C8C4', RED = '#E10600';
 const PALETTE = {
   blue: INK, green: INK, amber: INK_SOFT, purple: INK_SOFT,
   red: RED, pink: RED, orange: RED, emerald: INK,

@@ -357,7 +357,7 @@
   position: absolute;
   inset: 12px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(225, 6, 0, 0.10), rgba(10, 10, 11, 0.05) 55%, transparent 72%);
+  background: radial-gradient(circle, rgba(225, 6, 0, 0.10), rgba(15, 23, 42, 0.05) 55%, transparent 72%);
 }
 .stock-hero-svg {
   position: relative;

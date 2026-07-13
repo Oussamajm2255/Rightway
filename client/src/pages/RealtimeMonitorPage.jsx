@@ -6,9 +6,9 @@ import './RealtimeMonitorPage.css';
 
 /* ─── Brand Category Palette ─── */
 const CATEGORY_COLORS = [
-  '#0A0A0B',  // ink
+  '#0F172A',  // ink
   '#E10600',  // red
-  '#26262B',  // ink-soft
+  '#1E293B',  // ink-soft
 ];
 
 function formatDT(value) {
@@ -23,10 +23,10 @@ function formatInt(value) {
 
 function getStatusPill(pct) {
   if (pct >= 100) return { bg: 'rgba(225,6,0,0.12)', color: '#E10600', label: 'Épuisé' };
-  if (pct >= 80)  return { bg: 'rgba(10,10,11,0.08)', color: '#0A0A0B', label: 'Très bon' };
-  if (pct >= 50)  return { bg: 'rgba(38,38,43,0.08)', color: '#26262B', label: 'En cours' };
+  if (pct >= 80)  return { bg: 'rgba(15,23,42,0.08)', color: '#0F172A', label: 'Très bon' };
+  if (pct >= 50)  return { bg: 'rgba(30,41,59,0.08)', color: '#1E293B', label: 'En cours' };
   if (pct >= 20)  return { bg: 'rgba(225,6,0,0.08)', color: '#E10600', label: 'Lent' };
-  return { bg: 'rgba(10,10,11,0.05)', color: '#525566', label: 'Départ' };
+  return { bg: 'rgba(15,23,42,0.05)', color: '#525566', label: 'Départ' };
 }
 
 export default function RealtimeMonitorPage() {

@@ -4,20 +4,20 @@
 
 /* ===== Design Tokens ===== */
 :root {
-  /* --- Brand: Editorial Terminal (ink · paper · red) --- */
-  --color-ink: #0A0A0B;
-  --color-ink-soft: #26262B;
+  /* --- Brand: Deep Slate (ink · paper · red) --- */
+  --color-ink: #0F172A;
+  --color-ink-soft: #1E293B;
   --color-red: #E10600;
   --color-red-hover: #B80500;
   --color-red-wash: rgba(225, 6, 0, 0.06);
   --color-paper: #FFFFFF;
 
   /* --- Color Palette (mapped to brand) --- */
-  --color-primary: #0A0A0B;
-  --color-primary-hover: #26262B;
-  --color-primary-light: #3D3D42;
-  --color-primary-subtle: rgba(10, 10, 11, 0.05);
-  --color-primary-subtle-hover: rgba(10, 10, 11, 0.09);
+  --color-primary: #0F172A;
+  --color-primary-hover: #1E293B;
+  --color-primary-light: #334155;
+  --color-primary-subtle: rgba(15, 23, 42, 0.05);
+  --color-primary-subtle-hover: rgba(15, 23, 42, 0.09);
 
   --color-accent: #E10600;
   --color-accent-subtle: rgba(225, 6, 0, 0.07);
@@ -29,13 +29,13 @@
 
   --color-border: #E5E4E0;
   --color-border-strong: #C9C8C4;
-  --color-border-focus: #0A0A0B;
+  --color-border-focus: #0F172A;
 
-  --color-text: #0A0A0B;
+  --color-text: #0F172A;
   --color-text-secondary: #57575E;
   --color-text-tertiary: #9A9AA2;
   --color-text-inverse: #FFFFFF;
-  --color-text-link: #0A0A0B;
+  --color-text-link: #0F172A;
 
   /* --- Semantic Colors --- */
   --color-success: #0D7B4B;
@@ -118,11 +118,11 @@
   --radius-full: 9999px;
 
   /* --- Elevation (ink-based, restrained) --- */
-  --shadow-xs: 0 1px 2px rgba(10, 10, 11, 0.05);
-  --shadow-sm: 0 1px 3px rgba(10, 10, 11, 0.07), 0 1px 2px rgba(10, 10, 11, 0.05);
-  --shadow-md: 0 6px 16px rgba(10, 10, 11, 0.09), 0 1px 2px rgba(10, 10, 11, 0.06);
-  --shadow-lg: 0 14px 36px rgba(10, 10, 11, 0.12), 0 2px 4px rgba(10, 10, 11, 0.06);
-  --shadow-xl: 0 24px 52px rgba(10, 10, 11, 0.16), 0 4px 8px rgba(10, 10, 11, 0.06);
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.07), 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 6px 16px rgba(15, 23, 42, 0.09), 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 14px 36px rgba(15, 23, 42, 0.12), 0 2px 4px rgba(15, 23, 42, 0.06);
+  --shadow-xl: 0 24px 52px rgba(15, 23, 42, 0.16), 0 4px 8px rgba(15, 23, 42, 0.06);
 
   /* --- Focus --- */
   --focus-ring: 0 0 0 2px #FFFFFF, 0 0 0 4px rgba(225, 6, 0, 0.5);
@@ -1453,7 +1453,7 @@ textarea.form-input {
     position: absolute;
     inset: 0;
     z-index: -1;
-    background: rgba(10, 10, 11, 0.5);
+    background: rgba(15, 23, 42, 0.5);
     animation: modalBackdropIn 0.28s ease-out;
     will-change: opacity;
   }

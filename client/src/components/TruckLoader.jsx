@@ -199,7 +199,7 @@ export default function TruckLoader({ fullscreen = true }) {
                 />
 
                 {/* Windshield */}
-                <path d="M12 -30 h7 l7 9 H12 z" fill="#0A0A0B" />
+                <path d="M12 -30 h7 l7 9 H12 z" fill="#0F172A" />
                 {/* Windshield reflection */}
                 <path d="M13 -28 h3 l3 4 H13 z" fill="#FFFFFF" opacity="0.15" />
 
