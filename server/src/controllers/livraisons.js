@@ -63,7 +63,7 @@ async function confirmSortie(req, res) {
     const { password } = req.body;
     if (!password) return res.status(400).json({ error: 'Votre mot de passe est requis pour confirmer.' });
     const { rows: userRows } = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
-    if (!await verifyPassword(password, userRows[0].password_hash)) return res.status(401).json({ error: 'Mot de passe incorrect.' });
+    if (!await verifyPassword(password, userRows[0].password_hash)) return res.status(400).json({ error: 'Mot de passe incorrect.' });
     const result = await livraisonModel.confirmSortie(req.params.id, req.user.id);
     if (result.error) return res.status(400).json({ error: result.error });
     await notificationModel.resolveActionable(req.user.id, result.livraison.id, 'en attente de votre confirmation', `Vous avez confirmé le bon de sortie ${result.livraison.reference}.`);
@@ -117,7 +117,7 @@ async function terminerLivraison(req, res) {
     const { password } = req.body;
     if (!password) return res.status(400).json({ error: 'Mot de passe requis.' });
     const { rows: userRows } = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
-    if (!await verifyPassword(password, userRows[0].password_hash)) return res.status(401).json({ error: 'Mot de passe incorrect.' });
+    if (!await verifyPassword(password, userRows[0].password_hash)) return res.status(400).json({ error: 'Mot de passe incorrect.' });
     const result = await livraisonModel.terminerLivraison(req.params.id, req.user.id);
     if (result.error) return res.status(400).json({ error: result.error });
     await notificationModel.create(result.livraison.admin_id, `Livraison ${result.livraison.reference} de ${req.user.full_name} terminée. Retour en cours.`, result.livraison.id);
@@ -136,7 +136,7 @@ async function confirmerRetour(req, res) {
     const { password } = req.body;
     if (!password) return res.status(400).json({ error: 'Mot de passe requis.' });
     const { rows: userRows } = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
-    if (!await verifyPassword(password, userRows[0].password_hash)) return res.status(401).json({ error: 'Mot de passe incorrect.' });
+    if (!await verifyPassword(password, userRows[0].password_hash)) return res.status(400).json({ error: 'Mot de passe incorrect.' });
     const result = await livraisonModel.confirmerRetour(req.params.id, req.user.id, req.user.role);
     if (result.error) return res.status(400).json({ error: result.error });
     const { livraison, bothConfirmed, ca_total, commission, net_a_reverser } = result;
@@ -220,7 +220,7 @@ async function archiveLivraison(req, res) {
 
     const { rows: userRows } = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
     if (!await verifyPassword(password, userRows[0].password_hash)) {
-      return res.status(401).json({ error: 'Mot de passe incorrect.' });
+      return res.status(400).json({ error: 'Mot de passe incorrect.' });
     }
 
     const archived = await livraisonModel.archiveLivraison(req.params.id);
@@ -235,7 +235,7 @@ async function demanderAnnulation(req, res) {
     const { password } = req.body;
     if (!password) return res.status(400).json({ error: 'Mot de passe requis.' });
     const { rows: userRows } = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
-    if (!await verifyPassword(password, userRows[0].password_hash)) return res.status(401).json({ error: 'Mot de passe incorrect.' });
+    if (!await verifyPassword(password, userRows[0].password_hash)) return res.status(400).json({ error: 'Mot de passe incorrect.' });
 
     const result = await livraisonModel.demanderAnnulation(req.params.id, req.user.id);
     if (result.error) return res.status(400).json({ error: result.error });
@@ -250,7 +250,7 @@ async function confirmerAnnulation(req, res) {
     const { password } = req.body;
     if (!password) return res.status(400).json({ error: 'Mot de passe requis.' });
     const { rows: userRows } = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
-    if (!await verifyPassword(password, userRows[0].password_hash)) return res.status(401).json({ error: 'Mot de passe incorrect.' });
+    if (!await verifyPassword(password, userRows[0].password_hash)) return res.status(400).json({ error: 'Mot de passe incorrect.' });
 
     const result = await livraisonModel.confirmerAnnulation(req.params.id, req.user.id);
     if (result.error) return res.status(400).json({ error: result.error });
@@ -294,7 +294,8 @@ async function confirmerReouverture(req, res) {
     const { password } = req.body;
     if (!password) return res.status(400).json({ error: 'Mot de passe requis.' });
 
-    const valid = await verifyPassword(req.user.id, password);
+    const { rows: userRows } = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+    const valid = await verifyPassword(password, userRows[0].password_hash);
     if (!valid) return res.status(400).json({ error: 'Mot de passe incorrect.' });
 
     const result = await reopenLogModel.confirm(req.params.id, req.user.id);
@@ -353,7 +354,8 @@ async function confirmerRetourCreation(req, res) {
     const { password } = req.body;
     if (!password) return res.status(400).json({ error: 'Mot de passe requis.' });
 
-    const valid = await verifyPassword(req.user.id, password);
+    const { rows: userRows } = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+    const valid = await verifyPassword(password, userRows[0].password_hash);
     if (!valid) return res.status(400).json({ error: 'Mot de passe incorrect.' });
 
     const result = await retourCreationLogModel.confirm(req.params.id, req.user.id);
@@ -528,7 +530,7 @@ async function confirmerEcart(req, res) {
     );
     if (!userRow) return res.status(401).json({ error: 'Utilisateur introuvable.' });
     const valid = await verifyPassword(password, userRow.password_hash);
-    if (!valid) return res.status(403).json({ error: 'Mot de passe incorrect.' });
+    if (!valid) return res.status(400).json({ error: 'Mot de passe incorrect.' });
 
     const confirmed = await ecartModel.confirm(req.params.ecartId, req.user.id);
     if (!confirmed) return res.status(400).json({ error: 'Impossible de confirmer cet ecart.' });

@@ -181,7 +181,7 @@ async function deactivateUser(req, res) {
     );
     const valid = await verifyPassword(password, rows[0].password_hash);
     if (!valid) {
-      return res.status(401).json({ error: 'Mot de passe incorrect.' });
+      return res.status(400).json({ error: 'Mot de passe incorrect.' });
     }
 
     const { id } = req.params;

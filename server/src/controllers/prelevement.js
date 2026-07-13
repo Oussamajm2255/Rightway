@@ -258,7 +258,7 @@ async function deletePrelevement(req, res) {
     }
     const valid = await verifyPassword(password, userRow.password_hash);
     if (!valid) {
-      return res.status(403).json({ error: 'Mot de passe incorrect.' });
+      return res.status(400).json({ error: 'Mot de passe incorrect.' });
     }
 
     await prelevementModel.deletePrelevement(id);
