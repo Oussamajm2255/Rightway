@@ -1526,5 +1526,5 @@ textarea.form-input {
    ================================================================ */
 .leaflet-top,
 .leaflet-bottom {
-  z-index: 500;
+  z-index: 500 !important;
 }
