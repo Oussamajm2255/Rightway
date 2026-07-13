@@ -50,7 +50,7 @@ function SvgTruck() {
   return <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><path d="M1 14h13M5 14V5l3-3h7v12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M1 14v3h3M14 14v3h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><circle cx="5" cy="17" r="1.5" stroke="currentColor" strokeWidth="1.5"/><circle cx="14" cy="17" r="1.5" stroke="currentColor" strokeWidth="1.5"/></svg>;
 }
 function SvgCurrency() {
-  return <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5"/><path d="M8 7.5c0-.828.895-1.5 2-1.5s2 .672 2 1.5c0 .828-.895 1.5-2 1.5s-2 .672-2 1.5 0 .895 1.5 2 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M10 4v1M10 15v1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>;
+  return <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5"/><path d="M8 7.5c0-.828.895-1.5 2-1.5s2 .672 2 1.5c0 .828-.895 1.5-2 1.5s-2 .672-2 1.5c0 .828.895 1.5 2 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M10 4v1M10 15v1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>;
 }
 function SvgPercent() {
   return <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><circle cx="7" cy="7" r="2" stroke="currentColor" strokeWidth="1.5"/><circle cx="13" cy="13" r="2" stroke="currentColor" strokeWidth="1.5"/><path d="m13 7-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>;
