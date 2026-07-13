@@ -112,8 +112,8 @@ export default function CommercialsPage() {
 
   /* Historique state */
   const [histCommercialId, setHistCommercialId] = useState('all');
-  const [histDateFrom, setHistDateFrom] = useState('2026-01-01');
-  const [histDateTo, setHistDateTo] = useState('2026-06-27');
+  const [histDateFrom, setHistDateFrom] = useState('');
+  const [histDateTo, setHistDateTo] = useState('');
   const [histStatus, setHistStatus] = useState('all');
   const [historyData, setHistoryData] = useState([]);
   const [histLoading, setHistLoading] = useState(false);
