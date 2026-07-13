@@ -1052,10 +1052,12 @@ textarea.form-input {
 /* Compact variant for detail pages */
 .brand-masthead-compact {
   padding: 12px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .brand-masthead-compact .page-title {
-  font-size: 16px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .page-title {

@@ -3,11 +3,15 @@
    ───────────────────────────────────────────────────────────────
    Desktop: horizontal connected step cards
    Mobile  (<769px): vertical cards along a left progress rail
+
+   Hierarchy: completed (dark past) → active (elevated present)
+              → pending (muted future) → cancelled (exception)
    ═══════════════════════════════════════════════════════════════ */
 
 /* ── Wrapper ── */
 .status-timeline {
   margin-bottom: var(--space-6);
+  padding: 0 var(--space-4);
 }
 
 /* ═══════════════════════════════════════════
@@ -31,8 +35,8 @@
 .st-card {
   position: relative;
   flex: 1 1 0;
-  min-width: 120px;
-  max-width: 170px;
+  min-width: 140px;
+  max-width: 200px;
   opacity: 0;
   transform: translateY(6px);
 }
@@ -51,8 +55,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 16px 12px 14px;
+  gap: 10px;
+  padding: 18px 14px 16px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -74,10 +78,10 @@
   top: 50%;
   left: 0;
   right: 0;
-  margin-top: -16px;
-  height: 3px;
+  margin-top: -18px;
+  height: 2px;
   background: var(--color-border-strong);
-  border-radius: 2px;
+  border-radius: 1px;
   transform: scaleX(0);
   transform-origin: left center;
 }
@@ -87,7 +91,7 @@
 }
 
 .st-connector--done::after {
-  background: var(--color-ink);
+  background: var(--color-ink-soft);
 }
 
 .st-animated .st-connector--done::after {
@@ -104,10 +108,10 @@
   to   { transform: scaleX(1); }
 }
 
-/* ── State: COMPLETED ── */
+/* ── State: COMPLETED (dark past) ── */
 .st-card--completed .st-card-inner {
-  background: var(--color-ink);
-  border-color: var(--color-ink);
+  background: var(--color-ink-soft);
+  border-color: var(--color-ink-soft);
 }
 
 .st-card--completed .st-label {
@@ -116,40 +120,57 @@
 }
 
 .st-card--completed .st-date {
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .st-icon--completed {
   color: #fff;
 }
 
-/* ── State: ACTIVE ── */
+/* ── State: ACTIVE (elevated present) ── */
 .st-card--active .st-card-inner {
   background: var(--color-surface);
-  border-color: var(--color-red);
-  border-left: 3px solid var(--color-red);
-  box-shadow: 0 0 0 0 rgba(225, 6, 0, 0);
-}
-
-.st-animated .st-card--active .st-card-inner {
-  animation: stPulse 2.4s ease-in-out infinite;
-}
-
-@keyframes stPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(225, 6, 0, 0); }
-  50%      { box-shadow: 0 0 0 6px rgba(225, 6, 0, 0.08); }
+  border: 1.5px solid var(--color-ink-soft);
+  box-shadow:
+    0 2px 16px rgba(15, 23, 42, 0.07),
+    0 0 0 1px rgba(15, 23, 42, 0.04);
 }
 
 .st-card--active .st-label {
-  color: var(--color-text);
+  color: var(--color-ink);
+  font-weight: var(--weight-bold);
+}
+
+.st-card--active .st-date--active {
+  color: var(--color-ink-soft);
   font-weight: var(--weight-semibold);
+  position: relative;
+}
+
+/* Subtle pulse dot next to "Actif" to indicate liveliness */
+.st-card--active .st-date--active::before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-ink-soft);
+  margin-right: 4px;
+  vertical-align: middle;
+  animation: stActivePulse 1.8s ease-in-out infinite;
+}
+
+@keyframes stActivePulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
 }
 
 .st-icon--active {
-  color: var(--color-red);
+  color: #fff;
+  background: var(--color-ink-soft);
 }
 
-/* ── State: PENDING ── */
+/* ── State: PENDING (muted future) ── */
 .st-card--pending .st-card-inner {
   background: var(--color-surface);
   border-color: var(--color-border);
@@ -165,9 +186,10 @@
 
 .st-icon--pending {
   color: var(--color-text-tertiary);
+  background: var(--color-surface-hover);
 }
 
-/* ── State: CANCELLED ── */
+/* ── State: CANCELLED (exception) ── */
 .st-card--cancelled .st-card-inner {
   background: var(--color-danger-bg);
   border-color: var(--color-danger-border);
@@ -185,6 +207,7 @@
 
 .st-icon--cancelled {
   color: var(--color-danger);
+  background: rgba(225, 6, 0, 0.08);
 }
 
 /* ── Step content pieces ── */
@@ -196,29 +219,18 @@
   height: 36px;
   border-radius: var(--radius-md);
   flex-shrink: 0;
+  transition: background var(--transition-base), color var(--transition-base);
 }
 
 .st-card--completed .st-icon {
   background: rgba(255, 255, 255, 0.12);
 }
 
-.st-card--active .st-icon {
-  background: rgba(225, 6, 0, 0.07);
-}
-
-.st-card--pending .st-icon {
-  background: var(--color-surface-hover);
-}
-
-.st-card--cancelled .st-icon {
-  background: rgba(225, 6, 0, 0.08);
-}
-
 .st-body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 5px;
 }
 
 .st-label {
@@ -231,15 +243,10 @@
 }
 
 .st-date {
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: var(--weight-medium);
   line-height: 1.2;
   white-space: nowrap;
-}
-
-.st-date--active {
-  color: var(--color-red);
-  font-weight: var(--weight-semibold);
 }
 
 .st-date--pending {
@@ -251,8 +258,8 @@
    ═══════════════════════════════════════════ */
 @media (min-width: 769px) and (max-width: 1024px) {
   .st-card {
-    min-width: 110px;
-    max-width: 140px;
+    min-width: 120px;
+    max-width: 155px;
   }
 
   .st-connector {
@@ -260,7 +267,7 @@
   }
 
   .st-card-inner {
-    padding: 14px 10px 12px;
+    padding: 15px 10px 13px;
   }
 
   .st-label {
@@ -278,7 +285,8 @@
 @media (max-width: 768px) {
   .status-timeline {
     position: relative;
-    padding-left: 28px;
+    padding-left: 22px;
+    padding-right: 0;
   }
 
   /* Left progress rail */
@@ -290,7 +298,7 @@
     left: 0;
     top: 8px;
     bottom: 8px;
-    width: 20px;
+    width: 14px;
     z-index: 1;
   }
 
@@ -308,52 +316,54 @@
 
   /* Dot on the rail */
   .st-dot {
-    width: 14px;
-    height: 14px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     flex-shrink: 0;
     background: var(--color-border-strong);
-    border: 2px solid var(--color-surface);
-    box-shadow: 0 0 0 2px var(--color-border);
+    border: 1.5px solid var(--color-surface);
+    box-shadow: 0 0 0 1.5px var(--color-border-strong);
     transition: all var(--transition-base);
   }
 
   .st-dot--completed {
-    background: var(--color-ink);
-    border-color: var(--color-ink);
-    box-shadow: 0 0 0 2px var(--color-ink);
+    background: var(--color-ink-soft);
+    border-color: var(--color-ink-soft);
+    box-shadow: 0 0 0 1.5px var(--color-ink-soft);
   }
 
   .st-dot--active {
-    background: var(--color-red);
-    border-color: var(--color-red);
-    box-shadow: 0 0 0 2px var(--color-red), 0 0 8px rgba(225, 6, 0, 0.25);
+    background: var(--color-ink-soft);
+    border-color: var(--color-ink-soft);
+    box-shadow:
+      0 0 0 1.5px var(--color-ink-soft),
+      0 0 6px rgba(30, 41, 59, 0.2);
   }
 
   .st-dot--cancelled {
     background: var(--color-danger);
     border-color: var(--color-danger);
-    box-shadow: 0 0 0 2px var(--color-danger);
+    box-shadow: 0 0 0 1.5px var(--color-danger);
   }
 
   .st-dot--pending {
     background: var(--color-surface);
-    border-color: var(--color-border-strong);
-    box-shadow: 0 0 0 2px var(--color-border-strong);
+    border-color: var(--color-text-tertiary);
+    box-shadow: 0 0 0 1.5px var(--color-text-tertiary);
   }
 
   /* Vertical line between dots */
   .st-rail-line {
     flex: 1;
-    width: 2px;
-    min-height: 12px;
+    width: 1.5px;
+    min-height: 10px;
     background: var(--color-border-strong);
     border-radius: 1px;
     transition: background var(--transition-base);
   }
 
   .st-rail-line--done {
-    background: var(--color-ink);
+    background: var(--color-ink-soft);
   }
 
   /* Cards stack vertically */
@@ -365,7 +375,7 @@
 
   .st-card {
     flex: none;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
   }
 
   .st-card:last-child {
@@ -381,7 +391,11 @@
     border-radius: var(--radius-md);
   }
 
-  /* Mobile: active card left-border already handled by border-left */
+  /* Mobile active card: override desktop box-shadow, keep it cleaner */
+  .st-card--active .st-card-inner {
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.06);
+  }
+
   /* Hide desktop connectors on mobile */
   .st-connector {
     display: none;
@@ -410,16 +424,16 @@
 /* ── Very narrow screens (<=380px) ── */
 @media (max-width: 380px) {
   .status-timeline {
-    padding-left: 24px;
+    padding-left: 20px;
   }
 
   .st-rail {
-    width: 16px;
+    width: 12px;
   }
 
   .st-dot {
-    width: 11px;
-    height: 11px;
+    width: 9px;
+    height: 9px;
   }
 
   .st-card-inner {

@@ -467,12 +467,16 @@ function LivraisonDetailPage() {
     <div className="livraison-detail">
       {/* Brand Masthead with back link */}
       <div className="brand-masthead brand-masthead-compact">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button className="btn btn-ghost btn-sm" onClick={() => navigate('/livraisons')} style={{ color: '#9A9AA2', padding: 0 }}>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0}}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => navigate('/livraisons')}
+            aria-label="Retour aux livraisons"
+            style={{ color: '#9A9AA2', padding: 0, minWidth: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0}}>
               <path d="M9 2.5L4.5 7l4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Retour
           </button>
           {!loading && livraison && (
             <>
