@@ -377,7 +377,9 @@ export default function CommercialsPage() {
     const totalLivs = historyData.length;
     const totalCloture = clôturéesOnly.length;
     const compl = totalLivs > 0 ? Math.round((totalCloture / totalLivs) * 100) : 0;
-    const totalComm = clôturéesOnly.reduce((a, h) => a + (h.commission || 0), 0);
+    // SALAIRE commercials earn no commission — never sum theirs into the total,
+    // even if a stale/legacy row carries a non-zero commission value.
+    const totalComm = clôturéesOnly.reduce((a, h) => a + (h.commercial_remuneration_type === 'SALAIRE' ? 0 : (h.commission || 0)), 0);
     const totalAvances = historyData.reduce((a, h) => a + (h.avances || 0), 0);
     const totalNet = totalCA - totalComm - totalAvances;
 
@@ -672,7 +674,7 @@ export default function CommercialsPage() {
                 <div className="comm-sum-item"><span className="comm-sum-val" style={{ color: PALETTE[2] }}>{fmtDT(hs.totalCA)}</span><span className="comm-sum-lbl">CA période</span></div>
                 <div className="comm-sum-item"><span className="comm-sum-val">{hs.totalLivs}</span><span className="comm-sum-lbl">Livraisons</span></div>
                 <div className="comm-sum-item"><span className="comm-sum-val">{fmtPct(hs.compl)}</span><span className="comm-sum-lbl">Complétion</span></div>
-                <div className="comm-sum-item"><span className="comm-sum-val" style={{ color: PALETTE[1] }}>{fmtDT(hs.totalComm)}</span><span className="comm-sum-lbl">Commission</span></div>
+                <div className="comm-sum-item"><span className="comm-sum-val" style={{ color: PALETTE[1] }}>{hs.selComm?.remuneration_type === 'SALAIRE' ? <em style={{ fontSize: '13px', fontStyle: 'normal', color: 'var(--color-text-tertiary)' }}>Salaire</em> : fmtDT(hs.totalComm)}</span><span className="comm-sum-lbl">Commission</span></div>
                 <div className="comm-sum-item"><span className="comm-sum-val">{fmtDT(hs.totalAvances)}</span><span className="comm-sum-lbl">Avances</span></div>
                 <div className="comm-sum-item"><span className="comm-sum-val" style={{ color: PALETTE[0] }}>{fmtDT(Math.max(0, hs.totalNet))}</span><span className="comm-sum-lbl">Net reversé</span></div>
               </div>
