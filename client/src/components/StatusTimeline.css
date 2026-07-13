@@ -23,15 +23,16 @@
 .st-cards {
   display: flex;
   align-items: stretch;
+  justify-content: center;
   gap: 0;
   flex-wrap: nowrap;
-  overflow-x: auto;
 }
 
 .st-card {
   position: relative;
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 0;
+  min-width: 120px;
+  max-width: 170px;
   opacity: 0;
   transform: translateY(6px);
 }
@@ -62,25 +63,22 @@
 
 /* ── Connector lines (desktop, between cards) ── */
 .st-connector {
-  position: absolute;
-  top: 50%;
-  right: -2px;
-  transform: translateY(-18px); /* sit at icon level */
-  width: calc(100% - 0px);
-  height: 0;
-  z-index: 0;
+  flex: 0 0 24px;
+  position: relative;
+  align-self: stretch;
 }
 
 .st-connector::after {
   content: '';
   position: absolute;
-  top: -1.5px;
-  left: 50%;
-  width: 100%;
+  top: 50%;
+  left: 0;
+  right: 0;
+  margin-top: -16px;
   height: 3px;
   background: var(--color-border-strong);
   border-radius: 2px;
-  transform: translateX(-50%) scaleX(0);
+  transform: scaleX(0);
   transform-origin: left center;
 }
 
@@ -97,13 +95,13 @@
 }
 
 @keyframes stConnect {
-  from { transform: translateX(-50%) scaleX(0); }
-  to   { transform: translateX(-50%) scaleX(1); }
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
 }
 
 @keyframes stConnectDone {
-  from { transform: translateX(-50%) scaleX(0); }
-  to   { transform: translateX(-50%) scaleX(1); }
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
 }
 
 /* ── State: COMPLETED ── */
@@ -246,6 +244,32 @@
 
 .st-date--pending {
   color: var(--color-text-tertiary);
+}
+
+/* ═══════════════════════════════════════════
+   TABLET (769px–1024px) — compact cards
+   ═══════════════════════════════════════════ */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .st-card {
+    min-width: 110px;
+    max-width: 140px;
+  }
+
+  .st-connector {
+    flex: 0 0 18px;
+  }
+
+  .st-card-inner {
+    padding: 14px 10px 12px;
+  }
+
+  .st-label {
+    font-size: 11.5px;
+  }
+
+  .st-date {
+    font-size: 9px;
+  }
 }
 
 /* ═══════════════════════════════════════════

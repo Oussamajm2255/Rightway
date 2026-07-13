@@ -156,31 +156,33 @@ export default function StatusTimeline({ livraison }) {
             : STEP_ICONS[s.id] || STEP_ICONS.created;
 
           return (
-            <div key={s.id} className={`st-card st-card--${s.state}`} style={{ animationDelay: `${i * 0.1}s` }}>
-              {/* Desktop connector line between cards */}
+            <>
+              <div key={s.id} className={`st-card st-card--${s.state}`} style={{ animationDelay: `${i * 0.1}s` }}>
+                <div className="st-card-inner">
+                  <span className={`st-icon st-icon--${s.state}`}>
+                    <Icon />
+                  </span>
+                  <span className="st-body">
+                    <span className="st-label">{s.label}</span>
+                    {s.date ? (
+                      <span className="st-date">{formatDate(s.date)}</span>
+                    ) : s.state === 'active' ? (
+                      <span className="st-date st-date--active">Actif</span>
+                    ) : s.state === 'pending' ? (
+                      <span className="st-date st-date--pending">En attente</span>
+                    ) : null}
+                  </span>
+                </div>
+              </div>
+              {/* Connector between cards */}
               {i < steps.length - 1 && (
                 <span
+                  key={`conn-${s.id}`}
                   className={`st-connector ${s.state === 'completed' ? 'st-connector--done' : ''}`}
                   style={{ animationDelay: `${(i + 1) * 0.1 + 0.15}s` }}
                 />
               )}
-
-              <div className="st-card-inner">
-                <span className={`st-icon st-icon--${s.state}`}>
-                  <Icon />
-                </span>
-                <span className="st-body">
-                  <span className="st-label">{s.label}</span>
-                  {s.date ? (
-                    <span className="st-date">{formatDate(s.date)}</span>
-                  ) : s.state === 'active' ? (
-                    <span className="st-date st-date--active">Actif</span>
-                  ) : s.state === 'pending' ? (
-                    <span className="st-date st-date--pending">En attente</span>
-                  ) : null}
-                </span>
-              </div>
-            </div>
+            </>
           );
         })}
       </div>
