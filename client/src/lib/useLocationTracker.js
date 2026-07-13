@@ -10,11 +10,13 @@ const isCapacitor = typeof window !== 'undefined' && Capacitor.isNativePlatform(
 
 /**
  * Reverse-geocode lat/lng → human-readable location name
- * Uses Nominatim (OpenStreetMap) — free, no API key, Tunisia coverage
+ * Uses Nominatim (OpenStreetMap) — free, no API key, Tunisia coverage.
+ * Zoom 18 gives neighbourhood / town-level precision so markers show
+ * 'La Marsa' instead of the governorate 'Tunis'.
  */
 async function reverseGeocode(lat, lng) {
   try {
-    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14&addressdetails=1&accept-language=fr`;
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=fr`;
     const res = await fetch(url, {
       headers: { 'User-Agent': 'RightWayApp/1.0' },
     });
@@ -24,16 +26,25 @@ async function reverseGeocode(lat, lng) {
     if (!data || data.error) return null;
 
     const addr = data.address || {};
-    // Prefer city-level locality; fall back to town/village/county
-    const parts = [
-      addr.city || addr.town || addr.village || addr.municipality || addr.county,
-      addr.suburb || addr.neighbourhood || addr.quarter,
-      addr.state,
-    ].filter(Boolean);
 
-    // Deduplicate consecutive duplicates (e.g. "Tunis, Tunis")
-    const deduped = parts.filter((p, i) => i === 0 || p !== parts[i - 1]);
-    return deduped.join(' — ') || addr.country || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    // Primary: most granular — village, town, suburb, neighbourhood, quarter
+    // These are the actual town names users expect (e.g. 'La Marsa', 'Sidi Bou Saïd')
+    const local =
+      addr.village ||
+      addr.town ||
+      addr.suburb ||
+      addr.neighbourhood ||
+      addr.quarter ||
+      addr.hamlet ||
+      addr.municipality;
+
+    // Context: city / county / state — only appended when it adds useful context
+    // and differs from the local part (avoids 'Tunis, Tunis')
+    const context =
+      addr.city || addr.county || addr.state_district || addr.state;
+
+    const parts = [local, context !== local ? context : null].filter(Boolean);
+    return parts.join(', ') || addr.country || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
   } catch {
     return null;
   }

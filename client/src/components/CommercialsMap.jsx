@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { apiGet } from '../lib/api';
 import 'leaflet/dist/leaflet.css';
@@ -17,6 +17,27 @@ L.Icon.Default.mergeOptions({
 // (GPS turned off, permission revoked, or app closed).
 const STALE_MS = 30 * 60 * 1000; // 30 minutes
 
+// ── Clustering ──
+// Group markers whose coordinates round to the same grid cell (~100 m).
+const CLUSTER_PRECISION = 3; // decimal places: ~111 m at equator, ~100 m in Tunisia
+
+function gridKey(lat, lng) {
+  return `${lat.toFixed(CLUSTER_PRECISION)}|${lng.toFixed(CLUSTER_PRECISION)}`;
+}
+
+/** Group locations into clusters. Returns [ { key, members: [...], center: [lat,lng] }, ... ] */
+function clusterLocations(locations) {
+  const map = new Map();
+  for (const loc of locations) {
+    const key = gridKey(loc.latitude, loc.longitude);
+    if (!map.has(key)) {
+      map.set(key, { key, members: [], center: [loc.latitude, loc.longitude] });
+    }
+    map.get(key).members.push(loc);
+  }
+  return Array.from(map.values());
+}
+
 function isStale(isoStr) {
   if (!isoStr) return false;
   return Date.now() - new Date(isoStr).getTime() > STALE_MS;
@@ -31,18 +52,15 @@ function relativeLabel(isoStr) {
   return `Il y a ${Math.floor(diff / 86400)}j`;
 }
 
-function createMarkerIcon(fullName, city) {
-  const escapedName = fullName
+function esc(s) {
+  return (s || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
-  const escapedCity = (city || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+}
 
+function createMarkerIcon(fullName, city) {
   return L.divIcon({
     className: 'commercial-marker',
     html: `
@@ -54,8 +72,8 @@ function createMarkerIcon(fullName, city) {
           </svg>
         </div>
         <div class="marker-label-box">
-          <span class="marker-name">${escapedName}</span>
-          <span class="marker-city">${escapedCity}</span>
+          <span class="marker-name">${esc(fullName)}</span>
+          <span class="marker-city">${esc(city)}</span>
         </div>
       </div>
     `,
@@ -63,6 +81,53 @@ function createMarkerIcon(fullName, city) {
     iconAnchor: [80, 62],
     popupAnchor: [0, -34],
   });
+}
+
+/** Cluster icon — red circle with count badge */
+function createClusterIcon(count) {
+  const size = count <= 9 ? 40 : count <= 99 ? 48 : 56;
+  const fontSize = count <= 9 ? 15 : count <= 99 ? 13 : 11;
+  return L.divIcon({
+    className: 'cluster-marker',
+    html: `
+      <div class="cluster-wrap">
+        <div class="cluster-badge" style="width:${size}px;height:${size}px;font-size:${fontSize}px">
+          ${count}
+        </div>
+      </div>
+    `,
+    iconSize: [size + 20, size + 30],
+    iconAnchor: [(size + 20) / 2, (size + 30) / 2],
+    popupAnchor: [0, -(size + 30) / 2 + 5],
+  });
+}
+
+// ── Auto-fit component ──
+// Watches clusters and fits the map bounds to only show relevant area.
+function FitBoundsControl({ clusters }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!clusters || clusters.length === 0) return;
+
+    if (clusters.length === 1) {
+      // Single location → center on it with a tight zoom
+      const [lat, lng] = clusters[0].center;
+      map.setView([lat, lng], 14, { animate: true, duration: 0.6 });
+      return;
+    }
+
+    // Multiple locations → fit the bounding box with padding
+    const bounds = clusters.reduce((b, c) => b.extend(c.center), L.latLngBounds([]));
+    map.fitBounds(bounds, {
+      padding: [40, 40],
+      maxZoom: 14,
+      animate: true,
+      duration: 0.6,
+    });
+  }, [clusters, map]);
+
+  return null;
 }
 
 export default function CommercialsMap() {
@@ -108,6 +173,10 @@ export default function CommercialsMap() {
   const offline = locations.filter((l) => l.has_location && isStale(l.updated_at));
   const pending = locations.filter((l) => !l.has_location);
 
+  // Cluster live markers by proximity
+  const clusters = useMemo(() => clusterLocations(withGps), [withGps]);
+
+  // Cache marker icons so we don't recreate them on every render
   const markerIcons = {};
   function getIcon(name, city) {
     const key = `${name}||${city || ''}`;
@@ -115,6 +184,15 @@ export default function CommercialsMap() {
       markerIcons[key] = createMarkerIcon(name, city);
     }
     return markerIcons[key];
+  }
+
+  // Cache cluster icons by count
+  const clusterIcons = {};
+  function getClusterIcon(count) {
+    if (!clusterIcons[count]) {
+      clusterIcons[count] = createClusterIcon(count);
+    }
+    return clusterIcons[count];
   }
 
   const hasAny = locations.length > 0;
@@ -159,9 +237,9 @@ export default function CommercialsMap() {
           <MapContainer
             center={[34.5, 9.5]}
             zoom={7}
-            minZoom={6}
-            maxZoom={13}
-            maxBounds={[[29.5, 6.5], [38.0, 12.5]]}
+            minZoom={5}
+            maxZoom={16}
+            maxBounds={[[29.0, 6.0], [38.5, 13.0]]}
             scrollWheelZoom={true}
             style={{ height: '100%', width: '100%', borderRadius: '0 0 var(--radius-lg) var(--radius-lg)' }}
           >
@@ -169,23 +247,50 @@ export default function CommercialsMap() {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             />
-            {withGps.map((loc) => (
-              <Marker
-                key={loc.user_id}
-                position={[loc.latitude, loc.longitude]}
-                icon={getIcon(loc.full_name, loc.location_name)}
-              >
-                <Popup>
-                  <div className="cm-popup">
-                    <div className="cm-popup-name">{loc.full_name}</div>
-                    <div className="cm-popup-loc">{loc.location_name}</div>
-                    <div className="cm-popup-time">
-                      {relativeLabel(loc.updated_at)}
+            <FitBoundsControl clusters={clusters} />
+            {clusters.map((cluster) => {
+              if (cluster.members.length === 1) {
+                const loc = cluster.members[0];
+                return (
+                  <Marker
+                    key={loc.user_id}
+                    position={cluster.center}
+                    icon={getIcon(loc.full_name, loc.location_name)}
+                  >
+                    <Popup>
+                      <div className="cm-popup">
+                        <div className="cm-popup-name">{loc.full_name}</div>
+                        <div className="cm-popup-loc">{loc.location_name}</div>
+                        <div className="cm-popup-time">
+                          {relativeLabel(loc.updated_at)}
+                        </div>
+                      </div>
+                    </Popup>
+                  </Marker>
+                );
+              }
+              // Cluster of 2+ commercials at same location
+              return (
+                <Marker
+                  key={cluster.key}
+                  position={cluster.center}
+                  icon={getClusterIcon(cluster.members.length)}
+                >
+                  <Popup>
+                    <div className="cm-popup">
+                      <div className="cm-popup-name" style={{ marginBottom: 6 }}>
+                        {cluster.members.length} commerciaux
+                      </div>
+                      {cluster.members.map((m) => (
+                        <div key={m.user_id} className="cm-popup-loc" style={{ marginBottom: 2 }}>
+                          {m.full_name} · {m.location_name || 'Position'}
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
+                  </Popup>
+                </Marker>
+              );
+            })}
           </MapContainer>
         )}
       </div>
