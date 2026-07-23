@@ -108,7 +108,7 @@
 }
 
 .rem-salary-input:focus {
-  box-shadow: 0 0 0 3px rgba(225, 6, 0, 0.14);
+  box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.16);
 }
 
 .rem-salary-input:disabled {

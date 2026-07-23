@@ -95,7 +95,7 @@
 }
 
 .tracking-status-badge.enabled {
-  background: rgba(225, 6, 0, 0.12);
+  background: rgba(245, 158, 11, 0.14);
   color: var(--color-red);
 }
 
@@ -249,8 +249,8 @@
 }
 
 .pw-input:focus {
-  border-color: var(--color-red);
-  box-shadow: 0 0 0 3px rgba(225, 6, 0, 0.12);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.14);
 }
 
 .pw-input:disabled {

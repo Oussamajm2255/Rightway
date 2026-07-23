@@ -10,13 +10,13 @@
   padding: 0 var(--space-4) 48px;
 }
 
-/* ── Live badge (brand red accent on dark masthead) ── */
+/* ── Live badge (brand gold accent on dark masthead) ── */
 .live-badge {
   display: flex;
   align-items: center;
   gap: 7px;
-  background: rgba(225, 6, 0, 0.18);
-  border: 1px solid rgba(225, 6, 0, 0.35);
+  background: rgba(245, 158, 11, 0.18);
+  border: 1px solid rgba(245, 158, 11, 0.38);
   border-radius: var(--radius-full);
   padding: 4px 12px 4px 8px;
   font-size: 11px;
@@ -31,14 +31,14 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #E10600;
+  background: #F59E0B;
   animation: livePulse 1.6s ease-in-out infinite;
   flex-shrink: 0;
 }
 
 @keyframes livePulse {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(225, 6, 0, 0.6); }
-  50% { opacity: 0.7; box-shadow: 0 0 0 5px rgba(225, 6, 0, 0); }
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6); }
+  50% { opacity: 0.7; box-shadow: 0 0 0 5px rgba(245, 158, 11, 0); }
 }
 
 /* ── Clock (placed on dark masthead) ── */

@@ -4,38 +4,43 @@
 
 /* ===== Design Tokens ===== */
 :root {
-  /* --- Brand: Deep Slate (ink · paper · red) --- */
-  --color-ink: #0F172A;
-  --color-ink-soft: #1E293B;
-  --color-red: #E10600;
-  --color-red-hover: #B80500;
-  --color-red-wash: rgba(225, 6, 0, 0.06);
+  /* --- Brand: Fresh Emerald (ink · paper · gold accent) ---
+     Rebranded from deep-slate + red to a clear, eye-friendly emerald green
+     paired with a warm gold accent. `--color-ink` stays dark enough for dark
+     surfaces (masthead) and body text; `--color-primary` is the clear green
+     used for interactive elements. Legacy var names (`--color-red*`) are kept
+     for compatibility but now resolve to the gold accent. */
+  --color-ink: #0B3B2E;
+  --color-ink-soft: #14543F;
+  --color-red: #F59E0B;
+  --color-red-hover: #D97706;
+  --color-red-wash: rgba(245, 158, 11, 0.08);
   --color-paper: #FFFFFF;
 
   /* --- Color Palette (mapped to brand) --- */
-  --color-primary: #0F172A;
-  --color-primary-hover: #1E293B;
-  --color-primary-light: #334155;
-  --color-primary-subtle: rgba(15, 23, 42, 0.05);
-  --color-primary-subtle-hover: rgba(15, 23, 42, 0.09);
+  --color-primary: #047857;
+  --color-primary-hover: #036347;
+  --color-primary-light: #10B981;
+  --color-primary-subtle: rgba(4, 120, 87, 0.06);
+  --color-primary-subtle-hover: rgba(4, 120, 87, 0.11);
 
-  --color-accent: #E10600;
-  --color-accent-subtle: rgba(225, 6, 0, 0.07);
+  --color-accent: #F59E0B;
+  --color-accent-subtle: rgba(245, 158, 11, 0.10);
 
-  --color-page: #F3F2EF;
+  --color-page: #F1F5F3;
   --color-surface: #FFFFFF;
-  --color-surface-hover: #F3F2EF;
+  --color-surface-hover: #F1F5F3;
   --color-surface-raised: #FFFFFF;
 
-  --color-border: #E5E4E0;
-  --color-border-strong: #C9C8C4;
-  --color-border-focus: #0F172A;
+  --color-border: #E3E9E5;
+  --color-border-strong: #C6CFC9;
+  --color-border-focus: #047857;
 
-  --color-text: #0F172A;
-  --color-text-secondary: #57575E;
-  --color-text-tertiary: #9A9AA2;
+  --color-text: #0E2A21;
+  --color-text-secondary: #556059;
+  --color-text-tertiary: #93A099;
   --color-text-inverse: #FFFFFF;
-  --color-text-link: #0F172A;
+  --color-text-link: #047857;
 
   /* --- Semantic Colors --- */
   --color-success: #0D7B4B;
@@ -46,8 +51,10 @@
   --color-warning-bg: #FFFBEB;
   --color-warning-border: #FDE68A;
 
-  --color-danger: #E10600;
-  --color-danger-hover: #B80500;
+  /* Danger stays a true red — a universal safety signal for errors and
+     destructive actions. It is intentionally NOT part of the green/gold brand. */
+  --color-danger: #DC2626;
+  --color-danger-hover: #B91C1C;
   --color-danger-bg: #FEF2F2;
   --color-danger-border: #FBC5C3;
 
@@ -125,7 +132,7 @@
   --shadow-xl: 0 24px 52px rgba(15, 23, 42, 0.16), 0 4px 8px rgba(15, 23, 42, 0.06);
 
   /* --- Focus --- */
-  --focus-ring: 0 0 0 2px #FFFFFF, 0 0 0 4px rgba(225, 6, 0, 0.5);
+  --focus-ring: 0 0 0 2px #FFFFFF, 0 0 0 4px rgba(4, 120, 87, 0.5);
 
   /* --- Transitions --- */
   --transition-fast: 0.12s cubic-bezier(0.4, 0, 0.2, 1);
@@ -428,7 +435,7 @@ h3 { font-size: var(--text-md); }
 
 .form-input:focus {
   border-color: var(--color-border-focus);
-  box-shadow: 0 0 0 3px rgba(225, 6, 0, 0.12);
+  box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.14);
 }
 
 .form-input:disabled {

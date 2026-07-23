@@ -6,9 +6,9 @@ import './RealtimeMonitorPage.css';
 
 /* ─── Brand Category Palette ─── */
 const CATEGORY_COLORS = [
-  '#0F172A',  // ink
-  '#E10600',  // red
-  '#1E293B',  // ink-soft
+  '#047857',  // emerald (primary)
+  '#F59E0B',  // gold accent
+  '#0B3B2E',  // deep green (ink)
 ];
 
 function formatDT(value) {
@@ -22,11 +22,11 @@ function formatInt(value) {
 }
 
 function getStatusPill(pct) {
-  if (pct >= 100) return { bg: 'rgba(225,6,0,0.12)', color: '#E10600', label: 'Épuisé' };
-  if (pct >= 80)  return { bg: 'rgba(15,23,42,0.08)', color: '#0F172A', label: 'Très bon' };
-  if (pct >= 50)  return { bg: 'rgba(30,41,59,0.08)', color: '#1E293B', label: 'En cours' };
-  if (pct >= 20)  return { bg: 'rgba(225,6,0,0.08)', color: '#E10600', label: 'Lent' };
-  return { bg: 'rgba(15,23,42,0.05)', color: '#525566', label: 'Départ' };
+  if (pct >= 100) return { bg: 'rgba(220,38,38,0.12)', color: '#DC2626', label: 'Épuisé' };
+  if (pct >= 80)  return { bg: 'rgba(4,120,87,0.10)', color: '#047857', label: 'Très bon' };
+  if (pct >= 50)  return { bg: 'rgba(11,59,46,0.08)', color: '#0B3B2E', label: 'En cours' };
+  if (pct >= 20)  return { bg: 'rgba(245,158,11,0.14)', color: '#B45309', label: 'Lent' };
+  return { bg: 'rgba(15,23,42,0.05)', color: '#556059', label: 'Départ' };
 }
 
 export default function RealtimeMonitorPage() {

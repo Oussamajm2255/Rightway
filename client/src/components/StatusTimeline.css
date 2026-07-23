@@ -202,12 +202,12 @@
 }
 
 .st-card--cancelled .st-date {
-  color: rgba(225, 6, 0, 0.6);
+  color: rgba(220, 38, 38, 0.6);
 }
 
 .st-icon--cancelled {
   color: var(--color-danger);
-  background: rgba(225, 6, 0, 0.08);
+  background: rgba(220, 38, 38, 0.08);
 }
 
 /* ── Step content pieces ── */

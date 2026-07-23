@@ -6,9 +6,9 @@ import './CommercialsPage.css';
 
 /* ─── Brand Palette ─── */
 const PALETTE = [
-  '#0F172A',  // ink
-  '#E10600',  // red
-  '#1E293B',  // ink-soft
+  '#047857',  // emerald (primary)
+  '#F59E0B',  // gold accent
+  '#0B3B2E',  // deep green (ink)
 ];
 
 const MONTH_LABELS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun'];

@@ -144,8 +144,8 @@
 }
 
 .login-page .form-input:focus {
-  border-color: var(--color-red);
-  box-shadow: 0 0 0 3px rgba(225, 6, 0, 0.13);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.15);
 }
 
 /* ── Button ── */
@@ -183,12 +183,12 @@
 
 .login-page .btn-primary:hover:not(:disabled) {
   background: var(--color-ink-soft);
-  box-shadow: 0 8px 20px rgba(225, 6, 0, 0.22);
+  box-shadow: 0 8px 20px rgba(4, 120, 87, 0.25);
 }
 
 .login-page .btn-primary:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(225, 6, 0, 0.35);
+  box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.35);
 }
 
 .login-page .btn-full {

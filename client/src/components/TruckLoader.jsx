@@ -40,9 +40,9 @@ export default function TruckLoader({ fullscreen = true }) {
 
               {/* Route glow gradient */}
               <linearGradient id="rglow" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#E10600" stopOpacity="0" />
-                <stop offset="40%" stopColor="#E10600" stopOpacity="0.25" />
-                <stop offset="100%" stopColor="#E10600" stopOpacity="0.6" />
+                <stop offset="0%" stopColor="#F59E0B" stopOpacity="0" />
+                <stop offset="40%" stopColor="#F59E0B" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#F59E0B" stopOpacity="0.6" />
               </linearGradient>
 
               {/* Headlight gradient */}
@@ -53,8 +53,8 @@ export default function TruckLoader({ fullscreen = true }) {
 
               {/* Pin glow gradient */}
               <radialGradient id="pinglow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#E10600" stopOpacity="0.45" />
-                <stop offset="100%" stopColor="#E10600" stopOpacity="0" />
+                <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.45" />
+                <stop offset="100%" stopColor="#F59E0B" stopOpacity="0" />
               </radialGradient>
             </defs>
 
@@ -125,10 +125,10 @@ export default function TruckLoader({ fullscreen = true }) {
               <circle className="truck-pin-glow-2" cx="480" cy="265" r="16" fill="url(#pinglow)" />
               {/* Pin body */}
               <g className="truck-pin">
-                <circle cx="480" cy="265" r="5" fill="none" stroke="#E10600" strokeWidth="2.5" />
+                <circle cx="480" cy="265" r="5" fill="none" stroke="#F59E0B" strokeWidth="2.5" />
                 <path
                   d="M480 260 c -13 -16 -18 -22 -18 -34 a18 18 0 1 1 36 0 c 0 12 -5 18 -18 34 z"
-                  fill="#E10600"
+                  fill="#F59E0B"
                 />
                 <circle cx="480" cy="226" r="7" fill="#1E1E24" />
                 <circle cx="480" cy="226" r="3" fill="#FFD700" opacity="0.5" />
@@ -136,10 +136,10 @@ export default function TruckLoader({ fullscreen = true }) {
             </g>
 
             {/* ── Route particles ── */}
-            <circle className="truck-rp rp1" cx="280" cy="293" r="2" fill="#E10600" opacity="0" />
-            <circle className="truck-rp rp2" cx="330" cy="288" r="1.5" fill="#E10600" opacity="0" />
-            <circle className="truck-rp rp3" cx="390" cy="304" r="2" fill="#E10600" opacity="0" />
-            <circle className="truck-rp rp4" cx="440" cy="285" r="1.5" fill="#E10600" opacity="0" />
+            <circle className="truck-rp rp1" cx="280" cy="293" r="2" fill="#F59E0B" opacity="0" />
+            <circle className="truck-rp rp2" cx="330" cy="288" r="1.5" fill="#F59E0B" opacity="0" />
+            <circle className="truck-rp rp3" cx="390" cy="304" r="2" fill="#F59E0B" opacity="0" />
+            <circle className="truck-rp rp4" cx="440" cy="285" r="1.5" fill="#F59E0B" opacity="0" />
 
             {/* ── Truck ── */}
             <g className="truck-driver">
@@ -161,7 +161,7 @@ export default function TruckLoader({ fullscreen = true }) {
               <circle cx="-34" cy="0" r="1.5" fill="#9A9AA2" opacity="0" className="truck-dust dust3" />
 
               {/* Speed lines */}
-              <g className="truck-speed-lines" stroke="#E10600" strokeWidth="2" strokeLinecap="round" opacity="0">
+              <g className="truck-speed-lines" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" opacity="0">
                 <line x1="-48" y1="-28" x2="-60" y2="-28" />
                 <line x1="-46" y1="-20" x2="-64" y2="-20" />
                 <line x1="-44" y1="-12" x2="-56" y2="-12" />
@@ -179,14 +179,14 @@ export default function TruckLoader({ fullscreen = true }) {
                 <line x1="-40" y1="-18" x2="4" y2="-18" stroke="#333340" strokeWidth="1" />
 
                 {/* RW monogram on cargo */}
-                <text x="-18" y="-15" fontSize="9" fontWeight="700" fill="#E10600" fontFamily="Space Grotesk, sans-serif" textAnchor="middle" letterSpacing="2" opacity="0.7">
+                <text x="-18" y="-15" fontSize="9" fontWeight="700" fill="#F59E0B" fontFamily="Space Grotesk, sans-serif" textAnchor="middle" letterSpacing="2" opacity="0.7">
                   RW
                 </text>
 
                 {/* Cab */}
                 <path
                   d="M8 -36 h14 a4 4 0 0 1 3.5 2 L36 -20 v10 a3 3 0 0 1 -3 3 H8 z"
-                  fill="#E10600"
+                  fill="#F59E0B"
                 />
                 {/* Cab roof highlight */}
                 <path
@@ -199,7 +199,7 @@ export default function TruckLoader({ fullscreen = true }) {
                 />
 
                 {/* Windshield */}
-                <path d="M12 -30 h7 l7 9 H12 z" fill="#0F172A" />
+                <path d="M12 -30 h7 l7 9 H12 z" fill="#0B3B2E" />
                 {/* Windshield reflection */}
                 <path d="M13 -28 h3 l3 4 H13 z" fill="#FFFFFF" opacity="0.15" />
 

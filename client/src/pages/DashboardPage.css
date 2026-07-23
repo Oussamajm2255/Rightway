@@ -35,7 +35,7 @@
   align-items: center;
   gap: 7px;
   background: transparent;
-  border: 1px solid rgba(225, 6, 0, 0.55);
+  border: 1px solid rgba(245, 158, 11, 0.55);
   border-radius: 2px;
   padding: 4px 9px 4px 8px;
 }
@@ -49,8 +49,8 @@
 }
 
 @keyframes dash-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(225, 6, 0, 0.55); }
-  50% { box-shadow: 0 0 0 5px rgba(225, 6, 0, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.55); }
+  50% { box-shadow: 0 0 0 5px rgba(245, 158, 11, 0); }
 }
 
 .live-text {
@@ -357,7 +357,7 @@
   position: absolute;
   inset: 12px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(225, 6, 0, 0.10), rgba(15, 23, 42, 0.05) 55%, transparent 72%);
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.10), rgba(15, 23, 42, 0.05) 55%, transparent 72%);
 }
 .stock-hero-svg {
   position: relative;
