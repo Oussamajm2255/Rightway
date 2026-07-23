@@ -138,6 +138,19 @@
   --transition-fast: 0.12s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-base: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* --- Z-index scale ---
+     One ordered ladder for the whole app so stacking is predictable and
+     components never need to invent ad-hoc values. Higher = closer to viewer. */
+  --z-sticky: 100;   /* in-page sticky headers (dash-topbar, brand-masthead) */
+  --z-sidebar: 500;  /* desktop fixed sidebar                                 */
+  --z-chrome: 600;   /* fixed app topbar + mobile bottom-nav                  */
+  --z-overlay: 700;  /* sidebar drawer backdrop                               */
+  --z-drawer: 710;   /* sidebar drawer panel                                  */
+  --z-notif: 800;    /* notification dropdown / bottom-sheet (+ backdrops)    */
+  --z-banner: 9000;  /* foreground push heads-up — above all page chrome      */
+  --z-modal: 10000;  /* modal overlays, session-expiry                        */
+  --z-toast: 10050;  /* toasts, always on top                                 */
 }
 
 /* ===== Reset & Base ===== */
@@ -776,9 +789,8 @@ textarea.form-input {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Above the sticky brand-masthead (9999) and bottom-nav (600) so modals
-     always sit over page chrome — never covered by them. */
-  z-index: 10000;
+  /* Above all page chrome so modals always sit over the app — never covered. */
+  z-index: var(--z-modal);
   padding: var(--space-4);
   animation: modalOverlayIn var(--transition-base) ease-out;
 }
@@ -1002,10 +1014,9 @@ textarea.form-input {
   margin: 0 0 var(--space-6);
   position: sticky;
   top: calc(52px + var(--safe-top));
-  /* Above scrolling page content, but BELOW the sidebar drawer (610) and its
-     backdrop (605) so the drawer covers it, and below modals (10000). The old
-     9999 only looked fine because the page-transition wrapper used to trap it. */
-  z-index: 500;
+  /* Above scrolling page content, but BELOW the sidebar drawer and its
+     backdrop so the drawer covers it, and below the banner/modals. */
+  z-index: var(--z-sticky);
 }
 
 .brand-masthead .page-title {

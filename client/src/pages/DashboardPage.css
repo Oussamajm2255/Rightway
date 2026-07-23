@@ -20,7 +20,9 @@
   border-radius: 0;
   position: sticky;
   top: calc(52px + var(--safe-top));
-  z-index: 9999;
+  /* In-page sticky header: sits above scrolling content, but below the
+     foreground push banner and the mobile sidebar drawer. */
+  z-index: var(--z-sticky);
 }
 
 .dash-topbar .topbar-left {

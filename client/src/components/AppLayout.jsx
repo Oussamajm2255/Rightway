@@ -539,6 +539,12 @@ function AppLayout({ children }) {
     return '';
   }
 
+  // Mobile bottom-nav: show up to 5 destinations inline. When a role has more
+  // than fits (Super Admin), show the 4 primary tabs + a "Menu" button that
+  // opens the full drawer — no cramped horizontal scrolling.
+  const showMenuTab = navItems.length > 5;
+  const bottomItems = showMenuTab ? navItems.slice(0, 4) : navItems;
+
   return (
     <div className="app-layout">
       {/* In-app heads-up banner for foreground push notifications */}
@@ -671,9 +677,9 @@ function AppLayout({ children }) {
         </main>
       </div>
 
-      {/* Bottom Nav Mobile — all role-appropriate tabs, horizontally scrollable */}
+      {/* Bottom Nav Mobile — fixed equal-width slots: primary tabs (+ Menu) */}
       <nav className="bottom-nav">
-        {navItems.map((item) => {
+        {bottomItems.map((item) => {
           const Icon = ICON_MAP[item.icon];
           return (
             <NavLink
@@ -687,6 +693,18 @@ function AppLayout({ children }) {
             </NavLink>
           );
         })}
+        {showMenuTab && (
+          <button
+            type="button"
+            className={`bottom-nav-item bottom-nav-menu ${mobileMenuOpen ? 'active' : ''}`}
+            onClick={() => { if (mobileMenuOpen) setSidebarClosing(true); else setMobileMenuOpen(true); }}
+            aria-label="Plus de menus"
+            aria-expanded={mobileMenuOpen}
+          >
+            <span className="bn-icon"><IconMenu /></span>
+            <span className="bn-label">Menu</span>
+          </button>
+        )}
       </nav>
 
       {/* Logout confirmation modal */}

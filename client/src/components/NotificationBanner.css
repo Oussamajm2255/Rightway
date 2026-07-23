@@ -4,7 +4,7 @@
   left: 50%;
   transform: translateX(-50%);
   width: min(440px, calc(100vw - 20px));
-  z-index: 2000;
+  z-index: var(--z-banner);
   display: flex;
   align-items: stretch;
   gap: 4px;
