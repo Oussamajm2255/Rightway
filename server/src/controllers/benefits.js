@@ -1,4 +1,4 @@
-const { getGlobalBenefits, getProductBenefits } = require('../models/benefit');
+const { getGlobalBenefits, getProductBenefits, getStockValuation } = require('../models/benefit');
 
 async function getBenefits(req, res) {
   try {
@@ -18,14 +18,16 @@ async function getBenefits(req, res) {
       date_to: date_to || null,
     };
 
-    // Run both queries in parallel
-    const [global, productData] = await Promise.all([
+    // Run queries in parallel. Stock valuation is a live snapshot — it does
+    // NOT take the date range (unlike the profit KPIs).
+    const [global, productData, stockVal] = await Promise.all([
       getGlobalBenefits({ date_from: filters.date_from, date_to: filters.date_to }),
       getProductBenefits({
         ...filters,
         sort_by, sort_dir,
         page: pageNum, limit: limitNum,
       }),
+      getStockValuation(),
     ]);
 
     res.json({
@@ -38,6 +40,11 @@ async function getBenefits(req, res) {
         benefit_net: Number(global.benefit_net),
         margin_avg: Number(global.margin_avg),
         profitable_count: global.profitable_count,
+      },
+      stock: {
+        depot_ca: Number(stockVal.depot_ca),
+        charge_ca: Number(stockVal.charge_ca),
+        total_ca: Number(stockVal.depot_ca) + Number(stockVal.charge_ca),
       },
       products: productData.products.map((p) => ({
         id: p.id,

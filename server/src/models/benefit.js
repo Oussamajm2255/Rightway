@@ -161,4 +161,25 @@ async function getProductBenefits({
   return { products, total };
 }
 
-module.exports = { getGlobalBenefits, getProductBenefits };
+/**
+ * Live inventory valuation at selling price — a point-in-time snapshot,
+ * deliberately independent of any date range (unlike the profit KPIs).
+ * Mirrors the dashboard's stock-hero figures so the Bénéfices page can show
+ * "money still tied up in unsold stock" alongside purchases and sales.
+ */
+async function getStockValuation() {
+  const { rows } = await pool.query(`
+    SELECT
+      (SELECT COALESCE(SUM(ds.quantity * p.selling_price_ttc), 0)::NUMERIC(14,3)
+         FROM depot_stock ds
+         JOIN products p ON ds.product_id = p.id
+         WHERE p.is_active = true)                                    AS depot_ca,
+      (SELECT COALESCE(SUM((li.qte_chargee - li.qte_vendue) * li.prix_ttc), 0)::NUMERIC(14,3)
+         FROM livraison_items li
+         JOIN livraisons l ON li.livraison_id = l.id
+         WHERE l.status IN ('EN_COURS', 'EN_RETOUR') AND l.is_archived = false) AS charge_ca
+  `);
+  return rows[0] || { depot_ca: 0, charge_ca: 0 };
+}
+
+module.exports = { getGlobalBenefits, getProductBenefits, getStockValuation };
