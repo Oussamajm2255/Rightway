@@ -3,7 +3,9 @@ import { useAuth } from '../context/AuthContext';
 import { apiGet } from '../lib/api';
 import { formatDate } from '../lib/utils';
 import { useCategoryPalette } from '../context/CategoryPaletteContext';
+import { useNavigate } from 'react-router-dom';
 import { Chart } from 'chart.js/auto';
+import StockHero from '../components/StockHero';
 import './BenefitsPage.css';
 
 
@@ -44,6 +46,7 @@ function marginClass(pct) {
 export default function BenefitsPage() {
   const { user } = useAuth();
   const { getColor } = useCategoryPalette();
+  const navigate = useNavigate();
   const chartRef = useRef(null);
 
   // Data
@@ -323,42 +326,9 @@ export default function BenefitsPage() {
           </div>
 
           {loading && !stockVal ? (
-            <div className="kpi-grid-6">
-              {[1, 2, 3].map((i) => <div key={i} className="kpi-card skeleton-card" />)}
-            </div>
+            <div className="kpi-card skeleton-card" style={{ height: 180 }} />
           ) : stockVal ? (
-            <div className="kpi-grid-6">
-              {/* Valeur Stock Dépôt */}
-              <div className="kpi-card">
-                <div className="kpi-accent" style={{ background: 'var(--color-primary)' }} />
-                <div className="kpi-icon-wrap" style={{ background: 'rgba(4,120,87,.1)', color: 'var(--color-primary)' }}>
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-6 9 6v10a1 1 0 01-1 1H4a1 1 0 01-1-1V9z"/><path d="M3 13h18"/><path d="M9 21v-8h6v8"/></svg>
-                </div>
-                <div className="kpi-label">Valeur Stock Dépôt</div>
-                <div className="kpi-value" style={{ fontSize: 16 }}>{fmtDT(stockVal.depot_ca)}</div>
-                <div className="kpi-sub">en dépôt · prix de vente</div>
-              </div>
-              {/* Valeur Stock Chargé */}
-              <div className="kpi-card">
-                <div className="kpi-accent" style={{ background: '#0891b2' }} />
-                <div className="kpi-icon-wrap" style={{ background: 'rgba(8,145,178,.1)', color: '#0891b2' }}>
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/></svg>
-                </div>
-                <div className="kpi-label">Valeur Stock Chargé</div>
-                <div className="kpi-value" style={{ fontSize: 16 }}>{fmtDT(stockVal.charge_ca)}</div>
-                <div className="kpi-sub">chargé en véhicule · prix de vente</div>
-              </div>
-              {/* Valeur Stock Total */}
-              <div className="kpi-card">
-                <div className="kpi-accent" style={{ background: 'var(--color-ink)' }} />
-                <div className="kpi-icon-wrap" style={{ background: 'rgba(11,59,46,.1)', color: 'var(--color-ink)' }}>
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2l9 5-9 5-9-5 9-5z"/><path d="M3 12l9 5 9-5"/><path d="M3 17l9 5 9-5"/></svg>
-                </div>
-                <div className="kpi-label">Valeur Stock Total</div>
-                <div className="kpi-value" style={{ fontSize: 16 }}>{fmtDT(stockVal.total_ca)}</div>
-                <div className="kpi-sub">stock invendu (dépôt + chargé)</div>
-              </div>
-            </div>
+            <StockHero depot={stockVal.depot_ca} charge={stockVal.charge_ca} navigate={navigate} />
           ) : null}
         </div>
 

@@ -5,6 +5,7 @@ import { apiGet } from '../lib/api';
 import { formatDate } from '../lib/utils';
 import { Chart } from 'chart.js/auto';
 import CommercialsMap from '../components/CommercialsMap';
+import StockHero from '../components/StockHero';
 import './DashboardPage.css';
 
 // ─── Palette (Editorial Terminal: ink · red · grey) ───
@@ -97,100 +98,8 @@ function KpiCard({ icon, label, value, sub, onClick, invert, accent }) {
   );
 }
 
-// ─── Count-up animation hook ───
-function useCountUp(target, duration = 1100) {
-  const [val, setVal] = useState(0);
-  useEffect(() => {
-    const to = Number(target);
-    if (target === null || target === undefined || Number.isNaN(to)) { setVal(0); return; }
-    let raf;
-    const start = performance.now();
-    const tick = (now) => {
-      const p = Math.min((now - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - p, 3);
-      setVal(to * eased);
-      if (p < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [target, duration]);
-  return val;
-}
-
-// ─── Stock Total Hero (Depot + Chargé fused into a live total) ───
-const HERO_RING_C = 2 * Math.PI * 62; // r = 62
-
-function StockHero({ depot, charge, navigate }) {
-  const d = Number(depot) || 0;
-  const c = Number(charge) || 0;
-  const total = d + c;
-  const aTotal = useCountUp(total, 1300);
-  const aDepot = useCountUp(d, 1100);
-  const aCharge = useCountUp(c, 1100);
-  const [drawn, setDrawn] = useState(false);
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setDrawn(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
-
-  const depotFrac = total > 0 ? d / total : 0;
-  const chargeFrac = total > 0 ? c / total : 0;
-
-  return (
-    <div className="stock-hero">
-      <div className="stock-hero-accent" />
-
-      <button type="button" className="stock-hero-side" onClick={() => navigate('/stock')}>
-        <span className="stock-hero-icon" style={{ background: hexAlpha(PALETTE.emerald, 0.12), color: PALETTE.emerald }}>{Icons.package}</span>
-        <span className="stock-hero-label">CA Stock Depot</span>
-        <span className="stock-hero-val">{fmtDT(aDepot)}</span>
-        <span className="stock-hero-sub"><span className="stock-hero-dot" style={{ background: PALETTE.emerald }} />valeur au prix de vente</span>
-      </button>
-
-      <div className="stock-hero-link" aria-hidden="true">{Icons.chevRight}</div>
-
-      <div className="stock-hero-center">
-        <div className="stock-hero-ring">
-          <span className="stock-hero-glow" />
-          <svg viewBox="0 0 150 150" className="stock-hero-svg">
-            <circle cx="75" cy="75" r="62" className="ring-track" />
-            <circle
-              cx="75" cy="75" r="62" className="ring-arc"
-              stroke={PALETTE.emerald}
-              strokeDasharray={HERO_RING_C}
-              strokeDashoffset={drawn ? HERO_RING_C * (1 - depotFrac) : HERO_RING_C}
-            />
-            <circle
-              cx="75" cy="75" r="62" className="ring-arc ring-arc-charge"
-              stroke={PALETTE.cyan}
-              transform={`rotate(${360 * depotFrac} 75 75)`}
-              strokeDasharray={HERO_RING_C}
-              strokeDashoffset={drawn ? HERO_RING_C * (1 - chargeFrac) : HERO_RING_C}
-            />
-          </svg>
-          <div className="stock-hero-ring-center">
-            <span className="stock-hero-ring-label">Patrimoine</span>
-            <span className="stock-hero-ring-val">{fmtDTShort(aTotal)}</span>
-            <span className="stock-hero-ring-unit">total marchandise</span>
-          </div>
-        </div>
-        <div className="stock-hero-legend">
-          <span><span className="stock-hero-dot" style={{ background: PALETTE.emerald }} />Dépôt <b>{Math.round(depotFrac * 100)}%</b></span>
-          <span><span className="stock-hero-dot" style={{ background: PALETTE.cyan }} />Chargé <b>{Math.round(chargeFrac * 100)}%</b></span>
-        </div>
-      </div>
-
-      <div className="stock-hero-link" aria-hidden="true">{Icons.chevLeft}</div>
-
-      <button type="button" className="stock-hero-side right" onClick={() => navigate('/livraisons')}>
-        <span className="stock-hero-icon" style={{ background: hexAlpha(PALETTE.cyan, 0.12), color: PALETTE.cyan }}>{Icons.truck}</span>
-        <span className="stock-hero-label">CA Stock Chargé</span>
-        <span className="stock-hero-val">{fmtDT(aCharge)}</span>
-        <span className="stock-hero-sub"><span className="stock-hero-dot" style={{ background: PALETTE.cyan }} />marchandise en tournée</span>
-      </button>
-    </div>
-  );
-}
+// StockHero (live inventory donut) now lives in ../components/StockHero,
+// shared with the Bénéfices page so the two never drift.
 
 // ─── Section Header ───
 function SectionHeader({ title }) {
