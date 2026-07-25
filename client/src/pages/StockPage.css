@@ -188,6 +188,13 @@
   color: var(--color-danger);
 }
 
+/* Total purchase cost for the filtered period — pushed to the far end */
+.journal-summary-cost {
+  color: var(--color-text);
+  font-weight: var(--weight-semibold);
+  margin-left: auto;
+}
+
 .movement-badge {
   display: inline-block;
   padding: 0.15rem 0.5rem;

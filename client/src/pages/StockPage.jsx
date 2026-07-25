@@ -128,6 +128,12 @@ function MultiAdjustConfirm({ items, direction, form }) {
 
       <div className="confirm-meta-recap">
         <div><span>Motif</span><strong>{form.reason || '—'}</strong></div>
+        {isAdd && (
+          <div>
+            <span>Coût total</span>
+            <strong>{formatDT(items.reduce((s, it) => s + it.quantity_change * (it.product?.purchase_price ?? 0), 0))}</strong>
+          </div>
+        )}
         {isAdd && form.movement_date && <div><span>Date</span><strong>{formatDate(form.movement_date)}</strong></div>}
         {isAdd && form.invoice_number && <div><span>N° Facture</span><strong>{form.invoice_number}</strong></div>}
         {isAdd && form.company_name && <div><span>Société</span><strong>{form.company_name}</strong></div>}
@@ -923,6 +929,9 @@ function StockPage() {
               <span className={`journal-summary-item ${movements.reduce((s, m) => s + m.quantity, 0) >= 0 ? 'journal-summary-add' : 'journal-summary-remove'}`}>
                 Net : {movements.reduce((s, m) => s + m.quantity, 0) > 0 ? '+' : ''}{movements.reduce((s, m) => s + m.quantity, 0)} unités
               </span>
+              <span className="journal-summary-item journal-summary-cost">
+                Total achats : {formatDT(movements.reduce((s, m) => s + (m.total_price != null ? Number(m.total_price) : 0), 0))}
+              </span>
             </div>
           )}
 
@@ -942,6 +951,7 @@ function StockPage() {
                       <th>Catégorie</th>
                       <th>Opération</th>
                       <th>Qté</th>
+                      <th>Prix total</th>
                       <th>N° Facture</th>
                       <th>Société</th>
                       <th>Motif</th>
@@ -966,6 +976,7 @@ function StockPage() {
                         <td className={`td-qty ${m.quantity < 0 ? 'qty-low' : ''}`}>
                           {m.quantity > 0 ? '+' : ''}{m.quantity}
                         </td>
+                        <td className="td-price">{m.total_price != null ? formatDT(m.total_price) : '—'}</td>
                         <td>{m.invoice_number || '—'}</td>
                         <td>{m.company_name || '—'}</td>
                         <td className="movement-reason">{m.reason || '—'}</td>
@@ -993,6 +1004,7 @@ function StockPage() {
                         <span>{m.movement_date ? formatDate(m.movement_date) : formatDate(m.created_at)}</span>
                       </div>
                       <div className="journal-card-grid">
+                        <div><span>Prix total</span><b>{m.total_price != null ? formatDT(m.total_price) : '—'}</b></div>
                         <div><span>N° Facture</span><b>{m.invoice_number || '—'}</b></div>
                         <div><span>Société</span><b>{m.company_name || '—'}</b></div>
                         <div><span>Par</span><b>{m.created_by_name || '—'}</b></div>

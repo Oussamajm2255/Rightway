@@ -75,12 +75,21 @@ async function adjustStock(product_id, quantity_change, reason, created_by, extr
       [product_id, newQty]
     );
 
+    // Snapshot the product's purchase price at this moment. Adding stock is a
+    // purchase at this unit cost; freezing it here means the recorded "Prix
+    // total" never changes when the product's price is edited later.
+    const { rows: priceRows } = await client.query(
+      'SELECT purchase_price FROM products WHERE id = $1',
+      [product_id]
+    );
+    const unitPrice = priceRows.length > 0 ? priceRows[0].purchase_price : null;
+
     // Write stock movement with optional extra fields
     const { movement_date, invoice_number, company_name } = extraFields;
     await client.query(
-      `INSERT INTO stock_movements (product_id, type, quantity, reason, created_by, movement_date, invoice_number, company_name)
-       VALUES ($1, 'AJUSTEMENT', $2, $3, $4, $5, $6, $7)`,
-      [product_id, quantity_change, reason, created_by, movement_date || null, invoice_number || null, company_name || null]
+      `INSERT INTO stock_movements (product_id, type, quantity, unit_price, reason, created_by, movement_date, invoice_number, company_name)
+       VALUES ($1, 'AJUSTEMENT', $2, $3, $4, $5, $6, $7, $8)`,
+      [product_id, quantity_change, unitPrice, reason, created_by, movement_date || null, invoice_number || null, company_name || null]
     );
 
     await client.query('COMMIT');
@@ -130,6 +139,10 @@ async function getStockMovements({ limit = 100, product_id, type, movement_date,
     SELECT
       sm.id, sm.product_id, sm.type, sm.quantity,
       sm.movement_date, sm.invoice_number, sm.company_name,
+      sm.unit_price,
+      CASE WHEN sm.quantity > 0 AND sm.unit_price IS NOT NULL
+        THEN ROUND(sm.quantity * sm.unit_price, 3)
+        ELSE NULL END AS total_price,
       sm.reason, sm.created_at,
       p.name AS product_name, p.category AS product_category,
       u.full_name AS created_by_name

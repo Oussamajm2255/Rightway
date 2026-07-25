@@ -129,6 +129,10 @@ CREATE TABLE IF NOT EXISTS stock_movements (
   movement_date DATE,
   invoice_number VARCHAR(100),
   company_name VARCHAR(150),
+  -- Snapshot of products.purchase_price at the moment of the movement.
+  -- Frozen so the recorded purchase cost never drifts when a product's
+  -- price is later edited. Used for the "Prix total" journal column.
+  unit_price NUMERIC(10,3),
   reason TEXT,
   created_by UUID REFERENCES users(id),
   created_at TIMESTAMPTZ DEFAULT NOW()
