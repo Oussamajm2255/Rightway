@@ -11,17 +11,20 @@ async function getGlobalBenefits({ date_from, date_to } = {}) {
   let dateWhere = '';
   let prelevDateWhere = '';
   let ecartDateWhere = '';
+  let stockDateWhere = '';
 
   if (date_from) {
     dateWhere += ` AND l.closed_at::date >= $${idx}`;
     prelevDateWhere += ` AND expense_date >= $${idx}`;
     ecartDateWhere += ` AND declared_at::date >= $${idx}`;
+    stockDateWhere += ` AND COALESCE(movement_date, created_at::date) >= $${idx}`;
     params.push(date_from); idx++;
   }
   if (date_to) {
     dateWhere += ` AND l.closed_at::date <= $${idx}`;
     prelevDateWhere += ` AND expense_date <= $${idx}`;
     ecartDateWhere += ` AND declared_at::date <= $${idx}`;
+    stockDateWhere += ` AND COALESCE(movement_date, created_at::date) <= $${idx}`;
     params.push(date_to); idx++;
   }
 
@@ -49,12 +52,21 @@ async function getGlobalBenefits({ date_from, date_to } = {}) {
       SELECT COALESCE(SUM(amount), 0)::NUMERIC(12,3) AS total
       FROM livraison_ecarts
       WHERE 1=1 ${ecartDateWhere}
+    ),
+    stock_purchase_total AS (
+      -- Total cash spent buying stock in the period: each manual addition is a
+      -- purchase at its snapshotted unit_price (see stock-cost migration).
+      SELECT COALESCE(SUM(quantity * unit_price), 0)::NUMERIC(12,3) AS total
+      FROM stock_movements
+      WHERE type = 'AJUSTEMENT' AND quantity > 0 AND unit_price IS NOT NULL
+        ${stockDateWhere}
     )
     SELECT
       COALESCE(SUM(ps.ca), 0)::NUMERIC(12,3)            AS ca_total,
       COALESCE(SUM(ps.benefit), 0)::NUMERIC(12,3)       AS benefit_gross,
       (SELECT total FROM prelevement_total)              AS prelevement_total,
       (SELECT total FROM ecart_total)                    AS ecart_total,
+      (SELECT total FROM stock_purchase_total)           AS stock_purchase_total,
       COALESCE(SUM(ps.benefit), 0)::NUMERIC(12,3)
         - (SELECT total FROM prelevement_total)
         - (SELECT total FROM ecart_total)                 AS benefit_net,
@@ -66,7 +78,7 @@ async function getGlobalBenefits({ date_from, date_to } = {}) {
   `;
 
   const { rows } = await pool.query(query, params);
-  return rows[0] || { ca_total: 0, benefit_gross: 0, prelevement_total: 0, ecart_total: 0, benefit_net: 0, margin_avg: 0, profitable_count: 0 };
+  return rows[0] || { ca_total: 0, benefit_gross: 0, prelevement_total: 0, ecart_total: 0, stock_purchase_total: 0, benefit_net: 0, margin_avg: 0, profitable_count: 0 };
 }
 
 /**

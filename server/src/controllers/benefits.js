@@ -34,6 +34,7 @@ async function getBenefits(req, res) {
         benefit_gross: Number(global.benefit_gross),
         prelevement_total: Number(global.prelevement_total),
         ecart_total: Number(global.ecart_total),
+        stock_purchase_total: Number(global.stock_purchase_total),
         benefit_net: Number(global.benefit_net),
         margin_avg: Number(global.margin_avg),
         profitable_count: global.profitable_count,
