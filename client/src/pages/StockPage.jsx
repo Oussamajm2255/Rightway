@@ -63,6 +63,7 @@ function MultiAdjustConfirm({ items, direction, form }) {
   const totalCurrent = items.reduce((s, it) => s + (it.product?.quantity ?? 0), 0);
   const totalDelta = items.reduce((s, it) => s + it.quantity_change, 0);
   const totalAfter = totalCurrent + totalDelta;
+  const totalCost = items.reduce((s, it) => s + it.quantity_change * (it.product?.purchase_price ?? 0), 0);
 
   return (
     <div className="multi-confirm">
@@ -82,6 +83,7 @@ function MultiAdjustConfirm({ items, direction, form }) {
               <th>Variation</th>
               <th aria-hidden="true"></th>
               <th>Nouveau stock</th>
+              {isAdd && <th className="confirm-cost-col">Coût</th>}
             </tr>
           </thead>
           <tbody>
@@ -107,6 +109,12 @@ function MultiAdjustConfirm({ items, direction, form }) {
                   </td>
                   <td className="confirm-op" aria-hidden="true">=</td>
                   <td className={`confirm-num confirm-num-after ${after < 0 ? 'confirm-num-negative' : ''}`}>{after}</td>
+                  {isAdd && (
+                    <td className="confirm-num confirm-cost-cell">
+                      <span className="confirm-cost-line">{formatDT(quantity_change * (product?.purchase_price ?? 0))}</span>
+                      <span className="confirm-cost-unit">{quantity_change} × {formatDT(product?.purchase_price ?? 0)}</span>
+                    </td>
+                  )}
                 </tr>
               );
             })}
@@ -121,19 +129,24 @@ function MultiAdjustConfirm({ items, direction, form }) {
               </td>
               <td aria-hidden="true"></td>
               <td className="confirm-num confirm-num-after">{totalAfter}</td>
+              {isAdd && <td className="confirm-num confirm-num-after confirm-cost-grand">{formatDT(totalCost)}</td>}
             </tr>
           </tfoot>
         </table>
       </div>
 
+      {isAdd && (
+        <div className="confirm-cost-banner">
+          <div className="confirm-cost-banner-label">
+            Coût total du chargement
+            <span>À comparer avec la facture avant de confirmer</span>
+          </div>
+          <div className="confirm-cost-banner-amount">{formatDT(totalCost)}</div>
+        </div>
+      )}
+
       <div className="confirm-meta-recap">
         <div><span>Motif</span><strong>{form.reason || '—'}</strong></div>
-        {isAdd && (
-          <div>
-            <span>Coût total</span>
-            <strong>{formatDT(items.reduce((s, it) => s + it.quantity_change * (it.product?.purchase_price ?? 0), 0))}</strong>
-          </div>
-        )}
         {isAdd && form.movement_date && <div><span>Date</span><strong>{formatDate(form.movement_date)}</strong></div>}
         {isAdd && form.invoice_number && <div><span>N° Facture</span><strong>{form.invoice_number}</strong></div>}
         {isAdd && form.company_name && <div><span>Société</span><strong>{form.company_name}</strong></div>}
@@ -671,6 +684,15 @@ function StockPage() {
                         onChange={(e) => setAdjustForm((p) => ({ ...p, quantity_change: e.target.value }))}
                         min="1"
                       />
+                      {adjustDirection === 'add' && (parseInt(adjustForm.quantity_change, 10) > 0) && (
+                        <div className="stock-cost-hint">
+                          <span className="stock-cost-hint-label">
+                            Coût total
+                            <em>{parseInt(adjustForm.quantity_change, 10)} × {formatDT(adjustingItem?.purchase_price ?? 0)}</em>
+                          </span>
+                          <strong>{formatDT(parseInt(adjustForm.quantity_change, 10) * (adjustingItem?.purchase_price ?? 0))}</strong>
+                        </div>
+                      )}
                     </div>
                   )}
 
