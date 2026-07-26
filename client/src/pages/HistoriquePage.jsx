@@ -149,6 +149,7 @@ function HistoriquePage() {
                   </div>
                 </div>
 
+                <div className="dossier-modal-body">
           {/* Meta */}
           <div className="dossier-grid">
             <div className="detail-card"><h3>Commercial</h3><p className="detail-value">{selectedDossier.livraison.commercial_name}</p><p className="detail-sub">{selectedDossier.livraison.vehicle_name} — {selectedDossier.livraison.vehicle_plate}</p></div>
@@ -385,6 +386,7 @@ function HistoriquePage() {
               );
             })()}
           </div>
+                </div>
               </>
             )}
           </div>

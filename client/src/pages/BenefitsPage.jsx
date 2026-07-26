@@ -255,7 +255,7 @@ export default function BenefitsPage() {
 
           {loading && !globalData ? (
             <div className="kpi-grid-6">
-              {[1, 2, 3, 4, 5, 6].map((i) => <div key={i} className="kpi-card skeleton-card" />)}
+              {[1, 2, 3, 4, 5, 6, 7].map((i) => <div key={i} className="kpi-card skeleton-card" />)}
             </div>
           ) : globalData ? (
             <div className="kpi-grid-6">
@@ -285,7 +285,17 @@ export default function BenefitsPage() {
                 </div>
                 <div className="kpi-label">Bénéfice Net</div>
                 <div className={`kpi-value${globalData.benefit_net >= 0 ? ' positive' : ' negative'}`} style={{ fontSize: 16 }}>{fmtDT(globalData.benefit_net)}</div>
-                <div className="kpi-sub">{globalData.prelevement_total > 0 || globalData.ecart_total > 0 ? `après déductions (${fmtDT(-(globalData.prelevement_total + globalData.ecart_total))})` : 'après déductions'}</div>
+                <div className="kpi-sub">{(globalData.commission_total > 0 || globalData.prelevement_total > 0 || globalData.ecart_total > 0) ? `après déductions (${fmtDT(-(globalData.commission_total + globalData.prelevement_total + globalData.ecart_total))})` : 'après déductions'}</div>
+              </div>
+              {/* Commissions */}
+              <div className="kpi-card">
+                <div className="kpi-accent" style={{ background: '#d97706' }} />
+                <div className="kpi-icon-wrap" style={{ background: 'rgba(217,119,6,.1)', color: '#d97706' }}>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+                </div>
+                <div className="kpi-label">Commissions</div>
+                <div className="kpi-value" style={{ fontSize: 16 }}>{fmtDT(globalData.commission_total)}</div>
+                <div className="kpi-sub">10% du CA (commerciaux)</div>
               </div>
               {/* Achats de Stock */}
               <div className="kpi-card">

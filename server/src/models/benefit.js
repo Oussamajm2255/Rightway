@@ -1,4 +1,5 @@
 const pool = require('../db/pool');
+const { COMMISSION_RATE } = require('./livraison');
 
 /**
  * Global benefits KPIs — aggregated from all CLOTURE non-archived livraisons.
@@ -67,7 +68,10 @@ async function getGlobalBenefits({ date_from, date_to } = {}) {
       (SELECT total FROM prelevement_total)              AS prelevement_total,
       (SELECT total FROM ecart_total)                    AS ecart_total,
       (SELECT total FROM stock_purchase_total)           AS stock_purchase_total,
+      -- Commissions = COMMISSION_RATE of CA (ca is commission-commercials only)
+      ROUND(COALESCE(SUM(ps.ca), 0) * ${COMMISSION_RATE}, 3) AS commission_total,
       COALESCE(SUM(ps.benefit), 0)::NUMERIC(12,3)
+        - ROUND(COALESCE(SUM(ps.ca), 0) * ${COMMISSION_RATE}, 3)
         - (SELECT total FROM prelevement_total)
         - (SELECT total FROM ecart_total)                 AS benefit_net,
       CASE WHEN SUM(ps.ca) > 0
@@ -78,7 +82,7 @@ async function getGlobalBenefits({ date_from, date_to } = {}) {
   `;
 
   const { rows } = await pool.query(query, params);
-  return rows[0] || { ca_total: 0, benefit_gross: 0, prelevement_total: 0, ecart_total: 0, stock_purchase_total: 0, benefit_net: 0, margin_avg: 0, profitable_count: 0 };
+  return rows[0] || { ca_total: 0, benefit_gross: 0, prelevement_total: 0, ecart_total: 0, stock_purchase_total: 0, commission_total: 0, benefit_net: 0, margin_avg: 0, profitable_count: 0 };
 }
 
 /**
