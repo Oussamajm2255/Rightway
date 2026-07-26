@@ -39,10 +39,20 @@ async function getGlobalBenefits({ date_from, date_to } = {}) {
       FROM livraison_items li
       JOIN livraisons l ON li.livraison_id = l.id
       JOIN products p   ON li.product_id = p.id
-      JOIN users u      ON l.commercial_id = u.id AND u.remuneration_type = 'COMMISSION'
       WHERE l.status = 'CLOTURE' AND l.is_archived = false
         ${dateWhere}
       GROUP BY li.product_id
+    ),
+    -- CA from commission-type commercials ONLY — used for commission_total deduction.
+    -- MUST be a separate CTE; product_sales above includes ALL commercials
+    -- so ca_total reflects total business revenue, not just commission-eligible.
+    commission_ca AS (
+      SELECT COALESCE(SUM(li.qte_vendue * li.prix_ttc), 0)::NUMERIC(12,3) AS total
+      FROM livraison_items li
+      JOIN livraisons l ON li.livraison_id = l.id
+      JOIN users u      ON l.commercial_id = u.id AND u.remuneration_type = 'COMMISSION'
+      WHERE l.status = 'CLOTURE' AND l.is_archived = false
+        ${dateWhere}
     ),
     prelevement_total AS (
       SELECT COALESCE(SUM(amount), 0)::NUMERIC(12,3) AS total
@@ -68,10 +78,10 @@ async function getGlobalBenefits({ date_from, date_to } = {}) {
       (SELECT total FROM prelevement_total)              AS prelevement_total,
       (SELECT total FROM ecart_total)                    AS ecart_total,
       (SELECT total FROM stock_purchase_total)           AS stock_purchase_total,
-      -- Commissions = COMMISSION_RATE of CA (ca is commission-commercials only)
-      ROUND(COALESCE(SUM(ps.ca), 0) * ${COMMISSION_RATE}, 3) AS commission_total,
+      -- Commissions = COMMISSION_RATE × CA from commission-type commercials only
+      ROUND((SELECT total FROM commission_ca) * ${COMMISSION_RATE}, 3) AS commission_total,
       COALESCE(SUM(ps.benefit), 0)::NUMERIC(12,3)
-        - ROUND(COALESCE(SUM(ps.ca), 0) * ${COMMISSION_RATE}, 3)
+        - ROUND((SELECT total FROM commission_ca) * ${COMMISSION_RATE}, 3)
         - (SELECT total FROM prelevement_total)
         - (SELECT total FROM ecart_total)                 AS benefit_net,
       CASE WHEN SUM(ps.ca) > 0
