@@ -171,6 +171,8 @@
 .kpi-grid-6 { grid-template-columns: repeat(6, 1fr); }
 .kpi-grid-5 { grid-template-columns: repeat(5, 1fr); }
 .kpi-grid-4 { grid-template-columns: repeat(4, 1fr); }
+.kpi-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.kpi-grid-2 { grid-template-columns: repeat(2, 1fr); }
 
 .kpi-card {
   position: relative;
@@ -832,7 +834,9 @@
 @media (max-width: 420px) {
   .kpi-grid-6,
   .kpi-grid-5,
-  .kpi-grid-4 { grid-template-columns: 1fr; }
+  .kpi-grid-4,
+  .kpi-grid-3,
+  .kpi-grid-2 { grid-template-columns: 1fr; }
   .dash-topbar .topbar-right .btn { display: none; }
   .dash-topbar { gap: 8px; }
   .kpi-card { padding: 12px; }

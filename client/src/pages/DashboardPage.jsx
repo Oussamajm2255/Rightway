@@ -264,16 +264,15 @@ function SuperAdminView({ data, navigate, user }) {
       <DashboardTopbar subtitle="Vue d'ensemble · STE RIGHT WAY FOR TRADING" user={user} showExport />
       <div className="dash-content">
         {/* KPI Row */}
-        <div className="kpi-grid kpi-grid-4">
+        <div className="kpi-grid kpi-grid-3">
           <KpiCard icon={Icons.users} label="Commerciaux actifs" value={fmtInt(data.users_count)} sub="comptes activés" color={PALETTE.blue} onClick={() => navigate('/commercials')} />
           <KpiCard icon={Icons.package} label="Produits actifs" value={fmtInt(data.products_count)} sub="catalogue" color={PALETTE.emerald} onClick={() => navigate('/products')} />
           <KpiCard icon={Icons.truck} label="Livraisons actives" value={fmtInt(data.active_livraisons)} sub="EN_COURS + EN_RETOUR" color={PALETTE.orange} onClick={() => navigate('/livraisons')} />
-          <KpiCard icon={Icons.dollar} label="CA Global TTC" value={fmtDT(data.ca_total)} sub="livraisons clôturées" invert />
         </div>
 
         {/* Stock hero — Depot + Chargé fused into a live total */}
         <StockHero depot={data.depot_stock_ca} charge={data.voitures_ca} navigate={navigate} />
-        <div className="kpi-grid kpi-grid-3" style={{ marginTop: 'var(--space-4)' }}>
+        <div className="kpi-grid kpi-grid-2" style={{ marginTop: 'var(--space-4)' }}>
           <KpiCard icon={Icons.percent} label="Commissions" value={fmtDT(data.commissions)} sub="10% du CA (hors salariés)" />
           <KpiCard icon={Icons.alert} label="Alertes stock" value={fmtInt(data.stock_alerts_count)} sub="produits &lt; 20 unités" accent onClick={() => navigate('/stock')} />
         </div>
