@@ -31,6 +31,7 @@ function HistoriquePage() {
   const [dateTo, setDateTo] = useState('');
   const [selectedDossier, setSelectedDossier] = useState(null);
   const [dossierLoading, setDossierLoading] = useState(false);
+  const [dossierOpen, setDossierOpen] = useState(false);
 
   const fetchList = useCallback(async () => {
     setLoading(true);
@@ -51,6 +52,7 @@ function HistoriquePage() {
   useEffect(() => { fetchList(); }, [fetchList]);
 
   async function openDossier(id) {
+    setDossierOpen(true);
     setDossierLoading(true);
     setSelectedDossier(null);
     try {
@@ -62,6 +64,25 @@ function HistoriquePage() {
       setDossierLoading(false);
     }
   }
+
+  function closeDossier() {
+    setDossierOpen(false);
+    setSelectedDossier(null);
+    setDossierLoading(false);
+  }
+
+  // Close on Escape + lock background scroll while the dossier modal is open.
+  useEffect(() => {
+    if (!dossierOpen) return;
+    const onKey = (e) => { if (e.key === 'Escape') closeDossier(); };
+    document.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [dossierOpen]);
 
   function handlePrintDossier(id) {
     openPdf(`/livraisons/${id}/dossier/pdf`, id);
@@ -109,21 +130,24 @@ function HistoriquePage() {
         </div>
       )}
 
-      {/* Dossier Detail Panel */}
-      {dossierLoading && <div className="loading-state" style={{ marginTop: '1.5rem' }}>Chargement du dossier...</div>}
-
-      {selectedDossier && (
-        <div className="dossier-panel">
-          <div className="dossier-header">
-            <h2>{selectedDossier.livraison.reference}</h2>
-            <div className="dossier-actions">
-              {selectedDossier.meta.is_locked && <span className="badge badge-ok">Verrouillé</span>}
-              <button className="btn btn-sm btn-outline" onClick={() => handlePrintDossier(selectedDossier.livraison.id)}>
-                Imprimer le dossier complet
-              </button>
-              <button className="btn btn-sm btn-secondary" onClick={() => setSelectedDossier(null)}>Fermer</button>
-            </div>
-          </div>
+      {/* Dossier detail — modal overlay so it opens over the list, not appended below it */}
+      {dossierOpen && (
+        <div className="modal-overlay dossier-overlay" onClick={closeDossier}>
+          <div className="modal-card dossier-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+            {dossierLoading || !selectedDossier ? (
+              <div className="dossier-loading">Chargement du dossier…</div>
+            ) : (
+              <>
+                <div className="dossier-header">
+                  <h2>{selectedDossier.livraison.reference}</h2>
+                  <div className="dossier-actions">
+                    {selectedDossier.meta.is_locked && <span className="badge badge-ok">Verrouillé</span>}
+                    <button className="btn btn-sm btn-outline" onClick={() => handlePrintDossier(selectedDossier.livraison.id)}>
+                      Imprimer le dossier complet
+                    </button>
+                    <button className="btn btn-sm btn-secondary" onClick={closeDossier}>Fermer</button>
+                  </div>
+                </div>
 
           {/* Meta */}
           <div className="dossier-grid">
@@ -360,6 +384,9 @@ function HistoriquePage() {
                 </div>
               );
             })()}
+          </div>
+              </>
+            )}
           </div>
         </div>
       )}
