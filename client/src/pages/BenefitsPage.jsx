@@ -287,6 +287,43 @@ export default function BenefitsPage() {
       </div>
 
       <div className="benefits-content">
+        {/* ═══ FILTERS — page-wide; the date range also drives the global KPIs ═══ */}
+        <div className="filters-bar">
+          <div className="filter-group">
+            {Icon.search}
+            <input type="text" className="filter-input filter-search" placeholder="Rechercher nom ou code…" value={search}
+              onChange={(e) => { setSearch(e.target.value); handleFilterChange(); }} />
+          </div>
+          <div className="filter-group">
+            <label className="filter-label">Catégorie</label>
+            <select className="filter-input" value={category} onChange={(e) => { setCategory(e.target.value); handleFilterChange(); }}>
+              <option value="">Toutes</option>
+              {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div className="date-presets">
+            {DATE_PRESETS.map((p) => (
+              <button
+                key={p.key}
+                type="button"
+                className={`preset-btn${datePreset === p.key ? ' active' : ''}`}
+                onClick={() => applyPreset(p.key)}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+          <div className="filter-period">
+            <label className="filter-label">Du</label>
+            <input type="date" className="filter-input" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setDatePreset('custom'); handleFilterChange(); }} />
+            <span className="filter-sep">au</span>
+            <input type="date" className="filter-input" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setDatePreset('custom'); handleFilterChange(); }} />
+          </div>
+          <div className="filters-right">
+            <button className="btn btn-sm btn-outline" onClick={resetFilters}>{Icon.x} Réinitialiser</button>
+          </div>
+        </div>
+
         {/* ═══ SECTION A: KPI GLOBALS ═══ */}
         <div>
           <div className="section-header">
@@ -389,43 +426,6 @@ export default function BenefitsPage() {
           <div className="section-header">
             <h2>Détail par produit</h2>
             <div className="section-header-line" />
-          </div>
-
-          {/* FILTERS */}
-          <div className="filters-bar">
-            <div className="filter-group">
-              {Icon.search}
-              <input type="text" className="filter-input filter-search" placeholder="Rechercher nom ou code…" value={search}
-                onChange={(e) => { setSearch(e.target.value); handleFilterChange(); }} />
-            </div>
-            <div className="filter-group">
-              <label className="filter-label">Catégorie</label>
-              <select className="filter-input" value={category} onChange={(e) => { setCategory(e.target.value); handleFilterChange(); }}>
-                <option value="">Toutes</option>
-                {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div className="date-presets">
-              {DATE_PRESETS.map((p) => (
-                <button
-                  key={p.key}
-                  type="button"
-                  className={`preset-btn${datePreset === p.key ? ' active' : ''}`}
-                  onClick={() => applyPreset(p.key)}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-            <div className="filter-period">
-              <label className="filter-label">Du</label>
-              <input type="date" className="filter-input" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setDatePreset('custom'); handleFilterChange(); }} />
-              <span className="filter-sep">au</span>
-              <input type="date" className="filter-input" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setDatePreset('custom'); handleFilterChange(); }} />
-            </div>
-            <div className="filters-right">
-              <button className="btn btn-sm btn-outline" onClick={resetFilters}>{Icon.x} Réinitialiser</button>
-            </div>
           </div>
 
           {/* TABLE */}
