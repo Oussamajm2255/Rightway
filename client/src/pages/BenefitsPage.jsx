@@ -18,6 +18,34 @@ function fmtDT(v) {
 function fmtPct(v) { return Number(v).toFixed(1) + '%'; }
 function fmtInt(v) { return v === null || v === undefined ? '—' : Number(v).toLocaleString('fr-FR'); }
 
+// ─── Date range presets (local time, YYYY-MM-DD) ───
+function toYMD(d) {
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+// Returns { from, to } for a preset key. Empty strings = no bound (all time).
+function presetRange(key) {
+  const now = new Date();
+  const today = toYMD(now);
+  const y = now.getFullYear(), m = now.getMonth();
+  switch (key) {
+    case 'month':      return { from: toYMD(new Date(y, m, 1)), to: today };
+    case 'last_month': return { from: toYMD(new Date(y, m - 1, 1)), to: toYMD(new Date(y, m, 0)) };
+    case '3months':    return { from: toYMD(new Date(y, m - 2, 1)), to: today };
+    case 'year':       return { from: toYMD(new Date(y, 0, 1)), to: today };
+    case 'all':
+    default:           return { from: '', to: '' };
+  }
+}
+const DATE_PRESETS = [
+  { key: 'month', label: 'Ce mois' },
+  { key: 'last_month', label: 'Mois dernier' },
+  { key: '3months', label: '3 derniers mois' },
+  { key: 'year', label: 'Cette année' },
+  { key: 'all', label: 'Tout' },
+];
+
 // ─── Icons (inline SVG) ───
 const Icon = {
   chart: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>,
@@ -57,11 +85,12 @@ export default function BenefitsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Filters
+  // Filters — date range defaults to the current month ("Ce mois")
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const [datePreset, setDatePreset] = useState('month');
+  const [dateFrom, setDateFrom] = useState(() => presetRange('month').from);
+  const [dateTo, setDateTo] = useState(() => presetRange('month').to);
   const [categories, setCategories] = useState([]);
 
   // Sort & Pagination
@@ -189,8 +218,19 @@ export default function BenefitsPage() {
     setPage(1);
   }
 
+  // Apply a date preset (Ce mois / Mois dernier / …)
+  function applyPreset(key) {
+    const r = presetRange(key);
+    setDatePreset(key);
+    setDateFrom(r.from);
+    setDateTo(r.to);
+    setPage(1);
+  }
+
   function resetFilters() {
-    setSearch(''); setCategory(''); setDateFrom(''); setDateTo('');
+    const r = presetRange('month');
+    setSearch(''); setCategory('');
+    setDatePreset('month'); setDateFrom(r.from); setDateTo(r.to);
     setSortCol('benefit'); setSortDir('desc'); setPage(1);
   }
 
@@ -219,6 +259,8 @@ export default function BenefitsPage() {
 
   const periodLabel = (() => {
     if (!dateFrom && !dateTo) return 'Toute période';
+    const preset = DATE_PRESETS.find((pr) => pr.key === datePreset);
+    if (preset) return preset.label;
     const p = [];
     if (dateFrom) p.push('Du ' + formatDate(dateFrom));
     if (dateTo) p.push('Au ' + formatDate(dateTo));
@@ -363,11 +405,23 @@ export default function BenefitsPage() {
                 {categories.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
+            <div className="date-presets">
+              {DATE_PRESETS.map((p) => (
+                <button
+                  key={p.key}
+                  type="button"
+                  className={`preset-btn${datePreset === p.key ? ' active' : ''}`}
+                  onClick={() => applyPreset(p.key)}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
             <div className="filter-period">
               <label className="filter-label">Du</label>
-              <input type="date" className="filter-input" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); handleFilterChange(); }} />
+              <input type="date" className="filter-input" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setDatePreset('custom'); handleFilterChange(); }} />
               <span className="filter-sep">au</span>
-              <input type="date" className="filter-input" value={dateTo} onChange={(e) => { setDateTo(e.target.value); handleFilterChange(); }} />
+              <input type="date" className="filter-input" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setDatePreset('custom'); handleFilterChange(); }} />
             </div>
             <div className="filters-right">
               <button className="btn btn-sm btn-outline" onClick={resetFilters}>{Icon.x} Réinitialiser</button>

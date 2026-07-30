@@ -255,6 +255,27 @@ select.filter-input { cursor: pointer; }
 .filter-sep { font-size: 11px; color: var(--color-text-tertiary); }
 .filters-right { margin-left: auto; }
 
+/* ─── Date preset pills ─── */
+.date-presets { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.preset-btn {
+  padding: 5px 11px;
+  font-size: 12px;
+  font-weight: var(--weight-semibold);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+.preset-btn:hover { border-color: var(--color-border-strong); color: var(--color-text); }
+.preset-btn.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
 /* ─── Table Wrapper ─── */
 .table-wrapper {
   background: var(--color-surface);
