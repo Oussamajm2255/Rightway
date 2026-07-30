@@ -18,9 +18,11 @@
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  /* Stick just below the app's fixed topbar (52px + status-bar inset) instead
+     of top:0, where it would hide behind that chrome. */
   position: sticky;
-  top: 0;
-  z-index: 100;
+  top: calc(52px + var(--safe-top));
+  z-index: var(--z-sticky);
 }
 
 .benefits-topbar .topbar-left {
