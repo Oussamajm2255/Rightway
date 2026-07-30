@@ -162,13 +162,14 @@ async function adjustStock(req, res) {
  */
 async function listMovements(req, res) {
   try {
-    const { product_id, date_from, date_to, operation, limit, offset } = req.query;
+    const { product_id, date_from, date_to, operation, search, limit, offset } = req.query;
     const movements = await stockModel.getStockMovements({
       product_id: product_id || undefined,
       type: 'AJUSTEMENT',
       date_from: date_from || undefined,
       date_to: date_to || undefined,
       operation: operation || undefined,
+      search: search || undefined,
       limit: parseInt(limit, 10) || 100,
       offset: parseInt(offset, 10) || 0,
     });

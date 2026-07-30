@@ -102,7 +102,7 @@ async function adjustStock(product_id, quantity_change, reason, created_by, extr
   }
 }
 
-async function getStockMovements({ limit = 100, product_id, type, movement_date, date_from, date_to, operation, offset = 0 } = {}) {
+async function getStockMovements({ limit = 100, product_id, type, movement_date, date_from, date_to, operation, search, offset = 0 } = {}) {
   const conditions = [];
   const params = [];
   let idx = 1;
@@ -131,6 +131,11 @@ async function getStockMovements({ limit = 100, product_id, type, movement_date,
     conditions.push(`sm.quantity > 0`);
   } else if (operation === 'remove') {
     conditions.push(`sm.quantity < 0`);
+  }
+  // Match either the invoice number or the supplier/company name
+  if (search) {
+    conditions.push(`(sm.invoice_number ILIKE $${idx} OR sm.company_name ILIKE $${idx})`);
+    params.push(`%${search}%`); idx++;
   }
 
   const where = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';

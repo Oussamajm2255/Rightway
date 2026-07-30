@@ -194,6 +194,7 @@ function StockPage() {
   const [journalDateFrom, setJournalDateFrom] = useState('');
   const [journalDateTo, setJournalDateTo] = useState('');
   const [journalOperation, setJournalOperation] = useState('');
+  const [journalSearch, setJournalSearch] = useState('');
 
   const fetchStock = useCallback(async () => {
     setLoading(true);
@@ -226,6 +227,7 @@ function StockPage() {
       if (filters.dateFrom) params.append('date_from', filters.dateFrom);
       if (filters.dateTo) params.append('date_to', filters.dateTo);
       if (filters.operation) params.append('operation', filters.operation);
+      if (filters.search) params.append('search', filters.search);
       const data = await apiGet(`/stock/movements?${params.toString()}`);
       setMovements(data.movements);
     } catch (err) {
@@ -238,7 +240,7 @@ function StockPage() {
   function switchTab(tab) {
     setActiveTab(tab);
     if (tab === 'journal') {
-      fetchMovements({ dateFrom: journalDateFrom, dateTo: journalDateTo, operation: journalOperation });
+      fetchMovements({ dateFrom: journalDateFrom, dateTo: journalDateTo, operation: journalOperation, search: journalSearch });
     }
   }
 
@@ -932,9 +934,20 @@ function StockPage() {
                 <option value="remove">Retraits</option>
               </select>
             </div>
+            <div className="journal-filter-group journal-filter-search">
+              <label>Facture / Société</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="N° facture ou société…"
+                value={journalSearch}
+                onChange={(e) => setJournalSearch(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') fetchMovements({ dateFrom: journalDateFrom, dateTo: journalDateTo, operation: journalOperation, search: journalSearch }); }}
+              />
+            </div>
             <button
               className="btn btn-sm btn-primary"
-              onClick={() => fetchMovements({ dateFrom: journalDateFrom, dateTo: journalDateTo, operation: journalOperation })}
+              onClick={() => fetchMovements({ dateFrom: journalDateFrom, dateTo: journalDateTo, operation: journalOperation, search: journalSearch })}
             >
               Appliquer
             </button>
