@@ -819,6 +819,27 @@ body.capacitor-native .bottom-nav {
   padding-bottom: max(env(safe-area-inset-bottom, 24px), 24px);
 }
 
+/* Capacitor APK: match the bottom-nav clearance across every element
+   that must sit above it — page content, sidebar drawer, backdrop, and
+   the notification bottom sheet.  Without these overrides the browser-
+   default 56px+0px lets the bottom-nav occlude the last ~24-34 px of
+   each panel. */
+body.capacitor-native .main-content {
+  padding-bottom: calc(56px + max(env(safe-area-inset-bottom, 24px), 24px));
+}
+
+body.capacitor-native .sidebar {
+  bottom: calc(56px + max(env(safe-area-inset-bottom, 24px), 24px));
+}
+
+body.capacitor-native .sidebar-overlay {
+  bottom: calc(56px + max(env(safe-area-inset-bottom, 24px), 24px));
+}
+
+body.capacitor-native .notif-sheet {
+  padding-bottom: calc(56px + max(env(safe-area-inset-bottom, 24px), 24px) + var(--space-2));
+}
+
 .bottom-nav::-webkit-scrollbar {
   display: none;
 }
