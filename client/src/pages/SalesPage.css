@@ -8,8 +8,8 @@
 /* ===== Top Bar — CA + Search ===== */
 .sales-topbar {
   position: sticky;
-  top: 0;
-  z-index: 100;
+  top: calc(52px + var(--safe-top));
+  z-index: var(--z-sticky);
   background: rgba(255,255,255,.92);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -525,7 +525,10 @@
 
 /* ===== Mobile adjustments ===== */
 @media (max-width: 768px) {
-  .sales-topbar { padding: var(--space-3) var(--space-4); }
+  .sales-topbar {
+    padding: var(--space-3) var(--space-4);
+    top: calc(52px + var(--safe-top));
+  }
   .sales-topbar-inner { flex-wrap: wrap; gap: var(--space-3); }
   .sales-search-wrap { max-width: 100%; order: 3; flex: 1 1 100%; }
   .sales-chips { padding: var(--space-2) var(--space-4); }
@@ -535,7 +538,7 @@
   .sales-page { padding-bottom: calc(56px + 5rem + env(safe-area-inset-bottom, 0px)); }
   .sales-cat-header {
     position: sticky;
-    top: 52px;
+    top: calc(52px + 52px + var(--safe-top));
     z-index: 50;
     border-radius: 0;
     margin-left: calc(-1 * var(--space-4));

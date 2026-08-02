@@ -121,7 +121,11 @@ function ProductsPage() {
       {error && <div className="error-banner">{error}</div>}
 
       {loading ? (
-        <div className="loading-state">Chargement des produits...</div>
+        <div className="products-cards-view" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="skeleton skeleton-card" style={{ height: '150px' }} />
+          ))}
+        </div>
       ) : products.length === 0 ? (
         <div className="empty-state">
           <p>Aucun produit trouvé.</p>

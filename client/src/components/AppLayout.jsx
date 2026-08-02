@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { apiGet, apiPut } from '../lib/api';
 import useLocationTracker from '../lib/useLocationTracker';
 import NotificationBanner from './NotificationBanner';
+import PullToRefresh from './PullToRefresh';
 import './AppLayout.css';
 
 /* ===== SVG Icon Components ===== */
@@ -167,6 +168,12 @@ function AppLayout({ children }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifLoading, setNotifLoading] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  /* ── Refs for back-button handler (C2) ── */
+  const notifOpenRef = useRef(notifOpen);
+  const mobileMenuOpenRef = useRef(mobileMenuOpen);
+  useEffect(() => { notifOpenRef.current = notifOpen; }, [notifOpen]);
+  useEffect(() => { mobileMenuOpenRef.current = mobileMenuOpen; }, [mobileMenuOpen]);
 
   /* ── Bottom sheet drag-to-dismiss ── */
   const sheetRef = useRef(null);
@@ -347,6 +354,46 @@ function AppLayout({ children }) {
     }, 280);
     return () => clearTimeout(timer);
   }, [sidebarClosing]);
+
+  /* ── Android back-button handler (C2) ── */
+  useEffect(() => {
+    let handler;
+    try {
+      // The Capacitor bridge exposes plugins on window.Capacitor.Plugins
+      // at runtime. In browser dev mode this is undefined — safe no-op.
+      const capPlugins = window?.Capacitor?.Plugins;
+      const App = capPlugins?.App;
+      if (App && typeof App.addListener === 'function') {
+        handler = App.addListener('backButton', ({ canGoBack }) => {
+          // 1. Close notification bottom sheet
+          if (notifOpenRef.current) {
+            setNotifOpen(false);
+            return;
+          }
+          // 2. Close mobile sidebar
+          if (mobileMenuOpenRef.current) {
+            setSidebarClosing(true);
+            return;
+          }
+          // 3. Close any open modal overlay
+          const modal = document.querySelector('.modal-overlay');
+          if (modal && modal.offsetParent !== null) {
+            modal.click();
+            return;
+          }
+          // 4. Default: let system handle back navigation
+          if (!canGoBack && capPlugins?.App?.exitApp) {
+            capPlugins.App.exitApp();
+          }
+        });
+      }
+    } catch {
+      // Capacitor not available — back button N/A.
+    }
+    return () => {
+      if (handler && typeof handler.remove === 'function') handler.remove();
+    };
+  }, []);
 
   // Track scroll position for topbar shadow
   useEffect(() => {
@@ -672,9 +719,11 @@ function AppLayout({ children }) {
 
         {/* Main Content */}
         <main className="main-content">
-          <div className="page-transition" key={location.key}>
-            {children}
-          </div>
+          <PullToRefresh onRefresh={async () => { window.location.reload(); }}>
+            <div className="page-transition" key={location.key}>
+              {children}
+            </div>
+          </PullToRefresh>
         </main>
       </div>
 

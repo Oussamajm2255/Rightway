@@ -5,7 +5,7 @@
   align-items: center;
   justify-content: center;
   background: var(--color-page);
-  padding: var(--space-4);
+  padding: var(--space-4) var(--space-4) calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
 }
 
 .login-card {
@@ -279,7 +279,7 @@
 /* ===== Mobile ===== */
 @media (max-width: 480px) {
   .login-page {
-    padding: var(--space-3);
+    padding: var(--space-3) var(--space-3) calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
     align-items: flex-start;
     padding-top: var(--space-12);
   }

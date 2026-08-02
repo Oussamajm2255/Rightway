@@ -553,7 +553,7 @@ select.filter-input { cursor: pointer; }
   display: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .data-table { min-width: 800px; }
   .chart-card { padding: 14px; }
   .chart-card-header h3 { font-size: 12px; }

@@ -1,0 +1,103 @@
+/* ══════════════════════════════════════
+   Pull-to-Refresh Indicator
+   ══════════════════════════════════════ */
+
+.ptr-container {
+  position: relative;
+  /* Prevent the WebView's native over-scroll rubber-banding from
+     competing with our custom pull indicator. */
+  overscroll-behavior: contain;
+  min-height: 100%;
+}
+
+/* ── Indicator bar ── */
+.ptr-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  overflow: hidden;
+  height: 0;
+  background: var(--color-surface);
+  border-bottom: 1px solid transparent;
+  transition: height 0.2s ease-out, border-color 0.2s ease-out,
+    background 0.2s ease-out;
+  will-change: height;
+}
+
+.ptr-indicator.ptr-ready {
+  border-bottom-color: var(--color-border);
+  background: var(--color-surface-hover);
+}
+
+.ptr-indicator.ptr-refreshing {
+  border-bottom-color: var(--color-border);
+  background: var(--color-surface-hover);
+}
+
+.ptr-indicator.ptr-done {
+  border-bottom-color: var(--color-success-border, rgba(15, 158, 106, 0.25));
+  background: var(--color-success-bg, rgba(15, 158, 106, 0.06));
+}
+
+/* ── Spinner / arrow ── */
+.ptr-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  color: var(--color-text-tertiary);
+  transition: color 0.2s ease;
+}
+
+.ptr-ready .ptr-spinner {
+  color: var(--color-primary);
+}
+
+.ptr-refreshing .ptr-spinner {
+  color: var(--color-primary);
+}
+
+.ptr-done .ptr-spinner {
+  color: var(--color-success, #0f9e6a);
+}
+
+.ptr-arrow {
+  transition: transform 0.2s ease;
+}
+
+.ptr-arrow--flip {
+  transform: rotate(180deg);
+}
+
+.ptr-swoosh {
+  opacity: 1;
+}
+
+/* ── Label ── */
+.ptr-label {
+  font-size: 12px;
+  font-weight: var(--weight-medium);
+  color: var(--color-text-tertiary);
+  transition: color 0.2s ease;
+  white-space: nowrap;
+}
+
+.ptr-ready .ptr-label {
+  color: var(--color-text-secondary);
+}
+
+.ptr-refreshing .ptr-label {
+  color: var(--color-text-secondary);
+}
+
+.ptr-done .ptr-label {
+  color: var(--color-success, #0f9e6a);
+}
+
+/* ── Keyframes for done→idle transition ── */
+.ptr-done .ptr-swoosh circle {
+  stroke-dasharray: 60 0;
+  transition: stroke-dasharray 0.3s ease;
+}

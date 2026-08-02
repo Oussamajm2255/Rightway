@@ -268,6 +268,30 @@ h3 { font-size: var(--text-md); }
   transform: scale(0.985);
 }
 
+/* ── Touch feedback for all interactive elements on mobile ── */
+@media (hover: none) and (pointer: coarse) {
+  button:active,
+  a:active,
+  [role="button"]:active {
+    transform: scale(0.97);
+    transition: transform 0.1s ease;
+  }
+
+  /* Topbar chrome buttons — subtle press without layout shift */
+  .topbar-logout-btn:active,
+  .notif-bell:active,
+  .hamburger:active {
+    transform: scale(0.92);
+    transition: transform 0.1s ease;
+  }
+
+  /* Bottom-nav — haptic-like press */
+  .bottom-nav-item:active {
+    transform: scale(0.94);
+    transition: transform 0.08s ease;
+  }
+}
+
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -436,6 +460,18 @@ h3 { font-size: var(--text-md); }
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   outline: none;
   line-height: 1.5;
+}
+
+/* ── Mobile-optimized form inputs ── */
+@media (max-width: 900px) {
+  .form-input {
+    font-size: 16px; /* prevent iOS auto-zoom on focus */
+    padding: 0.75rem 0.875rem; /* larger touch target */
+  }
+
+  select.form-input {
+    padding: 0.75rem 2rem 0.75rem 0.875rem;
+  }
 }
 
 .form-input::placeholder {
@@ -936,8 +972,8 @@ textarea.form-input {
 
 /* Page transition wrapper */
 @keyframes pageFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .page-transition {
@@ -1162,6 +1198,41 @@ textarea.form-input {
   font-size: var(--text-sm);
 }
 
+/* ── Enhanced empty state (C5) ── */
+.empty-state-icon {
+  display: block;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto var(--space-4);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  color: var(--color-text-tertiary);
+  opacity: 0.55;
+}
+
+.empty-state-title {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+  margin: 0 0 var(--space-1);
+}
+
+.empty-state-subtitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+  margin: 0 0 var(--space-4);
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: var(--leading-relaxed);
+}
+
+.empty-state .btn {
+  margin-top: var(--space-2);
+}
+
 .skeleton {
   background: linear-gradient(90deg, #E8ECF0 25%, #F0F2F5 50%, #E8ECF0 75%);
   background-size: 200% 100%;
@@ -1332,7 +1403,7 @@ textarea.form-input {
    Grouped tables (category subtotals / colSpan) use bespoke card views
    instead of this utility.
    ============================================================ */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .table-container.cards-on-mobile {
     background: none;
     border: none;

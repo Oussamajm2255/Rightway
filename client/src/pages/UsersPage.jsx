@@ -170,7 +170,21 @@ function UsersPage() {
       {error && <div className="error-banner">{error}</div>}
 
       {loading ? (
-        <div className="loading-state">Chargement des utilisateurs...</div>
+        <div className="table-container cards-on-mobile">
+          <table className="data-table">
+            <tbody>
+              {[1, 2, 3, 4].map((i) => (
+                <tr key={i}>
+                  <td><span className="skeleton skeleton-text" style={{ width: '120px' }} /></td>
+                  <td><span className="skeleton skeleton-text" style={{ width: '180px' }} /></td>
+                  <td><span className="skeleton skeleton-text" style={{ width: '90px' }} /></td>
+                  <td><span className="skeleton skeleton-text" style={{ width: '70px' }} /></td>
+                  <td><span className="skeleton skeleton-text" style={{ width: '100px' }} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : users.length === 0 ? (
         <div className="empty-state">
           <p>Aucun utilisateur trouvé.</p>

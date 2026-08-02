@@ -465,7 +465,11 @@ function StockPage() {
           </div>
 
           {loading ? (
-            <div className="loading-state">Chargement du stock...</div>
+            <div className="stock-cards-view" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="skeleton skeleton-card" style={{ height: '110px' }} />
+              ))}
+            </div>
           ) : stock.length === 0 ? (
             <div className="empty-state"><p>Aucun produit en stock.</p></div>
           ) : (
