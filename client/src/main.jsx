@@ -40,6 +40,16 @@ function applySafeInsets() {
 // Run once before React mounts for APK
 applySafeInsets();
 
+// ── One-time cleanup: remove old password-in-localStorage keys ──
+// These were used by the (insecure) pre-July-2026 "Remember Me" which
+// stored the user's raw password base64-encoded.  The new system uses
+// server-side refresh tokens stored in Capacitor Preferences.
+try {
+  localStorage.removeItem('rightway_remembered_email');
+  localStorage.removeItem('rightway_remembered_pass');
+  localStorage.removeItem('rightway_remember_me');
+} catch { /* localStorage unavailable (private browsing, etc.) */ }
+
 // Keep insets in sync when the viewport changes
 window.addEventListener('resize', applySafeInsets);
 window.addEventListener('orientationchange', () => setTimeout(applySafeInsets, 180));

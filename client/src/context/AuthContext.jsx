@@ -1,6 +1,14 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { apiPost, apiGet } from '../lib/api';
 import { unregisterNativePush } from '../lib/nativePush';
+import {
+  setTokens,
+  getRefreshToken,
+  clearTokens,
+  isRefreshTokenAvailable,
+  getDeviceName,
+  getDeviceId,
+} from '../lib/tokenManager';
 
 const AuthContext = createContext(null);
 
@@ -10,15 +18,20 @@ const EXPIRES_AT_KEY = 'rightway_expires_at';
 const SESSION_DURATION = 8 * 60 * 60 * 1000; // 8 hours in ms
 const WARNING_BEFORE = 5 * 60 * 1000; // 5 minutes before expiry
 
+// ── Sync localStorage mirror read for initial render ──
+// tokenManager always mirrors writes to localStorage, so this is
+// safe for the synchronous useState initializer even in Capacitor.
+function readInitialUser() {
+  try {
+    const stored = localStorage.getItem(USER_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    try {
-      const stored = localStorage.getItem(USER_KEY);
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [user, setUser] = useState(readInitialUser);
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
   const [loading, setLoading] = useState(true);
   const [showExpiryModal, setShowExpiryModal] = useState(false);
@@ -26,16 +39,18 @@ export function AuthProvider({ children }) {
   const [logoutSubmitting, setLogoutSubmitting] = useState(false);
 
   const executeLogout = useCallback(() => {
-    // Detach this device's push token from the user FIRST (needs the JWT,
-    // which we're about to clear). Fire-and-forget — the request is initiated
-    // synchronously with the current token before removal below.
+    // Revoke the server-side refresh token (fire-and-forget).
+    // Must happen BEFORE clearTokens() which wipes the token.
+    getRefreshToken().then((rt) => {
+      if (rt) {
+        apiPost('/auth/logout', { refreshToken: rt }).catch(() => {});
+      }
+    });
+    // Detach this device's push token from the user (needs the JWT,
+    // which we're about to clear). Fire-and-forget.
     unregisterNativePush();
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-    localStorage.removeItem(EXPIRES_AT_KEY);
-    localStorage.removeItem('rightway_remembered_email');
-    localStorage.removeItem('rightway_remembered_pass');
-    localStorage.removeItem('rightway_remember_me');
+    // Clear all tokens (Capacitor Preferences + localStorage)
+    clearTokens();
     setToken(null);
     setUser(null);
     setShowExpiryModal(false);
@@ -59,8 +74,21 @@ export function AuthProvider({ children }) {
 
   const refreshSession = useCallback(async () => {
     try {
+      // Try refresh-token rotation first (for "Keep me signed in" flow)
+      const rt = await getRefreshToken();
+      if (rt) {
+        const data = await apiPost('/auth/refresh', { refreshToken: rt });
+        await setTokens(data.token, data.refreshToken);
+        const expiresAt = Date.now() + SESSION_DURATION;
+        localStorage.setItem(EXPIRES_AT_KEY, String(expiresAt));
+        setToken(data.token);
+        setShowExpiryModal(false);
+        return true;
+      }
+
+      // Fallback: legacy JWT extension (within 5-min window)
       const data = await apiPost('/auth/refresh', {});
-      localStorage.setItem(TOKEN_KEY, data.token);
+      await setTokens(data.token, null);
       const expiresAt = Date.now() + SESSION_DURATION;
       localStorage.setItem(EXPIRES_AT_KEY, String(expiresAt));
       setToken(data.token);
@@ -72,9 +100,15 @@ export function AuthProvider({ children }) {
     }
   }, [executeLogout]);
 
-  const login = useCallback(async (email, password) => {
-    const data = await apiPost('/auth/login', { email, password });
-    localStorage.setItem(TOKEN_KEY, data.token);
+  const login = useCallback(async (email, password, rememberMe = false) => {
+    const data = await apiPost('/auth/login', {
+      email,
+      password,
+      rememberMe,
+      deviceName: getDeviceName(),
+      deviceId: getDeviceId(),
+    });
+    await setTokens(data.token, data.refreshToken || null);
     localStorage.setItem(USER_KEY, JSON.stringify(data.user));
     const expiresAt = Date.now() + SESSION_DURATION;
     localStorage.setItem(EXPIRES_AT_KEY, String(expiresAt));
@@ -83,6 +117,16 @@ export function AuthProvider({ children }) {
     return data.user;
   }, []);
 
+  // ── Handle auth:expired custom event from api.js interceptor ──
+  useEffect(() => {
+    function handleAuthExpired() {
+      executeLogout();
+    }
+    window.addEventListener('auth:expired', handleAuthExpired);
+    return () => window.removeEventListener('auth:expired', handleAuthExpired);
+  }, [executeLogout]);
+
+  // ── Initial token verification ──
   useEffect(() => {
     async function verifyToken() {
       if (!token) {
@@ -140,6 +184,7 @@ export function AuthProvider({ children }) {
       cancelLogout,
       showLogoutConfirm,
       logoutSubmitting,
+      hasPersistedSession: isRefreshTokenAvailable, // async check for auto-login gate
     }}>
       {children}
     </AuthContext.Provider>

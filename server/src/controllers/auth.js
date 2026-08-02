@@ -2,6 +2,15 @@ const pool = require('../db/pool');
 const { hashPassword, verifyPassword } = require('../utils/password');
 const { signToken, verifyToken, canRefreshToken } = require('../utils/jwt');
 const { validationResult } = require('express-validator');
+const crypto = require('crypto');
+const {
+  generateRefreshToken,
+  storeRefreshToken,
+  findAndValidateRefreshToken,
+  rotateRefreshToken,
+  revokeAllUserTokens,
+  revokeTokenByHash,
+} = require('../utils/refreshToken');
 
 /**
  * POST /api/auth/login
@@ -78,7 +87,21 @@ async function login(req, res) {
       role: user.role,
     });
 
-    res.json({
+    // ── Refresh token ("Keep me signed in") ──
+    let refreshToken = null;
+    const rememberMe = req.body.rememberMe === true;
+    if (rememberMe) {
+      const { rawToken, hashedToken } = generateRefreshToken();
+      await storeRefreshToken(
+        user.id,
+        hashedToken,
+        req.body.deviceName || null,
+        req.body.deviceId || null
+      );
+      refreshToken = rawToken;
+    }
+
+    const response = {
       token,
       user: {
         id: user.id,
@@ -89,7 +112,11 @@ async function login(req, res) {
         vehicle_name: user.vehicle_name,
         vehicle_plate: user.vehicle_plate,
       },
-    });
+    };
+    if (refreshToken) {
+      response.refreshToken = refreshToken;
+    }
+    res.json(response);
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Erreur interne du serveur' });
@@ -120,11 +147,63 @@ async function me(req, res) {
 
 /**
  * POST /api/auth/refresh
- * Silently refreshes token if within 5 minutes of expiry
- * Body: { token } (optional — can also read from Authorization header)
+ * Two paths:
+ *  1. With refreshToken in body → full rotation (long-lived session)
+ *  2. With only Authorization header (JWT within 5 min of expiry) →
+ *     silent extension (for SessionExpiryModal mid-session)
+ *
+ * Path 1 rotates the refresh token on every use (old one invalidated).
+ * Path 2 issues a new access token only.
  */
 async function refresh(req, res) {
   try {
+    const { refreshToken: rawRefreshToken } = req.body;
+
+    // ── Path 1: refresh-token rotation ────────────────────────
+    if (rawRefreshToken && typeof rawRefreshToken === 'string') {
+      const hashedToken = crypto.createHash('sha256').update(rawRefreshToken).digest('hex');
+      const stored = await findAndValidateRefreshToken(hashedToken);
+
+      if (!stored) {
+        return res.status(401).json({ error: 'Session expirée. Veuillez vous reconnecter.' });
+      }
+
+      // Token reuse detection — a rotated token was replayed.
+      // This means either a race condition (two concurrent refreshes) or
+      // actual theft.  Revoke ALL tokens for this user to be safe.
+      if (stored.error === 'TOKEN_REUSED') {
+        await revokeAllUserTokens(stored.user_id);
+        return res.status(401).json({ error: 'Session expirée. Veuillez vous reconnecter.' });
+      }
+
+      if (stored.error) {
+        return res.status(401).json({ error: 'Session expirée. Veuillez vous reconnecter.' });
+      }
+
+      // Issue NEW access token + rotate the refresh token
+      const newAccessToken = signToken({
+        id: stored.user_id,
+        email: stored.email,
+        role: stored.role,
+      });
+
+      const { rawToken: newRaw, hashedToken: newHashed } = generateRefreshToken();
+      await rotateRefreshToken(hashedToken, newHashed);
+      await storeRefreshToken(stored.user_id, newHashed, stored.device_name, stored.device_id);
+
+      // Touch last_used_at on the new row
+      await pool.query(
+        'UPDATE refresh_tokens SET last_used_at = NOW() WHERE token_hash = $1',
+        [newHashed]
+      );
+
+      return res.json({
+        token: newAccessToken,
+        refreshToken: newRaw,
+      });
+    }
+
+    // ── Path 2: legacy JWT extension (5-min window) ───────────
     const authHeader = req.headers.authorization;
     const token = (req.body.token) || (authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null);
 
@@ -157,10 +236,30 @@ async function refresh(req, res) {
 }
 
 /**
+ * POST /api/auth/logout
+ * Revokes the caller's refresh token so it cannot be reused.
+ * Access token expiry is handled client-side.
+ */
+async function logout(req, res) {
+  try {
+    const { refreshToken: rawRefreshToken } = req.body;
+    if (rawRefreshToken && typeof rawRefreshToken === 'string') {
+      const hashedToken = crypto.createHash('sha256').update(rawRefreshToken).digest('hex');
+      await revokeTokenByHash(hashedToken);
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Logout error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+/**
  * PUT /api/auth/password
  * Body: { currentPassword, newPassword }
  * Authenticated — any role can change their own password.
- * On success the client MUST discard the current JWT (forced re-auth).
+ * On success, ALL refresh tokens for this user are revoked,
+ * forcing re-login on every device.
  */
 async function changePassword(req, res) {
   try {
@@ -200,6 +299,9 @@ async function changePassword(req, res) {
       [hash, req.user.id]
     );
 
+    // Invalidate all refresh tokens — forces re-login on every device
+    await revokeAllUserTokens(req.user.id);
+
     res.json({ success: true });
   } catch (err) {
     console.error('changePassword error:', err);
@@ -207,4 +309,4 @@ async function changePassword(req, res) {
   }
 }
 
-module.exports = { login, me, refresh, changePassword };
+module.exports = { login, me, refresh, logout, changePassword };

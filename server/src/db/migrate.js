@@ -187,6 +187,24 @@ const migrations = [
     updated_at TIMESTAMPTZ DEFAULT NOW()
   )`,
   `CREATE INDEX IF NOT EXISTS idx_device_tokens_user ON device_tokens(user_id)`,
+
+  // Refresh tokens — long-lived tokens for "Keep me signed in" (30 days).
+  // Hashed with SHA-256; the raw token is only sent over HTTPS and never
+  // stored server-side.  Rotation on each use with theft detection.
+  `CREATE TABLE IF NOT EXISTS refresh_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash VARCHAR(255) NOT NULL UNIQUE,
+    device_name VARCHAR(100),
+    device_id VARCHAR(255),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMPTZ NOT NULL,
+    last_used_at TIMESTAMPTZ DEFAULT NOW(),
+    revoked BOOLEAN DEFAULT FALSE,
+    replaced_by VARCHAR(255)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_refresh_tokens_hash ON refresh_tokens(token_hash)`,
 ];
 
 async function runMigrations() {

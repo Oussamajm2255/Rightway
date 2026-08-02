@@ -1,18 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { isRefreshTokenAvailable, getRefreshToken } from '../lib/tokenManager';
+import { apiPost } from '../lib/api';
 import './LoginPage.css';
 
-const REMEMBER_EMAIL_KEY = 'rightway_remembered_email';
-const REMEMBER_PASS_KEY = 'rightway_remembered_pass';   // base64
 const REMEMBER_PREF_KEY = 'rightway_remember_me';
-
-function encode(s) {
-  try { return btoa(unescape(encodeURIComponent(s))); } catch { return ''; }
-}
-function decode(s) {
-  try { return decodeURIComponent(escape(atob(s))); } catch { return ''; }
-}
+const LAST_EMAIL_KEY = 'rightway_last_email'; // non-sensitive, pre-fill only
 
 function LoginPage() {
   const [email, setEmail] = useState('');
@@ -24,37 +18,53 @@ function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const mounted = useRef(false);
+  const autoLoginAttempted = useRef(false);
 
-  // ── Auto-login on mount when credentials are saved ──
+  // ── Auto-login on mount using refresh token ──
   useEffect(() => {
     if (mounted.current) return;
     mounted.current = true;
 
-    const savedEmail = localStorage.getItem(REMEMBER_EMAIL_KEY);
-    const savedPass = localStorage.getItem(REMEMBER_PASS_KEY);
-    const savedPref = localStorage.getItem(REMEMBER_PREF_KEY);
+    async function attemptAutoLogin() {
+      if (autoLoginAttempted.current) return;
+      autoLoginAttempted.current = true;
 
-    if (savedEmail && savedPass && savedPref === 'true') {
-      const decodedPass = decode(savedPass);
-      if (decodedPass) {
-        setEmail(savedEmail);
-        setPassword(decodedPass);
-        setRememberMe(true);
-        setAutoLogging(true);
-
-        login(savedEmail, decodedPass)
-          .then(() => navigate('/', { replace: true }))
-          .catch(() => {
-            // Credentials stale — form stays visible, pre-filled
-            setAutoLogging(false);
-          });
+      const hasRT = await isRefreshTokenAvailable();
+      if (!hasRT) {
+        // No persisted session — pre-fill email only
+        const savedEmail = localStorage.getItem(LAST_EMAIL_KEY);
+        if (savedEmail) setEmail(savedEmail);
+        const savedPref = localStorage.getItem(REMEMBER_PREF_KEY);
+        if (savedPref === 'true') setRememberMe(true);
         return;
+      }
+
+      setAutoLogging(true);
+      try {
+        const rt = await getRefreshToken();
+        const data = await apiPost('/auth/refresh', { refreshToken: rt });
+
+        // Refresh succeeded — store tokens and redirect
+        const { setTokens: storeTokens } = await import('../lib/tokenManager');
+        await storeTokens(data.token, data.refreshToken || null);
+
+        // Fetch user info to populate AuthContext
+        const { apiGet } = await import('../lib/api');
+        const userData = await apiGet('/auth/me');
+        localStorage.setItem('rightway_user', JSON.stringify(userData.user));
+        localStorage.setItem('rightway_expires_at', String(Date.now() + 8 * 60 * 60 * 1000));
+        localStorage.setItem('rightway_token', data.token);
+
+        navigate('/', { replace: true });
+      } catch {
+        // Refresh token expired/revoked — show login form
+        setAutoLogging(false);
+        const savedEmail = localStorage.getItem(LAST_EMAIL_KEY);
+        if (savedEmail) setEmail(savedEmail);
       }
     }
 
-    // Partial restore (email only)
-    if (savedEmail) setEmail(savedEmail);
-    if (savedPref === 'true') setRememberMe(true);
+    attemptAutoLogin();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Manual submit ──
@@ -69,15 +79,13 @@ function LoginPage() {
 
     setSubmitting(true);
     try {
-      await login(email, password);
+      await login(email, password, rememberMe);
 
+      // Store preferences (email is non-sensitive, safe to keep)
       if (rememberMe) {
-        localStorage.setItem(REMEMBER_EMAIL_KEY, email);
-        localStorage.setItem(REMEMBER_PASS_KEY, encode(password));
         localStorage.setItem(REMEMBER_PREF_KEY, 'true');
+        localStorage.setItem(LAST_EMAIL_KEY, email);
       } else {
-        localStorage.removeItem(REMEMBER_EMAIL_KEY);
-        localStorage.removeItem(REMEMBER_PASS_KEY);
         localStorage.removeItem(REMEMBER_PREF_KEY);
       }
 
@@ -156,7 +164,7 @@ function LoginPage() {
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
             />
-            <span>Se souvenir de moi</span>
+            <span>Rester connecté</span>
           </label>
 
           <button
