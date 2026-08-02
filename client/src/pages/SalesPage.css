@@ -536,6 +536,18 @@
   .sales-terminer-wrap { bottom: calc(56px + env(safe-area-inset-bottom, 0px)); z-index: 650; }
   .sales-chips-bottom { bottom: calc(56px + 64px + env(safe-area-inset-bottom, 0px)); }
   .sales-page { padding-bottom: calc(56px + 5rem + env(safe-area-inset-bottom, 0px)); }
+
+  /* Capacitor APK: env() returns 0px in the WebView — apply the same
+     floor the bottom-nav uses so the Terminer button and chips clear it. */
+  body.capacitor-native .sales-terminer-wrap {
+    bottom: calc(56px + max(env(safe-area-inset-bottom, 24px), 24px));
+  }
+  body.capacitor-native .sales-chips-bottom {
+    bottom: calc(56px + 64px + max(env(safe-area-inset-bottom, 24px), 24px));
+  }
+  body.capacitor-native .sales-page {
+    padding-bottom: calc(56px + 5rem + max(env(safe-area-inset-bottom, 24px), 24px));
+  }
   .sales-cat-header {
     position: sticky;
     top: calc(52px + 52px + var(--safe-top));
