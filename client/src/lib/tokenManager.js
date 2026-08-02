@@ -14,15 +14,34 @@ const REFRESH_KEY = 'rightway_refresh_token';
 const USER_KEY = 'rightway_user';
 const EXPIRES_AT_KEY = 'rightway_expires_at';
 
-// ── Capacitor availability check ──────────────────────────────────
+// ── Capacitor + Preferences availability check ───────────────────
+// Capacitor.isNativePlatform() may return true even when the
+// Preferences plugin's native implementation hasn't been synced into
+// the APK yet (e.g. running an old build after a new cap sync).
+// We lazily probe once and cache the result.
 
-function isCapacitorAvailable() {
-  try {
-    // Preferences plugin exists only when running inside Capacitor
-    return !!(window?.Capacitor?.isNativePlatform?.());
-  } catch {
+let _preferencesReady = null;
+
+async function isPreferencesAvailable() {
+  if (_preferencesReady !== null) return _preferencesReady;
+  if (!window?.Capacitor?.isNativePlatform?.()) {
+    _preferencesReady = false;
     return false;
   }
+  try {
+    // Probe: if the native plugin is missing this throws immediately
+    await Preferences.get({ key: '__prefs_probe__' });
+    _preferencesReady = true;
+  } catch {
+    console.warn('[tokenManager] Preferences plugin not available in this APK build — using localStorage fallback');
+    _preferencesReady = false;
+  }
+  return _preferencesReady;
+}
+
+// Reset cached probe (useful after cap sync + rebuild)
+export function resetPreferencesProbe() {
+  _preferencesReady = null;
 }
 
 // ── Access token ──────────────────────────────────────────────────
@@ -37,28 +56,34 @@ export async function setAccessToken(token) {
 }
 
 export async function getAccessToken() {
-  if (isCapacitorAvailable()) {
-    const { value } = await Preferences.get({ key: ACCESS_KEY });
-    if (value) return value;
-  }
+  try {
+    if (await isPreferencesAvailable()) {
+      const { value } = await Preferences.get({ key: ACCESS_KEY });
+      if (value) return value;
+    }
+  } catch { /* fall through to localStorage */ }
   return localStorage.getItem('rightway_token');
 }
 
 // ── Refresh token ─────────────────────────────────────────────────
 
 export async function setRefreshToken(token) {
-  if (isCapacitorAvailable()) {
-    await Preferences.set({ key: REFRESH_KEY, value: token });
-  }
+  try {
+    if (await isPreferencesAvailable()) {
+      await Preferences.set({ key: REFRESH_KEY, value: token });
+    }
+  } catch { /* Preferences unavailable — localStorage fallback below */ }
   // Mirror for fallback
   localStorage.setItem('rightway_refresh_token', token);
 }
 
 export async function getRefreshToken() {
-  if (isCapacitorAvailable()) {
-    const { value } = await Preferences.get({ key: REFRESH_KEY });
-    if (value) return value;
-  }
+  try {
+    if (await isPreferencesAvailable()) {
+      const { value } = await Preferences.get({ key: REFRESH_KEY });
+      if (value) return value;
+    }
+  } catch { /* fall through to localStorage */ }
   return localStorage.getItem('rightway_refresh_token');
 }
 
@@ -77,12 +102,14 @@ export async function setTokens(accessToken, refreshToken) {
 }
 
 export async function clearTokens() {
-  if (isCapacitorAvailable()) {
-    await Promise.all([
-      Preferences.remove({ key: ACCESS_KEY }),
-      Preferences.remove({ key: REFRESH_KEY }),
-    ]);
-  }
+  try {
+    if (await isPreferencesAvailable()) {
+      await Promise.all([
+        Preferences.remove({ key: ACCESS_KEY }),
+        Preferences.remove({ key: REFRESH_KEY }),
+      ]);
+    }
+  } catch { /* Preferences unavailable — fall through */ }
   localStorage.removeItem('rightway_token');
   localStorage.removeItem('rightway_refresh_token');
   localStorage.removeItem(USER_KEY);
