@@ -83,6 +83,7 @@
 .cm-map-wrap {
   height: 400px;
   width: 100%;
+  z-index: 1;
 }
 
 /* ─── Custom Leaflet markers ─── */
@@ -262,6 +263,7 @@
 @media (max-width: 768px) {
   .cm-map-wrap {
     height: 320px;
+    z-index: 1;
   }
   .cm-header {
     padding: 10px 14px;
@@ -376,6 +378,7 @@
 @media (max-width: 480px) {
   .cm-map-wrap {
     height: 260px;
+    z-index: 1;
   }
   .cm-pending {
     padding: 10px 14px;
