@@ -7,8 +7,9 @@ const { COMMISSION_RATE } = require('../models/livraison');
  */
 async function getAllCommercials(req, res) {
   try {
+    const { date_from, date_to } = req.query;
     const [commercials, monthlyCA] = await Promise.all([
-      commercialModel.getAllWithStats(),
+      commercialModel.getAllWithStats({ date_from: date_from || undefined, date_to: date_to || undefined }),
       commercialModel.getMonthlyCA(),
     ]);
 

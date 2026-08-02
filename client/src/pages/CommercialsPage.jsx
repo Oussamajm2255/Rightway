@@ -32,6 +32,33 @@ function hexAlpha(hex, a) {
   return `rgba(${r},${g},${b},${a})`;
 }
 
+/* ─── Date range presets (local, YYYY-MM-DD) ─── */
+function toYMD(d) {
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+function presetRange(key) {
+  const now = new Date();
+  const today = toYMD(now);
+  const y = now.getFullYear(), m = now.getMonth();
+  switch (key) {
+    case 'month':      return { from: toYMD(new Date(y, m, 1)), to: today };
+    case 'last_month': return { from: toYMD(new Date(y, m - 1, 1)), to: toYMD(new Date(y, m, 0)) };
+    case '3months':    return { from: toYMD(new Date(y, m - 2, 1)), to: today };
+    case 'year':       return { from: toYMD(new Date(y, 0, 1)), to: today };
+    case 'all':
+    default:           return { from: '', to: '' };
+  }
+}
+const DATE_PRESETS = [
+  { key: 'all', label: 'Tout' },
+  { key: 'month', label: 'Ce mois' },
+  { key: 'last_month', label: 'Mois dernier' },
+  { key: '3months', label: '3 derniers mois' },
+  { key: 'year', label: 'Cette année' },
+];
+
 /* ─── Status helpers ─── */
 function statusLabel(s) {
   const map = { EN_COURS: 'En tournée', EN_RETOUR: 'En retour', INACTIVE: 'Inactif', CLOTURE: 'Clôturée', ANNULE: 'Annulée' };
@@ -115,6 +142,11 @@ export default function CommercialsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [openBreakdown, setOpenBreakdown] = useState({}); // { [commercialId]: true } — expanded card financial detail
 
+  /* Date range filter (default: all-time) */
+  const [datePreset, setDatePreset] = useState('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+
   /* Historique state */
   const [histCommercialId, setHistCommercialId] = useState('all');
   const [histDateFrom, setHistDateFrom] = useState('');
@@ -143,10 +175,14 @@ export default function CommercialsPage() {
     }));
   }, [commercials]);
 
-  /* Fetch all commercials data */
+  /* Fetch all commercials data (scoped to the selected date range) */
   const fetchCommercials = useCallback(async () => {
     try {
-      const data = await apiGet('/commercials');
+      const params = new URLSearchParams();
+      if (dateFrom) params.set('date_from', dateFrom);
+      if (dateTo) params.set('date_to', dateTo);
+      const qs = params.toString();
+      const data = await apiGet(`/commercials${qs ? '?' + qs : ''}`);
       setCommercials(data.commercials || []);
       setGlobals(data.globals || null);
       setError('');
@@ -155,7 +191,15 @@ export default function CommercialsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [dateFrom, dateTo]);
+
+  /* Apply a date preset (Tout / Ce mois / …) */
+  function applyDatePreset(key) {
+    const r = presetRange(key);
+    setDatePreset(key);
+    setDateFrom(r.from);
+    setDateTo(r.to);
+  }
 
   /* Fetch history data */
   const fetchHistory = useCallback(async () => {
@@ -488,6 +532,27 @@ export default function CommercialsPage() {
             <div className="comm-kpi-val">{globals ? fmtPct(globals.completion_avg) : '—'}</div>
             <div className="comm-kpi-sub">moyenne tous commerciaux</div>
           </div>
+        </div>
+
+        {/* DATE FILTER — scopes each commercial's CA / écarts / prélèvements */}
+        <div className="comm-date-filter">
+          {DATE_PRESETS.map(p => (
+            <button
+              key={p.key}
+              type="button"
+              className={`comm-preset-btn${datePreset === p.key ? ' active' : ''}`}
+              onClick={() => applyDatePreset(p.key)}
+            >
+              {p.label}
+            </button>
+          ))}
+          <span className="comm-date-range">
+            <input type="date" className="comm-date-input" value={dateFrom}
+              onChange={e => { setDateFrom(e.target.value); setDatePreset('custom'); }} />
+            <span className="comm-date-sep">→</span>
+            <input type="date" className="comm-date-input" value={dateTo}
+              onChange={e => { setDateTo(e.target.value); setDatePreset('custom'); }} />
+          </span>
         </div>
 
         {/* TOOLBAR */}

@@ -5,7 +5,20 @@ const { COMMISSION_RATE } = require('./livraison');
  * Get all COMMERCIAL users with aggregated performance stats.
  * Uses CTEs to avoid N+1 queries.
  */
-async function getAllWithStats() {
+async function getAllWithStats({ date_from, date_to } = {}) {
+  // Optional date range applied per-CTE on its natural date column:
+  // livraisons → created_at, prélèvements → expense_date, écarts → declared_at,
+  // avances → created_at. Params $1/$2 are reused across CTEs.
+  const params = [];
+  let fromIdx = null, toIdx = null;
+  if (date_from) { params.push(date_from); fromIdx = params.length; }
+  if (date_to) { params.push(date_to); toIdx = params.length; }
+  const dc = (col) => {
+    let s = '';
+    if (fromIdx) s += ` AND ${col} >= $${fromIdx}`;
+    if (toIdx) s += ` AND ${col} <= $${toIdx}`;
+    return s;
+  };
   const { rows } = await pool.query(`
     WITH commercial_stats AS (
       SELECT
@@ -16,7 +29,7 @@ async function getAllWithStats() {
         COUNT(*) FILTER (WHERE l.status = 'ANNULE') AS annulees,
         COUNT(*) FILTER (WHERE l.status = 'EN_RETOUR') AS en_retour
       FROM livraisons l
-      WHERE l.is_archived = false
+      WHERE l.is_archived = false${dc('l.created_at::date')}
       GROUP BY l.commercial_id
     ),
     commercial_ca AS (
@@ -25,7 +38,7 @@ async function getAllWithStats() {
         COALESCE(SUM(li.qte_vendue * li.prix_ttc), 0)::NUMERIC(12,3) AS ca_total
       FROM livraisons l
       JOIN livraison_items li ON li.livraison_id = l.id
-      WHERE l.status = 'CLOTURE' AND l.is_archived = false
+      WHERE l.status = 'CLOTURE' AND l.is_archived = false${dc('l.created_at::date')}
       GROUP BY l.commercial_id
     ),
     commercial_avances AS (
@@ -33,7 +46,7 @@ async function getAllWithStats() {
         la.commercial_id,
         COALESCE(SUM(la.amount), 0)::NUMERIC(12,3) AS avances_total
       FROM livraison_avances la
-      WHERE la.status = 'ACCEPTE'
+      WHERE la.status = 'ACCEPTE'${dc('la.created_at::date')}
       GROUP BY la.commercial_id
     ),
     commercial_prelevements AS (
@@ -41,7 +54,7 @@ async function getAllWithStats() {
         p.commercial_id,
         COALESCE(SUM(p.amount), 0)::NUMERIC(12,3) AS prelevements_total
       FROM prelevements p
-      WHERE p.commercial_id IS NOT NULL AND p.status = 'VALIDE'
+      WHERE p.commercial_id IS NOT NULL AND p.status = 'VALIDE'${dc('p.expense_date')}
       GROUP BY p.commercial_id
     ),
     -- Itemized prélèvements linked to each commercial (any category)
@@ -58,7 +71,7 @@ async function getAllWithStats() {
       FROM prelevements p
       JOIN prelevement_categories c ON p.category_id = c.id
       LEFT JOIN prelevement_categories pc ON c.parent_id = pc.id
-      WHERE p.commercial_id IS NOT NULL AND p.status = 'VALIDE'
+      WHERE p.commercial_id IS NOT NULL AND p.status = 'VALIDE'${dc('p.expense_date')}
       GROUP BY p.commercial_id
     ),
     -- Écarts on each commercial's livraisons (total, count + itemized)
@@ -76,7 +89,7 @@ async function getAllWithStats() {
         ) ORDER BY le.declared_at DESC) AS items
       FROM livraison_ecarts le
       JOIN livraisons l ON le.livraison_id = l.id
-      WHERE l.is_archived = false
+      WHERE l.is_archived = false${dc('le.declared_at::date')}
       GROUP BY l.commercial_id
     ),
     commercial_ecoulement AS (
@@ -89,7 +102,7 @@ async function getAllWithStats() {
         END AS sell_through
       FROM livraisons l
       JOIN livraison_items li ON li.livraison_id = l.id
-      WHERE l.is_archived = false
+      WHERE l.is_archived = false${dc('l.created_at::date')}
       GROUP BY l.commercial_id, l.id
     ),
     ecoulement_final AS (
@@ -122,7 +135,7 @@ async function getAllWithStats() {
     LEFT JOIN ecoulement_final ef ON ef.commercial_id = u.id
     WHERE u.role = 'COMMERCIAL'
     ORDER BY ca_total DESC
-  `);
+  `, params);
 
   return rows;
 }
