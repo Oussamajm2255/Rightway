@@ -37,6 +37,10 @@ function statusLabel(s) {
   const map = { EN_COURS: 'En tournée', EN_RETOUR: 'En retour', INACTIVE: 'Inactif', CLOTURE: 'Clôturée', ANNULE: 'Annulée' };
   return map[s] || s;
 }
+function ecartStatusLabel(s) {
+  const map = { PENDING: 'En attente', CONFIRMED: 'Confirmé', PAYMENT_REQUESTED: 'Paiement demandé', PAID: 'Payé' };
+  return map[s] || s;
+}
 function statusBadgeClass(s) {
   const m = { EN_COURS: 'comm-badge-green', EN_RETOUR: 'comm-badge-orange', INACTIVE: 'comm-badge-gray', CLOTURE: 'comm-badge-blue', ANNULE: 'comm-badge-red' };
   return m[s] || 'comm-badge-gray';
@@ -109,6 +113,7 @@ export default function CommercialsPage() {
   const [viewMode, setViewMode] = useState('grid');
   const [sortBy, setSortBy] = useState('ca');
   const [searchQuery, setSearchQuery] = useState('');
+  const [openBreakdown, setOpenBreakdown] = useState({}); // { [commercialId]: true } — expanded card financial detail
 
   /* Historique state */
   const [histCommercialId, setHistCommercialId] = useState('all');
@@ -549,11 +554,58 @@ export default function CommercialsPage() {
                     {c.prelevements_total > 0 && (
                       <div className="cc-rate-lbl" style={{ color: '#c2410c' }}>Prélèvements: {fmtDTShort(c.prelevements_total)}</div>
                     )}
+                    {c.ecarts_total > 0 && (
+                      <div className="cc-rate-lbl" style={{ color: '#dc2626' }}>Écarts: {fmtDTShort(c.ecarts_total)}{c.ecarts_count > 1 ? ` (${c.ecarts_count})` : ''}</div>
+                    )}
                   </div>
                   <button className="cc-detail-btn" style={{ color: c.color, borderColor: hexAlpha(c.color, 0.3) }} onClick={() => viewHistorique(c.id)}>
                     <SvgEye /> Détail
                   </button>
                 </div>
+
+                {((c.prelevement_items?.length || 0) > 0 || (c.ecart_items?.length || 0) > 0) && (
+                  <>
+                    <button
+                      type="button"
+                      className="cc-breakdown-toggle"
+                      onClick={() => setOpenBreakdown(prev => ({ ...prev, [c.id]: !prev[c.id] }))}
+                      aria-expanded={!!openBreakdown[c.id]}
+                    >
+                      Détails financiers {openBreakdown[c.id] ? '▴' : '▾'}
+                    </button>
+                    {openBreakdown[c.id] && (
+                      <div className="cc-breakdown">
+                        {(c.prelevement_items?.length || 0) > 0 && (
+                          <div className="cc-bd-group">
+                            <div className="cc-bd-title">Prélèvements ({c.prelevement_items.length})</div>
+                            {c.prelevement_items.map((p, i) => (
+                              <div key={`p${i}`} className="cc-bd-row">
+                                <span className="cc-bd-desc">
+                                  {p.parent_category ? `${p.parent_category} · ` : ''}{p.category}{p.description ? ` · ${p.description}` : ''}
+                                </span>
+                                <span className="cc-bd-amt" style={{ color: '#c2410c' }}>{fmtDT(p.amount)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {(c.ecart_items?.length || 0) > 0 && (
+                          <div className="cc-bd-group">
+                            <div className="cc-bd-title">Écarts ({c.ecart_items.length})</div>
+                            {c.ecart_items.map((e, i) => (
+                              <div key={`e${i}`} className="cc-bd-row">
+                                <span className="cc-bd-desc">
+                                  {e.justification}{e.reference ? ` (${e.reference})` : ''}
+                                  <span className="cc-bd-status">{ecartStatusLabel(e.status)}</span>
+                                </span>
+                                <span className="cc-bd-amt" style={{ color: '#dc2626' }}>{fmtDT(e.amount)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             ))}
           </div>

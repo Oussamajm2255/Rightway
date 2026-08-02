@@ -997,3 +997,69 @@
     font-size: 20px;
   }
 }
+
+/* ─── Card financial breakdown (écarts + linked prélèvements) ─── */
+.cc-breakdown-toggle {
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px 2px 2px;
+  background: none;
+  border: none;
+  border-top: 1px dashed var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: color var(--transition-fast);
+}
+.cc-breakdown-toggle:hover { color: var(--color-text); }
+
+.cc-breakdown {
+  margin-top: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cc-bd-group { display: flex; flex-direction: column; gap: 2px; }
+.cc-bd-title {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-bottom: 2px;
+}
+.cc-bd-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11.5px;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.cc-bd-row:last-child { border-bottom: none; }
+.cc-bd-desc { color: var(--color-text-secondary); line-height: 1.35; min-width: 0; overflow-wrap: anywhere; }
+.cc-bd-amt {
+  flex-shrink: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.cc-bd-status {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 6px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-tertiary);
+  background: var(--color-surface-hover);
+  border-radius: 99px;
+  white-space: nowrap;
+}

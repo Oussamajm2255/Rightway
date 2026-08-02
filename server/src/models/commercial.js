@@ -44,6 +44,41 @@ async function getAllWithStats() {
       WHERE p.commercial_id IS NOT NULL AND p.status = 'VALIDE'
       GROUP BY p.commercial_id
     ),
+    -- Itemized prélèvements linked to each commercial (any category)
+    commercial_prelevement_items AS (
+      SELECT
+        p.commercial_id,
+        json_agg(json_build_object(
+          'amount', p.amount,
+          'description', p.description,
+          'category', c.name,
+          'parent_category', pc.name,
+          'expense_date', p.expense_date
+        ) ORDER BY p.expense_date DESC) AS items
+      FROM prelevements p
+      JOIN prelevement_categories c ON p.category_id = c.id
+      LEFT JOIN prelevement_categories pc ON c.parent_id = pc.id
+      WHERE p.commercial_id IS NOT NULL AND p.status = 'VALIDE'
+      GROUP BY p.commercial_id
+    ),
+    -- Écarts on each commercial's livraisons (total, count + itemized)
+    commercial_ecart_items AS (
+      SELECT
+        l.commercial_id,
+        COALESCE(SUM(le.amount), 0)::NUMERIC(12,3) AS ecarts_total,
+        COUNT(*)::INT AS ecarts_count,
+        json_agg(json_build_object(
+          'amount', le.amount,
+          'justification', le.justification,
+          'status', le.status,
+          'reference', l.reference,
+          'declared_at', le.declared_at
+        ) ORDER BY le.declared_at DESC) AS items
+      FROM livraison_ecarts le
+      JOIN livraisons l ON le.livraison_id = l.id
+      WHERE l.is_archived = false
+      GROUP BY l.commercial_id
+    ),
     commercial_ecoulement AS (
       SELECT
         l.commercial_id,
@@ -72,12 +107,18 @@ async function getAllWithStats() {
       COALESCE(cca.ca_total, 0)::NUMERIC(12,3) AS ca_total,
       COALESCE(cav.avances_total, 0)::NUMERIC(12,3) AS avances_total,
       COALESCE(cp.prelevements_total, 0)::NUMERIC(12,3) AS prelevements_total,
+      COALESCE(cpi.items, '[]') AS prelevement_items,
+      COALESCE(cei.ecarts_total, 0)::NUMERIC(12,3) AS ecarts_total,
+      COALESCE(cei.ecarts_count, 0)::INT AS ecarts_count,
+      COALESCE(cei.items, '[]') AS ecart_items,
       COALESCE(ef.ecoulement, 0)::INT AS ecoulement
     FROM users u
     LEFT JOIN commercial_stats cs ON cs.commercial_id = u.id
     LEFT JOIN commercial_ca cca ON cca.commercial_id = u.id
     LEFT JOIN commercial_avances cav ON cav.commercial_id = u.id
     LEFT JOIN commercial_prelevements cp ON cp.commercial_id = u.id
+    LEFT JOIN commercial_prelevement_items cpi ON cpi.commercial_id = u.id
+    LEFT JOIN commercial_ecart_items cei ON cei.commercial_id = u.id
     LEFT JOIN ecoulement_final ef ON ef.commercial_id = u.id
     WHERE u.role = 'COMMERCIAL'
     ORDER BY ca_total DESC
