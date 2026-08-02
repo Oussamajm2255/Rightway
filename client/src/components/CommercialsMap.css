@@ -83,6 +83,7 @@
 .cm-map-wrap {
   height: 400px;
   width: 100%;
+  position: relative;
   z-index: 1;
 }
 
@@ -263,6 +264,7 @@
 @media (max-width: 768px) {
   .cm-map-wrap {
     height: 320px;
+    position: relative;
     z-index: 1;
   }
   .cm-header {
@@ -378,6 +380,7 @@
 @media (max-width: 480px) {
   .cm-map-wrap {
     height: 260px;
+    position: relative;
     z-index: 1;
   }
   .cm-pending {
