@@ -409,12 +409,19 @@
 .prel-row-actions {
   display: flex;
   gap: 4px;
-  opacity: 0;
-  transition: opacity .1s;
+  /* Always visible — approval must work without hover (touch devices). */
+  opacity: 1;
 }
 
-.prel-table tr:hover .prel-row-actions {
-  opacity: 1;
+/* Pending (unapproved) rows stand out in red so they're impossible to miss. */
+.prel-table tr.prel-row-pending td {
+  background: var(--color-danger-bg);
+}
+.prel-table tr.prel-row-pending td:first-child {
+  box-shadow: inset 3px 0 0 var(--color-danger);
+}
+.prel-table tr.prel-row-pending:hover td {
+  background: #fde4e4;
 }
 
 .prel-empty {
@@ -643,4 +650,66 @@
 .prel-day-btn.selected:hover {
   background: var(--color-primary-dark, #0a2e21);
   border-color: var(--color-primary-dark, #0a2e21);
+}
+
+/* ─── Prélèvement history: mobile card view (approval works on touch) ─── */
+.prel-cards-view { display: none; }
+
+.prel-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.prel-card-pending {
+  background: var(--color-danger-bg);
+  border-color: var(--color-danger-border);
+  border-left: 3px solid var(--color-danger);
+}
+.prel-card-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.prel-card-cat { font-weight: 600; font-size: 0.9rem; line-height: 1.3; min-width: 0; }
+.prel-card-parent { color: var(--color-text-tertiary); font-weight: 500; }
+.prel-card-amount {
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.prel-card-desc { font-size: 0.85rem; color: var(--color-text-secondary); line-height: 1.35; }
+.prel-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--color-text-tertiary);
+}
+.prel-card-muted { color: var(--color-text-tertiary); }
+.prel-status-pill {
+  padding: 1px 8px;
+  border-radius: 99px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.prel-status-pending { background: var(--color-danger); color: #fff; }
+.prel-status-rejected { background: var(--color-text-tertiary); color: #fff; }
+.prel-card-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: 2px;
+}
+
+@media (max-width: 760px) {
+  .prel-table-wrap { display: none; }
+  .prel-cards-view { display: block; }
 }

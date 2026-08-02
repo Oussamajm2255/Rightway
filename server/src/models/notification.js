@@ -1,12 +1,15 @@
 const pool = require('../db/pool');
 
-async function create(user_id, message, livraison_id = null) {
+async function create(user_id, message, livraison_id = null, link_url = null) {
   const { rows } = await pool.query(
-    `INSERT INTO notifications (user_id, message, livraison_id)
-     VALUES ($1, $2, $3)
+    `INSERT INTO notifications (user_id, message, livraison_id, link_url)
+     VALUES ($1, $2, $3, $4)
      RETURNING *`,
-    [user_id, message, livraison_id]
+    [user_id, message, livraison_id, link_url]
   );
+
+  // Push deep-links to link_url when set, else the livraison, else home.
+  const url = link_url || (livraison_id ? `/livraisons/${livraison_id}` : '/');
 
   // Fire-and-forget push notification to the user's device(s)
   // Lazy-required to avoid circular dependency at module init time
@@ -15,12 +18,27 @@ async function create(user_id, message, livraison_id = null) {
     sendToUser(user_id, {
       title: 'Right Way',
       body: message,
-      url: livraison_id ? `/livraisons/${livraison_id}` : '/',
-      tag: livraison_id ? `livraison-${livraison_id}` : 'rightway',
+      url,
+      tag: link_url ? `link-${link_url}` : (livraison_id ? `livraison-${livraison_id}` : 'rightway'),
     }).catch(() => {});
   } catch (_) { /* push service unavailable — not critical */ }
 
   return rows[0];
+}
+
+/**
+ * Notify every active SUPER_ADMIN with the same message + optional deep link.
+ * Used for system events like auto-prélèvements awaiting approval.
+ * Returns the number of admins notified.
+ */
+async function notifyAllSuperAdmins(message, link_url = null) {
+  const { rows } = await pool.query(
+    `SELECT id FROM users WHERE role = 'SUPER_ADMIN' AND is_active = true`
+  );
+  for (const u of rows) {
+    await create(u.id, message, null, link_url);
+  }
+  return rows.length;
 }
 
 async function findByUser(user_id, { unread_only = false } = {}) {
@@ -71,4 +89,4 @@ async function resolveActionable(user_id, livraison_id, keyword, new_message) {
   );
 }
 
-module.exports = { create, findByUser, markRead, markAllRead, countUnread, resolveActionable };
+module.exports = { create, notifyAllSuperAdmins, findByUser, markRead, markAllRead, countUnread, resolveActionable };

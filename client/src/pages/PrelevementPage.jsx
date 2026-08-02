@@ -1160,7 +1160,7 @@ export default function PrelevementPage() {
                       </td>
                     </tr>
                   ) : expenses.map(exp => (
-                    <tr key={exp.id}>
+                    <tr key={exp.id} className={exp.status === 'EN_ATTENTE' ? 'prel-row-pending' : ''}>
                       <td>{formatDate(exp.expense_date)}</td>
                       <td>
                         <span style={{fontSize:'0.82rem'}}>
@@ -1215,6 +1215,45 @@ export default function PrelevementPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile: card list (approval works on touch — no hover needed) */}
+            <div className="prel-cards-view">
+              {expenses.length === 0 ? (
+                <div className="prel-empty"><p>Aucun prélèvement trouvé</p></div>
+              ) : expenses.map(exp => (
+                <article key={exp.id} className={`prel-card${exp.status === 'EN_ATTENTE' ? ' prel-card-pending' : ''}`}>
+                  <div className="prel-card-top">
+                    <div className="prel-card-cat">
+                      {exp.parent_category_name && <span className="prel-card-parent">{exp.parent_category_name} › </span>}
+                      {exp.category_name}
+                    </div>
+                    <div className="prel-card-amount">{formatMoney(exp.amount)}</div>
+                  </div>
+                  {exp.description && <div className="prel-card-desc">{exp.description}</div>}
+                  <div className="prel-card-meta">
+                    <span>{formatDate(exp.expense_date)}</span>
+                    {exp.commercial_name
+                      ? <span className="prel-commercial-badge">{exp.commercial_name}</span>
+                      : <span className="prel-card-muted">Général</span>}
+                    {exp.status === 'EN_ATTENTE' && <span className="prel-status-pill prel-status-pending">En attente</span>}
+                    {exp.status === 'REJETE' && <span className="prel-status-pill prel-status-rejected">Rejeté</span>}
+                  </div>
+                  <div className="prel-card-actions">
+                    {exp.status === 'EN_ATTENTE' ? (
+                      <>
+                        <button className="btn btn-sm btn-success btn-full" onClick={() => handleUpdateStatus(exp.id, 'VALIDE')}>✓ Valider</button>
+                        <button className="btn btn-sm btn-danger btn-full" onClick={() => handleUpdateStatus(exp.id, 'REJETE')}>✕ Rejeter</button>
+                      </>
+                    ) : (
+                      <>
+                        <button className="btn btn-sm btn-outline btn-full" onClick={() => setEditingExpense(exp)}>Modifier</button>
+                        <button className="btn btn-sm btn-outline-danger btn-full" onClick={() => setDeletingExpense(exp)}>Supprimer</button>
+                      </>
+                    )}
+                  </div>
+                </article>
+              ))}
             </div>
 
             {totalPages > 1 && (

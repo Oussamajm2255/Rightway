@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const pool = require('./db/pool');
 const prelevementModel = require('./models/prelevement');
+const notificationModel = require('./models/notification');
 
 // We need a dummy "system user" or just pick the first SUPER_ADMIN to attribute the generation to
 async function getSystemUserId() {
@@ -66,6 +67,10 @@ async function checkAndGenerateSalaries(today) {
     });
   }
   console.log(`Cron: Generated salaries for ${eligibleUsers.length} users.`);
+  await notificationModel.notifyAllSuperAdmins(
+    `${eligibleUsers.length} salaire(s) automatique(s) en attente d'approbation.`,
+    '/prelevements'
+  );
 }
 
 // ISO weekday: 1=Monday..7=Sunday (JS getDay() is 0=Sunday..6=Saturday)
@@ -166,7 +171,13 @@ async function checkAndGenerateRecurring(today) {
       createdCount++;
     }
   }
-  if (createdCount > 0) console.log(`Cron: Generated ${createdCount} recurring expenses.`);
+  if (createdCount > 0) {
+    console.log(`Cron: Generated ${createdCount} recurring expenses.`);
+    await notificationModel.notifyAllSuperAdmins(
+      `${createdCount} prélèvement(s) automatique(s) en attente d'approbation.`,
+      '/prelevements'
+    );
+  }
 }
 
 // Start cron job

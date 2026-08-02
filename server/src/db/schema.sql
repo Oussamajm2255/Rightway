@@ -165,6 +165,9 @@ CREATE TABLE IF NOT EXISTS notifications (
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   message TEXT NOT NULL,
   livraison_id UUID REFERENCES livraisons(id) ON DELETE SET NULL,
+  -- Optional in-app deep link (e.g. '/prelevements') when the notification
+  -- isn't tied to a livraison. Tapping the notification navigates here.
+  link_url TEXT,
   is_read BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

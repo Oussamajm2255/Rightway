@@ -423,6 +423,7 @@ function AppLayout({ children }) {
       apiPut(`/notifications/${n.id}/read`, {}).catch(() => {});
     }
     if (n.livraison_id) navigate(`/livraisons/${n.livraison_id}`);
+    else if (n.link_url) navigate(n.link_url);
     setNotifOpen(false);
   }
 

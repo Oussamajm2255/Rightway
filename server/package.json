@@ -6,7 +6,8 @@
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
     "db:init": "node src/db/init.js",
-    "db:migrate:stock-cost": "node src/db/migrate-stock-cost.js"
+    "db:migrate:stock-cost": "node src/db/migrate-stock-cost.js",
+    "db:migrate:notif-link": "node src/db/migrate-notif-link.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
