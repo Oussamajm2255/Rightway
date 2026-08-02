@@ -53,6 +53,12 @@
   .dossier-modal-body { padding: var(--space-4); }
 }
 
+/* Capacitor APK: the dossier card is the tallest modal (92vh).
+   Reduce its height so the bottom never sits behind the gesture bar. */
+body.capacitor-native .dossier-modal {
+  max-height: calc(92vh - max(env(safe-area-inset-bottom, 24px), 24px));
+}
+
 .dossier-header {
   display: flex;
   justify-content: space-between;

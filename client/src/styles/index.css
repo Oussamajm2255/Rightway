@@ -831,6 +831,14 @@ textarea.form-input {
   animation: modalOverlayIn var(--transition-base) ease-out;
 }
 
+/* Capacitor APK: the system gesture bar (24-48 px) renders on top of the
+   WebView.  16 px bottom padding isn't enough to keep the modal card above
+   it.  Shifting the card up keeps the close button and bottom actions
+   reachable without fighting the Android nav bar. */
+body.capacitor-native .modal-overlay {
+  padding-bottom: calc(var(--space-4) + max(env(safe-area-inset-bottom, 24px), 24px));
+}
+
 @keyframes modalOverlayIn {
   from { opacity: 0; }
   to { opacity: 1; }
