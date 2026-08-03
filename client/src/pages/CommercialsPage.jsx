@@ -881,64 +881,65 @@ export default function CommercialsPage() {
                 </div>
                 <span className="comm-badge comm-badge-gray">{historyData.length} livraison{historyData.length !== 1 ? 's' : ''}</span>
               </div>
-              <div className="comm-scroll-x">
-                <table className="comm-data-table">
-                  <thead>
-                    <tr>
-                      <th>Référence</th>
-                      <th>Commercial</th>
-                      <th>Date</th>
-                      <th>Statut</th>
-                      <th>Chargé</th>
-                      <th>Vendu</th>
-                      <th>Écoulement</th>
-                      <th>CA</th>
-                      <th>Commission</th>
-                      <th>Avances</th>
-                      <th>Net reversé</th>
-                      <th>Durée</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {historyData.length === 0 ? (
-                      <tr><td colSpan="12" style={{ textAlign: 'center', padding: '30px', color: 'var(--color-text-tertiary)' }}>Aucune livraison trouvée</td></tr>
-                    ) : historyData.map(h => {
-                      const commColor = commercialsWithColor.find(c => c.id === h.commercial_id)?.color || PALETTE[0];
-                      const commInitials = (h.commercial_name || '').trim().split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??';
-                      return (
-                        <tr key={h.id} onClick={() => navigate(`/livraisons/${h.id}`)}>
-                          <td style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: PALETTE[0], fontWeight: 500 }}>{h.reference}</td>
-                          <td>
-                            <div className="comm-agent-cell">
-                              <div className="comm-avatar-sm" style={{ background: commColor, width: 26, height: 26, fontSize: 10 }}>{commInitials}</div>
-                              <span style={{ fontSize: '12px' }}>{h.commercial_name}</span>
-                            </div>
-                          </td>
-                          <td style={{ fontSize: '12px', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
-                            {new Date(h.date).toLocaleDateString('fr-TN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                          </td>
-                          <td><span className={`comm-badge ${statusBadgeClass(h.status)}`} style={{ fontSize: '10px', padding: '3px 8px' }}>{statusLabel(h.status)}</span></td>
-                          <td className="comm-mono">{h.charge}</td>
-                          <td className="comm-mono" style={{ color: commColor, fontWeight: 600 }}>{h.vendu}</td>
-                          <td>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <div style={{ flex: 1, height: 3, background: 'rgba(0,0,0,0.07)', borderRadius: 4, minWidth: 36 }}>
-                                <div style={{ height: '100%', width: `${h.ecoulement}%`, background: commColor, borderRadius: 4 }} />
-                              </div>
-                              <span className="comm-mono" style={{ fontSize: '11px' }}>{h.ecoulement}%</span>
-                            </div>
-                          </td>
-                          <td className="comm-mono" style={{ fontWeight: 600 }}>{fmtDT(h.ca)}</td>
-                          <td className="comm-mono" style={{ color: '#0f9e6a' }}>{h.commercial_remuneration_type === 'SALAIRE' ? <em style={{fontSize:'11px',color:'var(--color-text-tertiary)'}}>Salaire</em> : fmtDT(h.commission)}</td>
-                          <td className="comm-mono">{fmtDT(h.avances)}</td>
-                          <td className="comm-mono" style={{ color: PALETTE[0] }}>{fmtDT(Math.max(0, h.net_a_reverser))}</td>
-                          <td className="comm-mono">{h.duree}j</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              {historyData.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '30px', color: 'var(--color-text-tertiary)' }}>Aucune livraison trouvée</div>
+              ) : (
+                <div className="comm-hist-grid">
+                  {historyData.map(h => {
+                    const commColor = commercialsWithColor.find(c => c.id === h.commercial_id)?.color || PALETTE[0];
+                    const commInitials = (h.commercial_name || '').trim().split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??';
+                    const isSalaire = h.commercial_remuneration_type === 'SALAIRE';
+                    return (
+                      <article
+                        key={h.id}
+                        className={`comm-hist-card${h.has_pending_ecart ? ' comm-hist-card-alert' : ''}`}
+                        style={{ '--acc': commColor }}
+                        onClick={() => navigate(`/livraisons/${h.id}`)}
+                      >
+                        <div className="comm-hist-card-top">
+                          <span className="comm-hist-ref">{h.reference}</span>
+                          <span className={`comm-badge ${statusBadgeClass(h.status)}`} style={{ fontSize: '10px', padding: '3px 8px' }}>{statusLabel(h.status)}</span>
+                        </div>
+                        <div className="comm-hist-agent">
+                          <div className="comm-avatar-sm" style={{ background: commColor, width: 30, height: 30, fontSize: 11 }}>{commInitials}</div>
+                          <div className="comm-hist-agent-idn">
+                            <span className="comm-hist-agent-name">{h.commercial_name}</span>
+                            <span className="comm-hist-agent-veh">{h.vehicle_name || '—'}{h.vehicle_plate ? ` · ${h.vehicle_plate}` : ''}</span>
+                          </div>
+                          <span className="comm-hist-date">{new Date(h.date).toLocaleDateString('fr-TN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                        </div>
+                        <div className="comm-hist-chips">
+                          <div className="comm-hist-chip-cell">
+                            <span className="comm-hist-chip-k">Avance</span>
+                            {h.has_avance
+                              ? <span className="comm-avance-chip"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> {Number(h.total_avances).toFixed(3)} DT</span>
+                              : <span className="comm-hist-dash">—</span>}
+                          </div>
+                          <div className="comm-hist-chip-cell">
+                            <span className="comm-hist-chip-k">Écart</span>
+                            {h.has_pending_ecart
+                              ? <span className="comm-ecart-badge comm-ecart-pending"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> En attente</span>
+                              : h.has_ecart
+                                ? <span className="comm-ecart-badge comm-ecart-resolved"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Résolu</span>
+                                : <span className="comm-hist-dash">—</span>}
+                          </div>
+                        </div>
+                        <div className="comm-hist-ecoul">
+                          <div className="comm-hist-ecoul-bar"><div style={{ width: `${h.ecoulement}%`, background: commColor }} /></div>
+                          <span className="comm-mono comm-hist-ecoul-val">{h.ecoulement}%</span>
+                        </div>
+                        <div className="comm-hist-stats">
+                          <div><span>Chargé / Vendu</span><b>{h.charge} / {h.vendu}</b></div>
+                          <div><span>CA</span><b>{fmtDT(h.ca)}</b></div>
+                          <div><span>Commission</span><b>{isSalaire ? 'Salaire' : fmtDT(h.commission)}</b></div>
+                          <div><span>Net à reverser</span><b style={{ color: PALETTE[0] }}>{fmtDT(Math.max(0, h.net_a_reverser))}</b></div>
+                          <div><span>Durée</span><b>{h.duree}j</b></div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </>
         )}

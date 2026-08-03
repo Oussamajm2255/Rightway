@@ -1105,3 +1105,139 @@
   color: var(--color-text);
 }
 .comm-date-sep { color: var(--color-text-tertiary); font-size: 12px; }
+
+/* ─── Historique des livraisons — livraison-style cards ─── */
+.comm-hist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+  padding: 12px;
+}
+.comm-hist-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--acc, var(--color-primary));
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+  transition: box-shadow .15s ease, transform .15s ease;
+}
+.comm-hist-card:hover {
+  box-shadow: 0 2px 14px rgba(30, 40, 80, 0.08);
+  transform: translateY(-1px);
+}
+.comm-hist-card-alert {
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.04);
+}
+.comm-hist-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.comm-hist-ref {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+.comm-hist-agent { display: flex; align-items: center; gap: 9px; }
+.comm-hist-agent-idn { display: flex; flex-direction: column; min-width: 0; }
+.comm-hist-agent-name { font-size: 13px; font-weight: 600; line-height: 1.25; }
+.comm-hist-agent-veh {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.comm-hist-date {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+/* Avance / Écart chips — same look as the Livraisons tab */
+.comm-hist-chips {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+.comm-hist-chip-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.comm-hist-chip-k {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+.comm-hist-dash { color: var(--color-text-tertiary); font-size: 12px; }
+.comm-avance-chip,
+.comm-ecart-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+.comm-avance-chip {
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
+  border: 1px solid rgba(4, 120, 87, 0.20);
+}
+.comm-ecart-pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: #92400e;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+.comm-ecart-resolved {
+  background: rgba(16, 185, 129, 0.1);
+  color: #065f46;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.comm-hist-ecoul { display: flex; align-items: center; gap: 8px; }
+.comm-hist-ecoul-bar {
+  flex: 1;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.07);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.comm-hist-ecoul-bar > div { height: 100%; border-radius: 4px; }
+.comm-hist-ecoul-val { font-size: 11px; }
+
+.comm-hist-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px 12px;
+}
+.comm-hist-stats > div { display: flex; flex-direction: column; gap: 1px; }
+.comm-hist-stats span {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+.comm-hist-stats b {
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 560px) {
+  .comm-hist-grid { grid-template-columns: 1fr; padding: 10px; }
+}

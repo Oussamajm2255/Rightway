@@ -183,7 +183,9 @@ async function getHistory({ commercial_id, date_from, date_to, status } = {}) {
       COALESCE(SUM(li.qte_chargee), 0)::INT AS total_charge,
       COALESCE(SUM(li.qte_vendue), 0)::INT AS total_vendu,
       COALESCE(SUM(li.qte_vendue * li.prix_ttc), 0)::NUMERIC(12,3) AS ca,
-      COALESCE(SUM(la_total.amount), 0)::NUMERIC(12,3) AS avances
+      COALESCE(SUM(la_total.amount), 0)::NUMERIC(12,3) AS avances,
+      EXISTS(SELECT 1 FROM livraison_ecarts e WHERE e.livraison_id = l.id) AS has_ecart,
+      EXISTS(SELECT 1 FROM livraison_ecarts e WHERE e.livraison_id = l.id AND e.status IN ('PENDING','CONFIRMED','PAYMENT_REQUESTED')) AS has_pending_ecart
     FROM livraisons l
     JOIN users u ON l.commercial_id = u.id
     LEFT JOIN livraison_items li ON li.livraison_id = l.id
@@ -253,6 +255,10 @@ async function getHistory({ commercial_id, date_from, date_to, status } = {}) {
       net_a_reverser: net,
       ecoulement,
       duree,
+      has_ecart: row.has_ecart,
+      has_pending_ecart: row.has_pending_ecart,
+      has_avance: avances > 0,
+      total_avances: avances,
     };
   });
 }
