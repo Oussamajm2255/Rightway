@@ -881,6 +881,7 @@ export default function PrelevementPage() {
   // Modals
   const [showCatModal, setShowCatModal] = useState(false);
   const [showRecurringModal, setShowRecurringModal] = useState(false);
+  const [showAddSheet, setShowAddSheet] = useState(false); // mobile: add-form bottom sheet
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
   const [deletingExpense, setDeletingExpense] = useState(null);
@@ -1001,9 +1002,14 @@ export default function PrelevementPage() {
 
       {tab === 'declaration' && (
         <div className="prel-decl-layout">
-          {/* Left: Quick-add form */}
-          <div className="prel-form-card">
-            <h2>Nouveau prélèvement</h2>
+          {/* Left: Quick-add form (a slide-up bottom sheet on mobile) */}
+          <div className={`prel-form-card${showAddSheet ? ' prel-form-card--open' : ''}`}>
+            <h2>
+              Nouveau prélèvement
+              <button type="button" className="prel-form-card-close" onClick={() => setShowAddSheet(false)} aria-label="Fermer">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </h2>
 
             {categoriesError && (
               <div style={{
@@ -1043,6 +1049,7 @@ export default function PrelevementPage() {
                   commercial_id: fd.get('commercial_id') || undefined,
                 });
                 e.target.reset();
+                setShowAddSheet(false); // close the mobile bottom sheet
                 fetchExpenses();
                 toast?.success?.('Prélèvement déclaré');
               } catch (err) {
@@ -1266,6 +1273,13 @@ export default function PrelevementPage() {
               </div>
             )}
           </div>
+
+          {/* Mobile: FAB to open the add-form bottom sheet */}
+          <button className="prel-fab" onClick={() => setShowAddSheet(true)} aria-label="Nouveau prélèvement">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          {/* Mobile: backdrop behind the add-form sheet */}
+          {showAddSheet && <div className="prel-add-backdrop" onClick={() => setShowAddSheet(false)} />}
         </div>
       )}
 

@@ -274,11 +274,7 @@
 .prel-cat-actions {
   display: flex;
   gap: 4px;
-  opacity: 0;
-  transition: opacity .1s;
-}
-
-.prel-cat-item:hover .prel-cat-actions {
+  /* Always visible — rename/delete must work on touch (no hover on mobile). */
   opacity: 1;
 }
 
@@ -712,4 +708,125 @@
 @media (max-width: 760px) {
   .prel-table-wrap { display: none; }
   .prel-cards-view { display: block; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE UX — modal sheets, FAB add form, touch ergonomics
+   ═══════════════════════════════════════════════════════════ */
+.prel-fab,
+.prel-add-backdrop,
+.prel-form-card-close { display: none; }
+
+@keyframes prelSheetUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+@media (max-width: 760px) {
+  /* ── Modals → slide-up bottom sheets ── */
+  .prel-modal-overlay,
+  .prel-cat-modal-overlay { align-items: flex-end; }
+  .prel-modal,
+  .prel-cat-modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 92vh;
+    overflow-y: auto;
+    border-radius: 18px 18px 0 0;
+    animation: prelSheetUp .3s cubic-bezier(0.32, 0.72, 0, 1);
+    padding-bottom: calc(var(--space-5) + var(--safe-bottom, 0px));
+    -webkit-overflow-scrolling: touch;
+  }
+  .prel-modal-actions {
+    position: sticky;
+    bottom: 0;
+    background: var(--color-surface);
+    padding: var(--space-3) 0 0;
+    margin-top: var(--space-4);
+  }
+  .prel-modal-actions button { flex: 1; min-height: 44px; }
+
+  /* ── Inputs: 16px kills iOS focus-zoom; stack tight rows ── */
+  .prel-form-input,
+  .prel-form-select,
+  .prel-form-textarea,
+  .prel-filter-select,
+  .prel-cat-name-input { font-size: 16px; }
+  .prel-form-row { grid-template-columns: 1fr; }
+  .prel-cat-add-row { flex-direction: column; align-items: stretch; }
+
+  /* ── History filters + analyse stack ── */
+  .prel-table-filters { flex-direction: column; align-items: stretch; }
+  .prel-table-filters > * { width: 100%; }
+  .prel-stats-range { flex-direction: column; align-items: stretch; }
+  .prel-stats-presets { flex-wrap: wrap; }
+  .prel-top-table-wrap { overflow-x: auto; }
+
+  /* ── Déclaration add form → slide-up sheet, opened by the FAB ── */
+  .prel-form-card {
+    position: fixed;
+    left: 0; right: 0; bottom: 0; top: auto;
+    z-index: var(--z-modal);
+    max-height: 90vh;
+    overflow-y: auto;
+    border: none;
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.2);
+    transform: translateY(110%);
+    transition: transform .32s cubic-bezier(0.32, 0.72, 0, 1);
+    padding-bottom: calc(var(--space-6) + var(--safe-bottom, 0px));
+    -webkit-overflow-scrolling: touch;
+  }
+  .prel-form-card.prel-form-card--open { transform: translateY(0); }
+  .prel-form-card h2 {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--color-surface);
+    margin: calc(-1 * var(--space-5)) calc(-1 * var(--space-5)) var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .prel-form-card-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px; height: 32px;
+    border: none;
+    background: var(--color-surface-hover);
+    border-radius: 50%;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .prel-add-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: calc(var(--z-modal) - 1);
+    animation: prelFadeIn .2s;
+  }
+
+  .prel-fab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    right: 16px;
+    bottom: calc(56px + var(--safe-bottom, 0px) + 16px);
+    z-index: var(--z-chrome);
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    border: none;
+    background: var(--color-primary);
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(4, 120, 87, 0.4);
+    cursor: pointer;
+  }
+  .prel-fab:active { transform: scale(0.94); }
 }
