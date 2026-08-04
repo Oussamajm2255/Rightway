@@ -296,8 +296,17 @@ function SuperAdminView({ data, navigate, user }) {
                 <h3>Justifications</h3>
                 <div style={{display:'flex', flexDirection:'column', gap:'6px'}}>
                   {data.ecarts.map((ec) => (
-                    <div key={ec.id} style={{display:'flex', alignItems:'flex-start', gap:'10px', padding:'8px 0', borderBottom:'1px solid var(--color-border)', fontSize:'12.5px'}}>
-                      <span style={{flexShrink:0, fontWeight:600, color:'var(--color-text-secondary)', minWidth:90, fontSize:'11.5px'}}>
+                    <div
+                      key={ec.id}
+                      className="dash-ecart-row"
+                      onClick={() => ec.livraison_id && navigate(`/livraisons/${ec.livraison_id}`)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === 'Enter' && ec.livraison_id) navigate(`/livraisons/${ec.livraison_id}`); }}
+                      title={ec.livraison_id ? `Ouvrir ${ec.livraison_reference}` : undefined}
+                      style={{display:'flex', alignItems:'flex-start', gap:'10px', padding:'8px 10px', borderBottom:'1px solid var(--color-border)', fontSize:'12.5px', cursor:'pointer', borderRadius:'6px'}}
+                    >
+                      <span style={{flexShrink:0, fontWeight:600, color:'var(--color-primary)', minWidth:90, fontSize:'11.5px'}}>
                         {ec.livraison_reference}
                       </span>
                       <span style={{flexShrink:0, fontFamily:'var(--font-mono)', color:'var(--color-danger)', fontWeight:500, minWidth:70, textAlign:'right'}}>
