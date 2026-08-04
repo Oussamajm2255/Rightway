@@ -264,14 +264,10 @@ function SuperAdminView({ data, navigate, user }) {
       <DashboardTopbar subtitle="Vue d'ensemble · STE RIGHT WAY FOR TRADING" user={user} showExport />
       <div className="dash-content">
         {/* KPI Row */}
-        <div className="kpi-grid kpi-grid-3">
+        <div className="kpi-grid kpi-grid-4">
           <KpiCard icon={Icons.users} label="Commerciaux actifs" value={fmtInt(data.users_count)} sub="comptes activés" color={PALETTE.blue} onClick={() => navigate('/commercials')} />
           <KpiCard icon={Icons.package} label="Produits actifs" value={fmtInt(data.products_count)} sub="catalogue" color={PALETTE.emerald} onClick={() => navigate('/products')} />
           <KpiCard icon={Icons.truck} label="Livraisons actives" value={fmtInt(data.active_livraisons)} sub="EN_COURS + EN_RETOUR" color={PALETTE.orange} onClick={() => navigate('/livraisons')} />
-        </div>
-
-        {/* Alertes stock — above Stock Hero */}
-        <div className="kpi-grid" style={{ marginTop: 'var(--space-4)' }}>
           <KpiCard icon={Icons.alert} label="Alertes stock" value={fmtInt(data.stock_alerts_count)} sub="produits &lt; 20 unités" accent onClick={() => navigate('/stock')} />
         </div>
 
