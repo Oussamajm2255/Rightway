@@ -291,6 +291,33 @@
     padding: 3px 8px;
     max-width: 130px;
   }
+
+  /* ── Pending / offline lists ── */
+  .cm-pending {
+    padding: 12px 14px;
+  }
+  .cm-pending-header {
+    font-size: 11px;
+  }
+  .cm-pending-list {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .cm-pending-item {
+    width: 100%;
+    justify-content: space-between;
+    box-sizing: border-box;
+  }
+  .cm-pending-name {
+    font-size: 11px;
+  }
+  .cm-pending-badge,
+  .cm-offline-badge {
+    font-size: 9px;
+    white-space: normal;
+    text-align: right;
+    max-width: 55%;
+  }
 }
 
 /* ─── Pending: opted-in but no GPS signal yet ─── */
