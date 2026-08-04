@@ -757,3 +757,32 @@ select.filter-input { cursor: pointer; }
   .data-table { min-width: 700px; }
   .chart-wrap { max-height: 250px; }
 }
+
+/* ─── Mobile total card (Détail par produit) ─── */
+.ben-total-card {
+  border-left-color: var(--color-primary) !important;
+  background: var(--color-primary-subtle);
+  border-color: rgba(4, 120, 87, 0.25);
+}
+.ben-total-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--color-primary);
+  margin-bottom: var(--space-1);
+}
+.ben-total-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.ben-total-card .ben-card-margin b {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}

@@ -61,6 +61,7 @@ async function getBenefits(req, res) {
         margin_pct: Number(p.margin_pct),
       })),
       total: productData.total,
+      totals: productData.totals,
       page: pageNum,
       limit: limitNum,
     });

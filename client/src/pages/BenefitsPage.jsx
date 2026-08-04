@@ -82,6 +82,7 @@ export default function BenefitsPage() {
   const [stockVal, setStockVal] = useState(null);
   const [products, setProducts] = useState([]);
   const [total, setTotal] = useState(0);
+  const [totals, setTotals] = useState(null); // filtered-set aggregates (all pages)
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -119,6 +120,7 @@ export default function BenefitsPage() {
       setStockVal(data.stock || null);
       setProducts(data.products);
       setTotal(data.total);
+      setTotals(data.totals || null);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -254,6 +256,13 @@ export default function BenefitsPage() {
   const totalCA = products.reduce((s, p) => s + p.ca, 0);
   const totalCost = products.reduce((s, p) => s + p.cost, 0);
   const totalBenefit = products.reduce((s, p) => s + p.benefit, 0);
+  // Prefer the server's whole-filtered-set totals (all pages); fall back to the
+  // current page's sums if the API didn't return them.
+  const grand = totals || {
+    total_sold: products.reduce((s, p) => s + (p.total_sold || 0), 0),
+    ca: totalCA, cost: totalCost, benefit: totalBenefit,
+  };
+  const grandMargin = grand.ca > 0 ? (grand.benefit / grand.ca) * 100 : 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const showPagination = total > PAGE_SIZE;
 
@@ -496,11 +505,12 @@ export default function BenefitsPage() {
                 {products.length > 0 && (
                   <tfoot>
                     <tr>
-                      <td colSpan={6} className="total-label">TOTAL — {products.length} produit(s)</td>
-                      <td className="val-mono right" data-label="CA">{fmtDT(totalCA)}</td>
-                      <td className="val-mono right" data-label="Coût">{fmtDT(totalCost)}</td>
-                      <td className={`right ${totalBenefit >= 0 ? 'val-positive' : 'val-negative'}`} data-label="Bénéfice">{fmtDT(totalBenefit)}</td>
-                      <td />
+                      <td colSpan={5} className="total-label">TOTAL{category ? ` · ${category}` : ''} — {total} produit(s)</td>
+                      <td className="val-mono right" data-label="Qté Vendue">{fmtInt(grand.total_sold)}</td>
+                      <td className="val-mono right" data-label="CA">{fmtDT(grand.ca)}</td>
+                      <td className="val-mono right" data-label="Coût">{fmtDT(grand.cost)}</td>
+                      <td className={`right ${grand.benefit >= 0 ? 'val-positive' : 'val-negative'}`} data-label="Bénéfice">{fmtDT(grand.benefit)}</td>
+                      <td className="right" data-label="Marge %">{grand.ca > 0 ? fmtPct(grandMargin) : '—'}</td>
                     </tr>
                   </tfoot>
                 )}
@@ -514,7 +524,8 @@ export default function BenefitsPage() {
               ) : products.length === 0 ? (
                 <div className="empty-state">{Icon.search}<p>Aucun produit ne correspond aux critères de recherche.</p></div>
               ) : (
-                products.map((p) => {
+                <>
+                {products.map((p) => {
                   const benefitClass = p.benefit > 0 ? 'val-positive' : p.benefit < 0 ? 'val-negative' : 'val-neutral';
                   const mClass = marginClass(p.margin_pct);
                   const marginFillW = Math.min(Math.abs(p.margin_pct), 100);
@@ -563,7 +574,29 @@ export default function BenefitsPage() {
                       </div>
                     </article>
                   );
-                })
+                })}
+                <article className="ben-card ben-total-card">
+                  <div className="ben-total-head">
+                    <span>TOTAL{category ? ` · ${category}` : ''}</span>
+                    <span className="ben-total-count">{total} produit(s)</span>
+                  </div>
+                  <div className="ben-card-stats">
+                    <div><span>Qté Vendue</span><b>{fmtInt(grand.total_sold)}</b></div>
+                    <div><span>CA</span><b>{fmtDT(grand.ca)}</b></div>
+                    <div><span>Coût</span><b>{fmtDT(grand.cost)}</b></div>
+                  </div>
+                  <div className="ben-card-bottom">
+                    <div className="ben-card-benefit">
+                      <span>Bénéfice</span>
+                      <b className={grand.benefit >= 0 ? 'val-positive' : 'val-negative'}>{fmtDT(grand.benefit)}</b>
+                    </div>
+                    <div className="ben-card-margin">
+                      <span className="ben-card-margin-label">Marge</span>
+                      <b>{grand.ca > 0 ? fmtPct(grandMargin) : '—'}</b>
+                    </div>
+                  </div>
+                </article>
+                </>
               )}
             </div>
 

@@ -157,7 +157,13 @@ async function getProductBenefits({
       CASE WHEN COALESCE(ps.ca, 0) > 0
         THEN ROUND((COALESCE(ps.benefit, 0) / ps.ca) * 100, 1)
         ELSE 0 END                AS margin_pct,
-      COUNT(*) OVER()::INT        AS total_count
+      COUNT(*) OVER()::INT        AS total_count,
+      -- Window sums over the WHOLE filtered set (pre-LIMIT), so the "TOTAL"
+      -- row reflects the entire category/search, not just the current page.
+      SUM(COALESCE(ps.total_sold, 0)) OVER()::INT             AS grand_total_sold,
+      SUM(COALESCE(ps.ca, 0)) OVER()::NUMERIC(14,3)           AS grand_ca,
+      SUM(COALESCE(ps.cost, 0)) OVER()::NUMERIC(14,3)         AS grand_cost,
+      SUM(COALESCE(ps.benefit, 0)) OVER()::NUMERIC(14,3)      AS grand_benefit
     FROM products p
     LEFT JOIN product_sales ps ON p.id = ps.product_id
     WHERE p.is_active = true
@@ -169,10 +175,22 @@ async function getProductBenefits({
   const { rows } = await pool.query(query, params);
   const total = rows.length > 0 ? rows[0].total_count : 0;
 
-  // Strip total_count from rows before returning
-  const products = rows.map(({ total_count, ...rest }) => rest);
+  // Totals across the whole filtered set (from the window sums on any row).
+  const totals = rows.length > 0
+    ? {
+        total_sold: Number(rows[0].grand_total_sold),
+        ca: Number(rows[0].grand_ca),
+        cost: Number(rows[0].grand_cost),
+        benefit: Number(rows[0].grand_benefit),
+      }
+    : { total_sold: 0, ca: 0, cost: 0, benefit: 0 };
 
-  return { products, total };
+  // Strip the window/count helpers from rows before returning
+  const products = rows.map(
+    ({ total_count, grand_total_sold, grand_ca, grand_cost, grand_benefit, ...rest }) => rest
+  );
+
+  return { products, total, totals };
 }
 
 /**
