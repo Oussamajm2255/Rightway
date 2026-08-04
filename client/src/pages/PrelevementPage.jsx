@@ -1001,6 +1001,19 @@ export default function PrelevementPage() {
       </div>
 
       {tab === 'declaration' && (
+        <>
+          {/* Toolbar: management actions always visible, never trapped in the add-form sheet */}
+          <div className="prel-toolbar">
+            <button className="prel-cat-btn" onClick={() => setShowCatModal(true)}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              Gérer les catégories
+            </button>
+            <button className="prel-cat-btn" onClick={() => setShowRecurringModal(true)}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+              Gérer les charges fixes
+            </button>
+          </div>
+
         <div className="prel-decl-layout">
           {/* Left: Quick-add form (a slide-up bottom sheet on mobile) */}
           <div className={`prel-form-card${showAddSheet ? ' prel-form-card--open' : ''}`}>
@@ -1024,17 +1037,6 @@ export default function PrelevementPage() {
                 <strong>Erreur chargement catégories :</strong> {categoriesError}
               </div>
             )}
-
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-              <button className="prel-cat-btn" onClick={() => setShowCatModal(true)} style={{ flex: 1 }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-                Gérer les catégories
-              </button>
-              <button className="prel-cat-btn" onClick={() => setShowRecurringModal(true)} style={{ flex: 1 }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
-                Gérer les charges fixes
-              </button>
-            </div>
 
             <form onSubmit={async (e) => {
               e.preventDefault();
@@ -1281,6 +1283,7 @@ export default function PrelevementPage() {
           {/* Mobile: backdrop behind the add-form sheet */}
           {showAddSheet && <div className="prel-add-backdrop" onClick={() => setShowAddSheet(false)} />}
         </div>
+        </>
       )}
 
       {tab === 'analyse' && (

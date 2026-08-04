@@ -200,6 +200,51 @@
   text-decoration: underline;
 }
 
+/* ===== Toolbar row — management actions above the form/table ===== */
+.prel-toolbar {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.prel-toolbar .prel-cat-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  justify-content: center;
+  flex: 1;
+  min-height: 40px;
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+  text-decoration: none;
+}
+
+.prel-toolbar .prel-cat-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+@media (max-width: 760px) {
+  .prel-toolbar {
+    gap: var(--space-2);
+  }
+  .prel-toolbar .prel-cat-btn {
+    flex: 1 1 100%;
+    min-height: 44px;
+    font-size: 0.85rem;
+  }
+}
+
 .prel-cat-modal-overlay {
   position: fixed;
   inset: 0;
@@ -706,8 +751,8 @@
 }
 
 @media (max-width: 760px) {
-  .prel-table-wrap { display: none; }
-  .prel-cards-view { display: block; }
+  .prel-table-card .prel-table-wrap { display: none; }
+  .prel-table-card .prel-cards-view { display: block; }
 }
 
 /* ═══════════════════════════════════════════════════════════
