@@ -315,6 +315,8 @@
   .cm-offline-badge {
     font-size: 9px;
     white-space: normal;
+    word-break: break-word;
+    min-width: 0;
     text-align: right;
     max-width: 55%;
   }
@@ -419,5 +421,15 @@
   }
   .cm-pending-item {
     justify-content: space-between;
+  }
+  /* Force badge text to wrap on very narrow screens —
+     flex items need min-width:0 to shrink below content size */
+  .cm-pending-badge,
+  .cm-offline-badge {
+    white-space: normal;
+    word-break: break-word;
+    min-width: 0;
+    max-width: 55%;
+    font-size: 8.5px;
   }
 }
