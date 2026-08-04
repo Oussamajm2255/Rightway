@@ -270,12 +270,13 @@ function SuperAdminView({ data, navigate, user }) {
           <KpiCard icon={Icons.truck} label="Livraisons actives" value={fmtInt(data.active_livraisons)} sub="EN_COURS + EN_RETOUR" color={PALETTE.orange} onClick={() => navigate('/livraisons')} />
         </div>
 
-        {/* Stock hero — Depot + Chargé fused into a live total */}
-        <StockHero depot={data.depot_stock_ca} charge={data.voitures_ca} navigate={navigate} />
-        <div className="kpi-grid kpi-grid-2" style={{ marginTop: 'var(--space-4)' }}>
-          <KpiCard icon={Icons.percent} label="Commissions" value={fmtDT(data.commissions)} sub="10% du CA (hors salariés)" />
+        {/* Alertes stock — above Stock Hero */}
+        <div className="kpi-grid" style={{ marginTop: 'var(--space-4)' }}>
           <KpiCard icon={Icons.alert} label="Alertes stock" value={fmtInt(data.stock_alerts_count)} sub="produits &lt; 20 unités" accent onClick={() => navigate('/stock')} />
         </div>
+
+        {/* Stock hero — Depot + Chargé fused into a live total */}
+        <StockHero depot={data.depot_stock_ca} charge={data.voitures_ca} navigate={navigate} />
 
         {/* Live Commercials Map — first-contact KPI */}
         <CommercialsMap />
