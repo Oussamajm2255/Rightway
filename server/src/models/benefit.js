@@ -5,7 +5,7 @@ const { COMMISSION_RATE } = require('./livraison');
  * Global benefits KPIs — aggregated from all CLOTURE non-archived livraisons.
  * Accepts optional date range to scope metrics.
  */
-async function getGlobalBenefits({ date_from, date_to } = {}) {
+async function getGlobalBenefits({ date_from, date_to, commercial_id } = {}) {
   const params = [];
   let idx = 1;
 
@@ -27,6 +27,15 @@ async function getGlobalBenefits({ date_from, date_to } = {}) {
     ecartDateWhere += ` AND declared_at::date <= $${idx}`;
     stockDateWhere += ` AND COALESCE(movement_date, created_at::date) <= $${idx}`;
     params.push(date_to); idx++;
+  }
+  
+  if (commercial_id) {
+    dateWhere += ` AND l.commercial_id = $${idx}`;
+    prelevDateWhere += ` AND commercial_id = $${idx}`;
+    ecartDateWhere += ` AND commercial_id = $${idx}`;
+    // Stock purchases are global, so if filtering by commercial, return 0
+    stockDateWhere += ` AND 1=0`;
+    params.push(commercial_id); idx++;
   }
 
   const query = `
@@ -100,7 +109,7 @@ async function getGlobalBenefits({ date_from, date_to } = {}) {
  * Supports filters, sort, and pagination — mirrors the frontend table.
  */
 async function getProductBenefits({
-  category, search, date_from, date_to,
+  category, search, date_from, date_to, commercial_id,
   sort_by = 'benefit', sort_dir = 'desc',
   page = 1, limit = 50,
 } = {}) {
@@ -119,6 +128,7 @@ async function getProductBenefits({
   let dateWhere = '';
   if (date_from) { dateWhere += ` AND l.closed_at::date >= $${filterIdx++}`; params.push(date_from); }
   if (date_to)   { dateWhere += ` AND l.closed_at::date <= $${filterIdx++}`; params.push(date_to);   }
+  if (commercial_id) { dateWhere += ` AND l.commercial_id = $${filterIdx++}`; params.push(commercial_id); }
 
   // Build product-level filters
   let productWhere = '';

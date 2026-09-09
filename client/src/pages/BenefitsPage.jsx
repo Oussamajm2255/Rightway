@@ -89,10 +89,12 @@ export default function BenefitsPage() {
   // Filters — date range defaults to the current month ("Ce mois")
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
+  const [commercialId, setCommercialId] = useState('');
   const [datePreset, setDatePreset] = useState('month');
   const [dateFrom, setDateFrom] = useState(() => presetRange('month').from);
   const [dateTo, setDateTo] = useState(() => presetRange('month').to);
   const [categories, setCategories] = useState([]);
+  const [commercials, setCommercials] = useState([]);
 
   // Sort & Pagination
   const [sortCol, setSortCol] = useState('benefit');
@@ -108,6 +110,7 @@ export default function BenefitsPage() {
       const params = new URLSearchParams();
       if (search) params.append('search', search);
       if (category) params.append('category', category);
+      if (commercialId) params.append('commercial_id', commercialId);
       if (dateFrom) params.append('date_from', dateFrom);
       if (dateTo) params.append('date_to', dateTo);
       params.append('sort_by', sortCol);
@@ -126,7 +129,7 @@ export default function BenefitsPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, category, dateFrom, dateTo, sortCol, sortDir, page]);
+  }, [search, category, commercialId, dateFrom, dateTo, sortCol, sortDir, page]);
 
   // ─── Fetch categories ───
   const fetchCategories = useCallback(async () => {
@@ -136,8 +139,16 @@ export default function BenefitsPage() {
     } catch { /* ignore */ }
   }, []);
 
+  const fetchCommercials = useCallback(async () => {
+    try {
+      const data = await apiGet('/users/commercials');
+      setCommercials(data.users || []);
+    } catch { /* ignore */ }
+  }, []);
+
   useEffect(() => { fetchData(); }, [fetchData]);
   useEffect(() => { fetchCategories(); }, [fetchCategories]);
+  useEffect(() => { fetchCommercials(); }, [fetchCommercials]);
 
   // ─── Chart ───
   useEffect(() => {
@@ -231,7 +242,7 @@ export default function BenefitsPage() {
 
   function resetFilters() {
     const r = presetRange('month');
-    setSearch(''); setCategory('');
+    setSearch(''); setCategory(''); setCommercialId('');
     setDatePreset('month'); setDateFrom(r.from); setDateTo(r.to);
     setSortCol('benefit'); setSortDir('desc'); setPage(1);
   }
@@ -310,6 +321,13 @@ export default function BenefitsPage() {
               {categories.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
+          <div className="filter-group">
+            <label className="filter-label">Commercial</label>
+            <select className="filter-input" value={commercialId} onChange={(e) => { setCommercialId(e.target.value); handleFilterChange(); }}>
+              <option value="">Tous</option>
+              {commercials.map((c) => <option key={c.id} value={c.id}>{c.full_name}</option>)}
+            </select>
+          </div>
           <div className="date-presets">
             {DATE_PRESETS.map((p) => (
               <button
@@ -333,10 +351,28 @@ export default function BenefitsPage() {
           </div>
         </div>
 
+        {/* ═══ COMMERCIAL CONTEXT BANNER ═══ */}
+        {commercialId && (() => {
+          const com = commercials.find((c) => c.id === commercialId);
+          return com ? (
+            <div className="commercial-filter-banner">
+              <div className="cfb-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>Ventes de <strong>{com.full_name}</strong></span>
+                <span className="cfb-role-badge">{com.role?.replace('_', ' ')}</span>
+              </div>
+              <button className="cfb-clear" onClick={() => { setCommercialId(''); handleFilterChange(); }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                Voir tous les commerciaux
+              </button>
+            </div>
+          ) : null;
+        })()}
+
         {/* ═══ SECTION A: KPI GLOBALS ═══ */}
         <div>
           <div className="section-header">
-            <h2>Bénéfice global</h2>
+            <h2>{commercialId ? 'Performance du commercial' : 'Bénéfice global'}</h2>
             <div className="section-header-line" />
             <span className="period-label">{periodLabel}</span>
           </div>
@@ -386,14 +422,14 @@ export default function BenefitsPage() {
                 <div className="kpi-sub">10% du CA (commerciaux)</div>
               </div>
               {/* Achats de Stock */}
-              <div className="kpi-card">
+              <div className={`kpi-card ${commercialId ? 'kpi-muted' : ''}`} style={commercialId ? { opacity: 0.5 } : {}}>
                 <div className="kpi-accent" style={{ background: '#ea580c' }} />
                 <div className="kpi-icon-wrap" style={{ background: 'rgba(234,88,12,.1)', color: '#ea580c' }}>
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
                 </div>
                 <div className="kpi-label">Achats de Stock</div>
-                <div className="kpi-value" style={{ fontSize: 16 }}>{fmtDT(globalData.stock_purchase_total)}</div>
-                <div className="kpi-sub">coût total des entrées de stock</div>
+                <div className="kpi-value" style={{ fontSize: 16 }}>{commercialId ? '—' : fmtDT(globalData.stock_purchase_total)}</div>
+                <div className="kpi-sub">{commercialId ? 'Non applicable par commercial' : 'coût total des entrées de stock'}</div>
               </div>
               {/* Marge Moyenne */}
               <div className="kpi-card">
@@ -433,7 +469,7 @@ export default function BenefitsPage() {
         {/* ═══ SECTION B: TABLEAU ═══ */}
         <div>
           <div className="section-header">
-            <h2>Détail par produit</h2>
+            <h2>{commercialId ? 'Ventes par produit' : 'Détail par produit'}</h2>
             <div className="section-header-line" />
           </div>
 
@@ -505,7 +541,7 @@ export default function BenefitsPage() {
                 {products.length > 0 && (
                   <tfoot>
                     <tr>
-                      <td colSpan={5} className="total-label">TOTAL{category ? ` · ${category}` : ''} — {total} produit(s)</td>
+                      <td colSpan={5} className="total-label">TOTAL{category ? ` · ${category}` : ''}{commercialId && commercials.find(c => c.id === commercialId) ? ` · ${commercials.find(c => c.id === commercialId).full_name}` : ''} — {total} produit(s)</td>
                       <td className="val-mono right" data-label="Qté Vendue">{fmtInt(grand.total_sold)}</td>
                       <td className="val-mono right" data-label="CA">{fmtDT(grand.ca)}</td>
                       <td className="val-mono right" data-label="Coût">{fmtDT(grand.cost)}</td>
@@ -577,7 +613,7 @@ export default function BenefitsPage() {
                 })}
                 <article className="ben-card ben-total-card">
                   <div className="ben-total-head">
-                    <span>TOTAL{category ? ` · ${category}` : ''}</span>
+                    <span>TOTAL{category ? ` · ${category}` : ''}{commercialId && commercials.find(c => c.id === commercialId) ? ` · ${commercials.find(c => c.id === commercialId).full_name}` : ''}</span>
                     <span className="ben-total-count">{total} produit(s)</span>
                   </div>
                   <div className="ben-card-stats">

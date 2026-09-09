@@ -16,12 +16,13 @@ async function getBenefits(req, res) {
       search: search || null,
       date_from: date_from || null,
       date_to: date_to || null,
+      commercial_id: req.query.commercial_id || null,
     };
 
     // Run queries in parallel. Stock valuation is a live snapshot — it does
     // NOT take the date range (unlike the profit KPIs).
     const [global, productData, stockVal] = await Promise.all([
-      getGlobalBenefits({ date_from: filters.date_from, date_to: filters.date_to }),
+      getGlobalBenefits({ date_from: filters.date_from, date_to: filters.date_to, commercial_id: filters.commercial_id }),
       getProductBenefits({
         ...filters,
         sort_by, sort_dir,
