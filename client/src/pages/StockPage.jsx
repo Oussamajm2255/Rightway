@@ -616,8 +616,8 @@ function StockPage() {
 
           {/* Adjust Modal */}
           {showAdjustModal && (
-            <div className="modal-overlay" onClick={closeAdjustModal}>
-              <div className={`modal-card modal-form modal-adjust ${adjustMode === 'multiple' ? 'modal-adjust-multi' : ''}`} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-overlay">
+              <div className={`modal-card modal-form modal-adjust ${adjustMode === 'multiple' ? 'modal-adjust-multi' : ''}`}>
                 {adjustMode === 'multiple' ? (
                   <>
                     <h3 className="modal-title">
