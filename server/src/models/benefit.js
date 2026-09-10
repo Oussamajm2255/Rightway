@@ -29,14 +29,38 @@ async function getGlobalBenefits({ date_from, date_to, commercial_id } = {}) {
     params.push(date_to); idx++;
   }
   
+  // When scoping to a specific commercial:
+  // - dateWhere already filters livraisons by commercial_id (l.commercial_id = $N)
+  // - prelevements has no commercial_id column → set to 0 (they are global company expenses)
+  // - livraison_ecarts links via livraison_id, so we must join livraisons to filter
+  // - stock_purchases are global → set to 0
+  let commercialJoinEcart = '';
   if (commercial_id) {
     dateWhere += ` AND l.commercial_id = $${idx}`;
-    prelevDateWhere += ` AND commercial_id = $${idx}`;
-    ecartDateWhere += ` AND commercial_id = $${idx}`;
-    // Stock purchases are global, so if filtering by commercial, return 0
+    // prelevements: no commercial_id col — will be forced to 0 via a flag in the CTE
+    // ecarts: need to join livraisons
+    commercialJoinEcart = `JOIN livraisons le_l ON le.livraison_id = le_l.id AND le_l.commercial_id = $${idx}`;
+    // stock purchases: global, return 0
     stockDateWhere += ` AND 1=0`;
     params.push(commercial_id); idx++;
   }
+
+  // Build the prelevement CTE: skip (SUM = 0) if filtering by commercial
+  const prelevCTE = commercial_id
+    ? `prelevement_total AS (SELECT 0::NUMERIC(12,3) AS total)`
+    : `prelevement_total AS (
+        SELECT COALESCE(SUM(amount), 0)::NUMERIC(12,3) AS total
+        FROM prelevements
+        WHERE 1=1 ${prelevDateWhere}
+      )`;
+
+  // Build the ecart CTE: join through livraisons if filtering by commercial
+  const ecartCTE = `ecart_total AS (
+      SELECT COALESCE(SUM(le.amount), 0)::NUMERIC(12,3) AS total
+      FROM livraison_ecarts le
+      ${commercialJoinEcart}
+      WHERE 1=1 ${ecartDateWhere}
+    )`;
 
   const query = `
     WITH product_sales AS (
@@ -63,16 +87,8 @@ async function getGlobalBenefits({ date_from, date_to, commercial_id } = {}) {
       WHERE l.status = 'CLOTURE' AND l.is_archived = false
         ${dateWhere}
     ),
-    prelevement_total AS (
-      SELECT COALESCE(SUM(amount), 0)::NUMERIC(12,3) AS total
-      FROM prelevements
-      WHERE 1=1 ${prelevDateWhere}
-    ),
-    ecart_total AS (
-      SELECT COALESCE(SUM(amount), 0)::NUMERIC(12,3) AS total
-      FROM livraison_ecarts
-      WHERE 1=1 ${ecartDateWhere}
-    ),
+    ${prelevCTE},
+    ${ecartCTE},
     stock_purchase_total AS (
       -- Total cash spent buying stock in the period: each manual addition is a
       -- purchase at its snapshotted unit_price (see stock-cost migration).
