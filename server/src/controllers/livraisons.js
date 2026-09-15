@@ -600,4 +600,68 @@ async function confirmPaymentEcart(req, res) {
   }
 }
 
-module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier, archiveLivraison, demanderAnnulation, confirmerAnnulation, demanderReouverture, confirmerReouverture, demanderRetourCreation, confirmerRetourCreation, declarerAvance, getAvances, accepterAvance, refuserAvance, modifierAvancePaiement, realtimeData, declarerEcart, listEcarts, confirmerEcart, requestPaymentEcart, confirmPaymentEcart };
+// ═══════════════════════════════════════════════
+// DISTRIBUTION (Super Admin analytics view)
+// ═══════════════════════════════════════════════
+
+/**
+ * GET /livraisons/distribution
+ * Returns paginated livraisons with per-livraison distribution stats
+ * (total charged, total sold, remaining, CA, declaration count).
+ * Also returns the list of commercials for the filter dropdown.
+ * SUPER_ADMIN only.
+ */
+async function getDistributionList(req, res) {
+  try {
+    const {
+      reference,
+      commercial_id,
+      status,
+      date_from,
+      date_to,
+      include_archived,
+      page = '1',
+      limit: limitStr = '50',
+    } = req.query;
+
+    const limit = Math.min(Math.max(parseInt(limitStr, 10) || 50, 1), 100);
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const offset = (pageNum - 1) * limit;
+
+    const filters = {
+      reference: reference || undefined,
+      commercial_id: commercial_id || undefined,
+      status: status || undefined,
+      date_from: date_from || undefined,
+      date_to: date_to || undefined,
+      include_archived: include_archived === 'true',
+      limit,
+      offset,
+    };
+
+    const [rows, total] = await Promise.all([
+      livraisonModel.findAllWithDistributionStats(filters),
+      livraisonModel.countDistributionStats(filters),
+    ]);
+
+    // Fetch the distinct list of commercials for the filter dropdown
+    const { rows: commercials } = await pool.query(
+      `SELECT id, full_name FROM users WHERE role = 'COMMERCIAL' AND is_active = true ORDER BY full_name`
+    );
+
+    res.json({
+      livraisons: rows,
+      total,
+      page: pageNum,
+      limit,
+      pages: Math.ceil(total / limit),
+      commercials,
+    });
+  } catch (err) {
+    console.error('getDistributionList error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier, archiveLivraison, demanderAnnulation, confirmerAnnulation, demanderReouverture, confirmerReouverture, demanderRetourCreation, confirmerRetourCreation, declarerAvance, getAvances, accepterAvance, refuserAvance, modifierAvancePaiement, realtimeData, declarerEcart, listEcarts, confirmerEcart, requestPaymentEcart, confirmPaymentEcart, getDistributionList };
+

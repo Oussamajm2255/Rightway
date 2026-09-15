@@ -499,6 +499,7 @@ const MONTHS = [
 const FREQUENCY_META = {
   WEEKLY: { label: 'Hebdomadaire', bg: '#EFF6FF', color: '#1D4ED8' },
   MONTHLY: { label: 'Mensuel', bg: '#ECFDF5', color: '#047857' },
+  QUARTERLY: { label: 'Trimestriel', bg: '#FEF3C7', color: '#D97706' },
   YEARLY: { label: 'Annuel', bg: '#F5F3FF', color: '#6D28D9' },
 };
 
@@ -513,9 +514,9 @@ function cycleLabel(item) {
     const wd = WEEKDAYS.find(w => w.value === item.generation_weekday);
     return `Chaque ${wd ? wd.label.toLowerCase() : '—'}`;
   }
-  if (item.frequency === 'YEARLY') {
+  if (item.frequency === 'YEARLY' || item.frequency === 'QUARTERLY') {
     const m = MONTHS.find(m => m.value === item.generation_month);
-    return `Le ${item.generation_day} ${m ? m.label.toLowerCase() : '—'} (chaque année)`;
+    return `Le ${item.generation_day} ${m ? m.label.toLowerCase() : '—'} (chaque ${item.frequency === 'YEARLY' ? 'année' : 'trimestre'})`;
   }
   const days = (item.generation_days && item.generation_days.length > 0)
     ? item.generation_days
@@ -557,7 +558,7 @@ function RecurringModal({ categories, commercials, onClose }) {
     };
     if (form.frequency === 'WEEKLY') {
       payload.generation_weekday = parseInt(form.generation_weekday) || 1;
-    } else if (form.frequency === 'YEARLY') {
+    } else if (form.frequency === 'YEARLY' || form.frequency === 'QUARTERLY') {
       payload.generation_month = parseInt(form.generation_month) || 1;
       payload.generation_day = parseInt(form.generation_day) || 1;
     } else {
@@ -680,6 +681,7 @@ function RecurringModal({ categories, commercials, onClose }) {
             >
               <option value="WEEKLY">Hebdomadaire</option>
               <option value="MONTHLY">Mensuel</option>
+              <option value="QUARTERLY">Trimestriel</option>
               <option value="YEARLY">Annuel</option>
             </select>
 
@@ -714,13 +716,13 @@ function RecurringModal({ categories, commercials, onClose }) {
               </div>
             )}
 
-            {form.frequency === 'YEARLY' && (
+            {(form.frequency === 'YEARLY' || form.frequency === 'QUARTERLY') && (
               <>
                 <select
                   className="prel-form-select"
                   value={form.generation_month}
                   onChange={e => setForm({...form, generation_month: e.target.value})}
-                  title="Mois"
+                  title={form.frequency === 'YEARLY' ? 'Mois' : 'Mois de référence'}
                   style={{ flex: 1 }}
                 >
                   {MONTHS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
@@ -747,13 +749,15 @@ function RecurringModal({ categories, commercials, onClose }) {
                 const freq = FREQUENCY_META[item.frequency] || FREQUENCY_META.MONTHLY;
                 return (
                   <li key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--color-border-light)' }}>
-                    <div>
-                      <div style={{ fontWeight: 500, opacity: item.is_active ? 1 : 0.5 }}>{item.description || 'Sans description'} - {formatMoney(item.amount)}</div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--color-text-tertiary)', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                    <div style={{ flex: 1, minWidth: 0, paddingRight: '8px' }}>
+                      <div style={{ fontWeight: 500, opacity: item.is_active ? 1 : 0.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {item.description || 'Sans description'} - {formatMoney(item.amount)}
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--color-text-tertiary)', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px', flexWrap: 'wrap' }}>
                         <span>{item.parent_category_name ? `${item.parent_category_name} › ` : ''}{item.category_name}</span>
                         <span>&bull;</span>
                         <span
-                          style={{ background: freq.bg, color: freq.color, borderRadius: '999px', padding: '1px 8px', fontWeight: 600, fontSize: '0.72rem' }}
+                          style={{ background: freq.bg, color: freq.color, borderRadius: '999px', padding: '1px 8px', fontWeight: 600, fontSize: '0.72rem', whiteSpace: 'nowrap' }}
                         >
                           {freq.label}
                         </span>
@@ -763,8 +767,8 @@ function RecurringModal({ categories, commercials, onClose }) {
                         )}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button className="btn btn-ghost btn-sm" style={{ color: item.is_active ? 'var(--color-success)' : 'var(--color-text-tertiary)' }} onClick={() => handleToggle(item.id, item.is_active)}>
+                    <div style={{ display: 'flex', gap: '4px', flexShrink: 0, alignItems: 'center' }}>
+                      <button className="btn btn-ghost btn-sm" style={{ color: item.is_active ? 'var(--color-success)' : 'var(--color-text-tertiary)', padding: '4px' }} onClick={() => handleToggle(item.id, item.is_active)}>
                         {item.is_active ? 'Actif' : 'Inactif'}
                       </button>
                       <button className="prel-cat-icon-btn" onClick={() => handleEdit(item)} title="Modifier"><IconEdit /></button>

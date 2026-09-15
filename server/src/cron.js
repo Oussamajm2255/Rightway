@@ -130,6 +130,17 @@ async function checkAndGenerateRecurring(today) {
           periodLabel: String(today.getFullYear()),
         });
       }
+    } else if (r.frequency === 'QUARTERLY') {
+      if (r.generation_month && r.generation_day === dayOfMonth) {
+        // Fire if the current month matches the anchor month modulo 3
+        if ((month - 1) % 3 === (r.generation_month - 1) % 3) {
+          const quarter = Math.ceil(month / 3);
+          occurrences.push({
+            ref: `REC-${r.id}-${today.getFullYear()}-Q${quarter}`,
+            periodLabel: `T${quarter} ${today.getFullYear()}`,
+          });
+        }
+      }
     } else {
       // MONTHLY — generation_days is the source of truth (backfilled from
       // generation_day by migration); a configured day beyond this month's

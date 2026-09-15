@@ -76,7 +76,7 @@ const migrations = [
   // instead of a fixed monthly-only schedule.
   `ALTER TABLE recurring_prelevements ADD COLUMN IF NOT EXISTS frequency VARCHAR(20) DEFAULT 'MONTHLY'`,
   `ALTER TABLE recurring_prelevements DROP CONSTRAINT IF EXISTS recurring_prelevements_frequency_check`,
-  `ALTER TABLE recurring_prelevements ADD CONSTRAINT recurring_prelevements_frequency_check CHECK (frequency IN ('WEEKLY', 'MONTHLY', 'YEARLY'))`,
+  `ALTER TABLE recurring_prelevements ADD CONSTRAINT recurring_prelevements_frequency_check CHECK (frequency IN ('WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY'))`,
   `ALTER TABLE recurring_prelevements ADD COLUMN IF NOT EXISTS generation_weekday INTEGER CHECK (generation_weekday BETWEEN 1 AND 7)`,
   `ALTER TABLE recurring_prelevements ADD COLUMN IF NOT EXISTS generation_month INTEGER CHECK (generation_month BETWEEN 1 AND 12)`,
 

@@ -789,12 +789,154 @@ async function confirmerAnnulation(id, admin_id) {
   }
 }
 
+/**
+ * Distribution list — livraisons with aggregated distribution stats.
+ * Returns per-livraison: total charged, total sold, remaining, sales log
+ * entry count. Supports server-side filtering and pagination.
+ */
+async function findAllWithDistributionStats({
+  reference,
+  commercial_id,
+  status,
+  date_from,
+  date_to,
+  include_archived = false,
+  limit = 50,
+  offset = 0,
+} = {}) {
+  let query = `
+    SELECT
+      l.id,
+      l.reference,
+      l.status,
+      l.created_at,
+      l.closed_at,
+      l.confirmed_by_commercial_at,
+      l.end_declared_at,
+      l.is_archived,
+      c.full_name          AS commercial_name,
+      c.id                 AS commercial_id,
+      c.vehicle_name,
+      c.vehicle_plate,
+      a.full_name          AS admin_name,
+      -- Product / quantity aggregates
+      COALESCE(it.product_count, 0)     AS product_count,
+      COALESCE(it.total_qte_chargee, 0) AS total_qte_chargee,
+      COALESCE(it.total_qte_vendue, 0)  AS total_qte_vendue,
+      COALESCE(it.total_ca, 0)          AS total_ca,
+      -- Sales-log (real-time declaration) count
+      COALESCE(sl.log_count, 0)         AS sales_log_count
+    FROM livraisons l
+    JOIN users c ON l.commercial_id = c.id
+    JOIN users a ON l.admin_id     = a.id
+    LEFT JOIN (
+      SELECT
+        livraison_id,
+        COUNT(*)                                         AS product_count,
+        SUM(qte_chargee)                                 AS total_qte_chargee,
+        SUM(qte_vendue)                                  AS total_qte_vendue,
+        SUM(qte_vendue * prix_ttc)                       AS total_ca
+      FROM livraison_items
+      GROUP BY livraison_id
+    ) it ON it.livraison_id = l.id
+    LEFT JOIN (
+      SELECT livraison_id, COUNT(*) AS log_count
+      FROM livraison_sales_log
+      GROUP BY livraison_id
+    ) sl ON sl.livraison_id = l.id
+    WHERE 1=1
+  `;
+
+  const params = [];
+  let idx = 1;
+
+  if (!include_archived) {
+    query += ` AND l.is_archived = false`;
+  }
+
+  if (reference) {
+    query += ` AND l.reference ILIKE $${idx++}`;
+    params.push(`%${reference}%`);
+  }
+
+  if (commercial_id) {
+    query += ` AND l.commercial_id = $${idx++}`;
+    params.push(commercial_id);
+  }
+
+  if (status) {
+    query += ` AND l.status = $${idx++}`;
+    params.push(status);
+  }
+
+  if (date_from) {
+    query += ` AND l.created_at >= $${idx++}`;
+    params.push(date_from);
+  }
+
+  if (date_to) {
+    query += ` AND l.created_at <= $${idx++}`;
+    params.push(date_to);
+  }
+
+  query += ` ORDER BY l.created_at DESC LIMIT $${idx++} OFFSET $${idx++}`;
+  params.push(limit, offset);
+
+  const { rows } = await pool.query(query, params);
+  return rows;
+}
+
+/**
+ * Count total matching livraisons for pagination metadata.
+ */
+async function countDistributionStats({
+  reference,
+  commercial_id,
+  status,
+  date_from,
+  date_to,
+  include_archived = false,
+} = {}) {
+  let query = `SELECT COUNT(*) AS total FROM livraisons l WHERE 1=1`;
+  const params = [];
+  let idx = 1;
+
+  if (!include_archived) {
+    query += ` AND l.is_archived = false`;
+  }
+  if (reference) {
+    query += ` AND l.reference ILIKE $${idx++}`;
+    params.push(`%${reference}%`);
+  }
+  if (commercial_id) {
+    query += ` AND l.commercial_id = $${idx++}`;
+    params.push(commercial_id);
+  }
+  if (status) {
+    query += ` AND l.status = $${idx++}`;
+    params.push(status);
+  }
+  if (date_from) {
+    query += ` AND l.created_at >= $${idx++}`;
+    params.push(date_from);
+  }
+  if (date_to) {
+    query += ` AND l.created_at <= $${idx++}`;
+    params.push(date_to);
+  }
+
+  const { rows } = await pool.query(query, params);
+  return Number(rows[0].total);
+}
+
 module.exports = {
   COMMISSION_RATE,
   generateReference,
   create,
   findById,
   findAll,
+  findAllWithDistributionStats,
+  countDistributionStats,
   confirmSortie,
   getSalesState,
   recordSales,

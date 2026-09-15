@@ -388,7 +388,7 @@ async function listRecurringPrelevements(_req, res) {
   }
 }
 
-const RECURRING_FREQUENCIES = ['WEEKLY', 'MONTHLY', 'YEARLY'];
+const RECURRING_FREQUENCIES = ['WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY'];
 
 // Normalizes a monthly days list: accepts an array (or single day as
 // fallback), dedupes, sorts, validates 1-31. Days beyond the current
@@ -407,7 +407,7 @@ function normalizeMonthlyDays({ generation_days, generation_day }) {
 // skips a year on short Februaries.
 function validateCycleFields(frequency, { generation_day, generation_weekday, generation_month, generation_days }) {
   if (!RECURRING_FREQUENCIES.includes(frequency)) {
-    return 'Cycle invalide. Choisissez Hebdomadaire, Mensuel ou Annuel.';
+    return 'Cycle invalide. Choisissez Hebdomadaire, Mensuel, Trimestriel ou Annuel.';
   }
   if (frequency === 'WEEKLY') {
     const wd = parseInt(generation_weekday, 10);
@@ -418,14 +418,14 @@ function validateCycleFields(frequency, { generation_day, generation_weekday, ge
     if (!normalizeMonthlyDays({ generation_days, generation_day })) {
       return 'Au moins un jour du mois (1-31) est requis pour un cycle mensuel.';
     }
-  } else if (frequency === 'YEARLY') {
+  } else if (frequency === 'YEARLY' || frequency === 'QUARTERLY') {
     const month = parseInt(generation_month, 10);
     const day = parseInt(generation_day, 10);
     if (!month || month < 1 || month > 12) {
-      return 'Le mois est requis pour un cycle annuel.';
+      return `Le mois de référence est requis pour un cycle ${frequency === 'YEARLY' ? 'annuel' : 'trimestriel'}.`;
     }
     if (!day || day < 1 || day > 28) {
-      return 'Le jour du mois (1-28) est requis pour un cycle annuel.';
+      return `Le jour du mois (1-28) est requis pour un cycle ${frequency === 'YEARLY' ? 'annuel' : 'trimestriel'}.`;
     }
   }
   return null;
@@ -464,9 +464,9 @@ async function createRecurringPrelevement(req, res) {
       // generation_day kept in sync with the first monthly day for
       // backward compatibility with anything still reading it.
       generation_day: frequency === 'MONTHLY' ? monthlyDays[0]
-        : frequency === 'YEARLY' ? parseInt(req.body.generation_day, 10) : null,
+        : (frequency === 'YEARLY' || frequency === 'QUARTERLY') ? parseInt(req.body.generation_day, 10) : null,
       generation_weekday: frequency === 'WEEKLY' ? parseInt(req.body.generation_weekday, 10) : null,
-      generation_month: frequency === 'YEARLY' ? parseInt(req.body.generation_month, 10) : null,
+      generation_month: (frequency === 'YEARLY' || frequency === 'QUARTERLY') ? parseInt(req.body.generation_month, 10) : null,
       generation_days: monthlyDays,
       commercial_id: req.body.commercial_id || null,
     });
@@ -524,9 +524,9 @@ async function updateRecurringPrelevement(req, res) {
       const monthlyDays = frequency === 'MONTHLY' ? normalizeMonthlyDays(merged) : null;
       fields.frequency = frequency;
       fields.generation_day = frequency === 'MONTHLY' ? monthlyDays[0]
-        : frequency === 'YEARLY' ? parseInt(merged.generation_day, 10) : null;
+        : (frequency === 'YEARLY' || frequency === 'QUARTERLY') ? parseInt(merged.generation_day, 10) : null;
       fields.generation_weekday = frequency === 'WEEKLY' ? parseInt(merged.generation_weekday, 10) : null;
-      fields.generation_month = frequency === 'YEARLY' ? parseInt(merged.generation_month, 10) : null;
+      fields.generation_month = (frequency === 'YEARLY' || frequency === 'QUARTERLY') ? parseInt(merged.generation_month, 10) : null;
       fields.generation_days = monthlyDays;
     }
 

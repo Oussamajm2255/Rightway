@@ -35,6 +35,7 @@ const {
   confirmerEcart,
   requestPaymentEcart,
   confirmPaymentEcart,
+  getDistributionList,
 } = require('../controllers/livraisons');
 
 router.use(authenticate);
@@ -83,6 +84,10 @@ async function requireLivraisonOwnership(req, res, next) {
 
 router.post('/', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL'), createLivraison);
 router.get('/', listLivraisons);
+
+// Distribution analytics — SUPER_ADMIN only. Must be before /:id to avoid route collision.
+router.get('/distribution', authorize('SUPER_ADMIN'), getDistributionList);
+
 router.get('/:id', requireLivraisonOwnership, getLivraison);
 router.put('/:id/confirm-sortie', authorize('COMMERCIAL'), confirmSortie);
 

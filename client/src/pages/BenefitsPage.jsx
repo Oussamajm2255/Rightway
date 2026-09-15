@@ -97,7 +97,7 @@ export default function BenefitsPage() {
   const [commercials, setCommercials] = useState([]);
 
   // Sort & Pagination
-  const [sortCol, setSortCol] = useState('benefit');
+  const [sortCol, setSortCol] = useState('ca');
   const [sortDir, setSortDir] = useState('desc');
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 50;
@@ -244,7 +244,7 @@ export default function BenefitsPage() {
     const r = presetRange('month');
     setSearch(''); setCategory(''); setCommercialId('');
     setDatePreset('month'); setDateFrom(r.from); setDateTo(r.to);
-    setSortCol('benefit'); setSortDir('desc'); setPage(1);
+    setSortCol('ca'); setSortDir('desc'); setPage(1);
   }
 
   function exportCSV() {

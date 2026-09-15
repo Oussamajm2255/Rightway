@@ -10,6 +10,7 @@ import TruckLoader from './components/TruckLoader';
 import { ToastProvider } from './context/ToastContext';
 import { PushProvider } from './context/PushContext';
 import { CategoryPaletteProvider } from './context/CategoryPaletteContext';
+import ScrollToTop from './components/ScrollToTop';
 
 // Eager — critical path, always loaded
 import LoginPage from './pages/LoginPage';
@@ -30,6 +31,7 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const PrelevementPage = lazy(() => import('./pages/PrelevementPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const AdminSettingsPage = lazy(() => import('./pages/AdminSettingsPage'));
+const DistributionPage = lazy(() => import('./pages/DistributionPage'));
 
 function AppRoutes() {
   const { user, loading } = useAuth();
@@ -204,6 +206,16 @@ function AppRoutesInner() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/distribution"
+        element={
+          <ProtectedRoute>
+            <RoleGuard roles={['SUPER_ADMIN']}>
+              <DistributionPage />
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
@@ -216,6 +228,7 @@ function App() {
         <ToastProvider>
           <PushProvider>
             <CategoryPaletteProvider>
+              <ScrollToTop />
               <AppRoutes />
               <SessionExpiryModal />
             </CategoryPaletteProvider>

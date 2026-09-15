@@ -144,6 +144,21 @@ function IconPrelevement() {
   );
 }
 
+function IconDistribution() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 3h7v7H3z"/>
+      <path d="M14 3h7v7h-7z"/>
+      <path d="M14 14h7v7h-7z"/>
+      <path d="M3 14h7v7H3z"/>
+      <path d="M10 6.5h4"/>
+      <path d="M17.5 10v4"/>
+      <path d="M6.5 10v4"/>
+      <path d="M10 17.5h4"/>
+    </svg>
+  );
+}
+
 const ICON_MAP = {
   dashboard: IconDashboard,
   users: IconUsers,
@@ -154,6 +169,7 @@ const ICON_MAP = {
   commercials: IconCommercials,
   benefits: IconBenefits,
   prelevement: IconPrelevement,
+  distribution: IconDistribution,
   settings: IconSettings,
   logout: IconLogout,
 };
@@ -540,6 +556,7 @@ function AppLayout({ children }) {
     navItems.push({ to: '/products', label: 'Produits', icon: 'products' });
     navItems.push({ to: '/stock', label: 'Stock', icon: 'stock' });
     navItems.push({ to: '/livraisons', label: 'Livraisons', icon: 'livraisons' });
+    navItems.push({ to: '/distribution', label: 'Distribution', icon: 'distribution' });
     navItems.push({ to: '/commercials', label: 'Commerciaux', icon: 'commercials' });
     navItems.push({ to: '/benefits', label: 'Bénéfices', icon: 'benefits' });
     navItems.push({ to: '/prelevements', label: 'Prélèvements', icon: 'prelevement' });
@@ -577,6 +594,7 @@ function AppLayout({ children }) {
     if (path.startsWith('/livraisons/nouvelle')) return 'Nouvelle livraison';
     if (path.startsWith('/livraisons/') && path.split('/').length === 3) return 'Détail livraison';
     if (path.startsWith('/livraisons')) return 'Livraisons';
+    if (path.startsWith('/distribution')) return 'Distribution';
     if (path.startsWith('/ventes')) return 'Déclaration des ventes';
     if (path.startsWith('/commercials')) return 'Commerciaux';
     if (path.startsWith('/benefits')) return 'Bénéfices & Rentabilité';
