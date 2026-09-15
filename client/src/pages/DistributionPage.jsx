@@ -395,7 +395,7 @@ function TimelineDot({ type }) {
 }
 
 /* ─── Detail panel full view ─── */
-function DetailPanel({ dossier }) {
+function DetailPanel({ dossier, onBack }) {
   const { livraison, sales_log, financials } = dossier;
   const items = livraison.items || [];
   const avatar = getAvatar(livraison.commercial_name);
@@ -410,6 +410,14 @@ function DetailPanel({ dossier }) {
 
   return (
     <div className="dist-fade-in">
+      {/* ── Mobile back navigation bar ── */}
+      <div className="dist-mobile-back-bar">
+        <button type="button" className="dist-mobile-back-btn" onClick={onBack}>
+          <IconChevronLeft />
+          <span>Retour aux livraisons</span>
+        </button>
+      </div>
+
       {/* ── Header ── */}
       <div className="dist-detail-header">
         <div className="dist-detail-header-top">
@@ -450,7 +458,7 @@ function DetailPanel({ dossier }) {
         </div>
         <div className="dist-kpi-cell">
           <div className="dist-kpi-cell-label">CA Total</div>
-          <div className="dist-kpi-cell-value blue" style={{ fontSize: 17 }}>
+          <div className="dist-kpi-cell-value blue">
             {Number(financials?.ca_total || 0).toFixed(3)} DT
           </div>
         </div>
@@ -480,6 +488,8 @@ function DetailPanel({ dossier }) {
             <span className="dist-section-title">Produits distribués</span>
             <span className="dist-section-count">{items.length} produit{items.length !== 1 ? 's' : ''}</span>
           </div>
+
+          {/* Desktop Table View */}
           <div className="dist-products-table-wrap">
             <table className="dist-products-table">
               <thead>
@@ -519,6 +529,52 @@ function DetailPanel({ dossier }) {
                 })}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Cards View */}
+          <div className="dist-mobile-prod-cards">
+            {items.map((item) => {
+              const charged = Number(item.qte_chargee || 0);
+              const sold    = Number(item.qte_vendue  || 0);
+              const rem     = charged - sold;
+              const pct     = charged > 0 ? Math.round((sold / charged) * 100) : 0;
+              const ca      = (sold * Number(item.prix_ttc || 0)).toFixed(3);
+              const barColor = getSellThroughColor(pct);
+              return (
+                <div key={item.id || item.product_id} className="dist-mp-card">
+                  <div className="dist-mp-top">
+                    <div>
+                      <div className="dist-mp-name">{item.product_name}</div>
+                      {item.category && <div className="dist-mp-cat">{item.category}</div>}
+                    </div>
+                    <span className="dist-mp-pct-badge" style={{ color: barColor, background: `${barColor}15` }}>
+                      {pct}%
+                    </span>
+                  </div>
+                  <div className="dist-mp-bar">
+                    <div className="dist-mp-bar-fill" style={{ width: `${pct}%`, background: barColor }} />
+                  </div>
+                  <div className="dist-mp-stats">
+                    <div className="dist-mp-stat">
+                      <span className="lbl">Chargé</span>
+                      <span className="val">{charged}</span>
+                    </div>
+                    <div className="dist-mp-stat">
+                      <span className="lbl">Vendu</span>
+                      <span className="val green">{sold}</span>
+                    </div>
+                    <div className="dist-mp-stat">
+                      <span className="lbl">Restant</span>
+                      <span className="val orange">{rem}</span>
+                    </div>
+                    <div className="dist-mp-stat">
+                      <span className="lbl">CA</span>
+                      <span className="val blue">{ca} DT</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -568,6 +624,8 @@ function DetailPanel({ dossier }) {
               <span className="dist-section-title">Journal des déclarations</span>
               <span className="dist-section-count">{sales_log.length} entrée{sales_log.length !== 1 ? 's' : ''}</span>
             </div>
+
+            {/* Desktop Table */}
             <div className="dist-log-table-wrap">
               <table className="dist-log-table">
                 <thead>
@@ -593,6 +651,22 @@ function DetailPanel({ dossier }) {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Cards / List */}
+            <div className="dist-mobile-log-list">
+              {sales_log.map((entry, idx) => (
+                <div key={entry.id} className="dist-ml-item">
+                  <div className="dist-ml-top">
+                    <span className="dist-ml-seq">#{idx + 1}</span>
+                    <span className="dist-ml-product">{entry.product_name}</span>
+                    <span className={entry.delta >= 0 ? 'dist-log-delta-pos' : 'dist-log-delta-neg'}>
+                      {formatDelta(entry.delta)}
+                    </span>
+                  </div>
+                  <div className="dist-ml-time">{formatDateTime(entry.logged_at)}</div>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -809,7 +883,7 @@ function DistributionPage() {
       </div>
 
       {/* ── Split body ── */}
-      <div className="dist-body">
+      <div className={`dist-body${selectedId ? ' has-selected' : ''}`}>
         {/* ── Left: list panel ── */}
         <div className="dist-list-panel">
           {listError && (
@@ -898,7 +972,7 @@ function DistributionPage() {
               {detailError}
             </div>
           ) : dossier ? (
-            <DetailPanel dossier={dossier} />
+            <DetailPanel dossier={dossier} onBack={() => setSelectedId(null)} />
           ) : null}
         </div>
       </div>
