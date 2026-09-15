@@ -147,14 +147,12 @@ function IconPrelevement() {
 function IconDistribution() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 3h7v7H3z"/>
-      <path d="M14 3h7v7h-7z"/>
-      <path d="M14 14h7v7h-7z"/>
-      <path d="M3 14h7v7H3z"/>
-      <path d="M10 6.5h4"/>
-      <path d="M17.5 10v4"/>
-      <path d="M6.5 10v4"/>
-      <path d="M10 17.5h4"/>
+      <rect x="9" y="3" width="6" height="6" rx="1.5" />
+      <circle cx="5" cy="18.5" r="2" />
+      <circle cx="12" cy="18.5" r="2" />
+      <circle cx="19" cy="18.5" r="2" />
+      <path d="M12 9v4.5" />
+      <path d="M5 16.5v-3a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3" />
     </svg>
   );
 }
