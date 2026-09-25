@@ -11,7 +11,10 @@ const pdfGenerator = require('../services/pdfGenerator');
 
 async function createLivraison(req, res) {
   try {
-    const { commercial_id, items } = req.body;
+    const { commercial_id, items, password } = req.body;
+    if (!password) return res.status(400).json({ error: 'Votre mot de passe est requis pour confirmer.' });
+    const { rows: userRows } = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+    if (!userRows[0] || !await verifyPassword(password, userRows[0].password_hash)) return res.status(400).json({ error: 'Mot de passe incorrect.' });
     if (!commercial_id) return res.status(400).json({ error: 'Veuillez sélectionner un commercial.' });
     if (!items || !Array.isArray(items) || items.length === 0) return res.status(400).json({ error: 'Veuillez ajouter au moins un produit.' });
     const { rows: comRows } = await pool.query('SELECT id, full_name, role, is_active FROM users WHERE id = $1', [commercial_id]);

@@ -122,6 +122,7 @@ function CreateLivraisonPage() {
       const data = await apiPost('/livraisons', {
         commercial_id: selectedCommercial.id,
         items,
+        password,
       });
       navigate(`/livraisons/${data.livraison.id}`);
     } catch (err) {
