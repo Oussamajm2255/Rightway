@@ -252,7 +252,7 @@ async function superAdminDashboard(req, res) {
       pool.query(`SELECT COALESCE(SUM((li.qte_chargee - li.qte_vendue) * li.prix_ttc), 0)::NUMERIC(14,3) AS total
         FROM livraison_items li
         JOIN livraisons l ON li.livraison_id = l.id
-        WHERE l.status IN ('EN_COURS', 'EN_RETOUR') AND l.is_archived = false`),
+        WHERE l.status IN ('CONFIRME', 'EN_COURS', 'EN_RETOUR') AND l.is_archived = false`),
     ]);
 
     // Build monthly CA array

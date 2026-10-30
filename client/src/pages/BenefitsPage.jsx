@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { apiGet } from '../lib/api';
+import { apiGet, openReportPdf } from '../lib/api';
 import { formatDate } from '../lib/utils';
 import { presetRange, DATE_PRESETS } from '../lib/datePresets';
 import { useCategoryPalette } from '../context/CategoryPaletteContext';
@@ -236,6 +236,21 @@ export default function BenefitsPage() {
     URL.revokeObjectURL(url);
   }
 
+  async function printReport() {
+    setError('');
+    try {
+      const params = new URLSearchParams();
+      if (search) params.append('search', search);
+      if (category) params.append('category', category);
+      if (commercialId) params.append('commercial_id', commercialId);
+      if (dateFrom) params.append('date_from', dateFrom);
+      if (dateTo) params.append('date_to', dateTo);
+      await openReportPdf('/benefits/report/pdf', params);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   // ─── Computed ───
   const totalCA = products.reduce((s, p) => s + p.ca, 0);
   const totalCost = products.reduce((s, p) => s + p.cost, 0);
@@ -274,6 +289,7 @@ export default function BenefitsPage() {
         </div>
         <div className="topbar-right">
           <span className="super-admin-badge">{Icon.shield} Super Admin</span>
+          <button className="btn btn-sm btn-export" onClick={printReport}>{Icon.download} Rapport PDF</button>
           <button className="btn btn-sm btn-export" onClick={exportCSV}>{Icon.download} Export CSV</button>
           <button className="btn btn-sm btn-primary" onClick={fetchData}>{Icon.refresh} Actualiser</button>
         </div>

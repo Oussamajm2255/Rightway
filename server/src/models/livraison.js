@@ -206,7 +206,7 @@ async function findById(id) {
 /**
  * List livraisons with filters
  */
-async function findAll({ status, commercial_id, date_from, date_to, admin_id, magasinier_scope, directeur_scope, include_archived, limit = 100, offset = 0 } = {}) {
+async function findAll({ status, commercial_id, date_from, date_to, admin_id, directeur_scope, include_archived, limit = 100, offset = 0 } = {}) {
   let query = `
     SELECT l.reference, l.id, l.status, l.created_at, l.closed_at, l.is_archived,
            c.full_name AS commercial_name, c.vehicle_name, c.vehicle_plate, c.remuneration_type AS commercial_remuneration_type,
@@ -247,12 +247,6 @@ async function findAll({ status, commercial_id, date_from, date_to, admin_id, ma
   if (admin_id) {
     query += ` AND l.admin_id = $${idx++}`;
     params.push(admin_id);
-  }
-
-  // Magasinier: only unfinished livraisons (not CLOTURE/ANNULE) created in
-  // the last 5 days. No date/status params — fixed operational window.
-  if (magasinier_scope) {
-    query += ` AND l.status NOT IN ('CLOTURE', 'ANNULE') AND l.created_at >= (NOW() - INTERVAL '5 days')`;
   }
 
   // Directeur Commercial: last 5 days OR still active OR cloturé with pending écart.
@@ -607,7 +601,7 @@ async function confirmerRetour(id, user_id, role) {
     const now = new Date().toISOString();
     let bothConfirmed = false;
 
-    if (role === 'DIRECTEUR_COMMERCIAL' || role === 'SUPER_ADMIN') {
+    if (role === 'DIRECTEUR_COMMERCIAL' || role === 'SUPER_ADMIN' || role === 'MAGASINIER') {
       if (livRows[0].retour_confirmed_by_admin_at) { await client.query('ROLLBACK'); return { error: 'Vous avez déjà confirmé ce bon de retour.' }; }
       await client.query('UPDATE livraisons SET retour_confirmed_by_admin_at = $2 WHERE id = $1', [id, now]);
     } else if (role === 'COMMERCIAL') {
@@ -699,6 +693,103 @@ async function archiveLivraison(id) {
 
     await client.query('COMMIT');
     return rows[0];
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Edit the load of a livraison returned to création.
+ * Stock already left the depot at the first confirmation, so only the
+ * differences move now. A product can never go below what was already sold.
+ */
+async function updateItems(id, newItems, user_id) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const { rows: livRows } = await client.query('SELECT * FROM livraisons WHERE id = $1 FOR UPDATE', [id]);
+    if (livRows.length === 0) { await client.query('ROLLBACK'); return { error: 'Livraison introuvable.' }; }
+    if (livRows[0].status !== 'CONFIRME' || !livRows[0].returned_to_creation_at) {
+      await client.query('ROLLBACK');
+      return { error: 'Le chargement ne peut être modifié qu\'après un retour à la création.' };
+    }
+
+    const { rows: currentItems } = await client.query(
+      'SELECT * FROM livraison_items WHERE livraison_id = $1 FOR UPDATE', [id]
+    );
+    const current = new Map(currentItems.map((i) => [i.product_id, i]));
+    const wanted = new Map(newItems.map((i) => [i.product_id, i.qte_chargee]));
+
+    // Sorted so concurrent edits lock depot_stock rows in the same order
+    const productIds = [...new Set([...current.keys(), ...wanted.keys()])].sort();
+
+    for (const product_id of productIds) {
+      const item = current.get(product_id);
+      const newQty = wanted.get(product_id) || 0;
+      const oldQty = item ? item.qte_chargee : 0;
+      const sold = item ? item.qte_vendue : 0;
+      const delta = newQty - oldQty;
+      if (delta === 0) continue;
+
+      const { rows: productRows } = await client.query(
+        'SELECT name, selling_price_ttc, is_active FROM products WHERE id = $1', [product_id]
+      );
+      const product = productRows[0];
+      if (!product) { await client.query('ROLLBACK'); return { error: `Produit ${product_id} introuvable.` }; }
+
+      if (newQty < sold) {
+        await client.query('ROLLBACK');
+        return { error: `"${product.name}" : ${sold} déjà vendu(s), la quantité ne peut pas être inférieure.` };
+      }
+
+      if (delta > 0) {
+        const { rows: stockRows } = await client.query(
+          'SELECT quantity FROM depot_stock WHERE product_id = $1 FOR UPDATE', [product_id]
+        );
+        const available = stockRows[0]?.quantity || 0;
+        if (available < delta) {
+          await client.query('ROLLBACK');
+          return { error: `Stock insuffisant pour "${product.name}". Disponible: ${available}, Demandé: ${delta} de plus.` };
+        }
+        await client.query(
+          'UPDATE depot_stock SET quantity = quantity - $2, last_updated = NOW() WHERE product_id = $1',
+          [product_id, delta]
+        );
+      } else {
+        await client.query(
+          `INSERT INTO depot_stock (product_id, quantity)
+           VALUES ($1, $2)
+           ON CONFLICT (product_id)
+           DO UPDATE SET quantity = depot_stock.quantity + $2, last_updated = NOW()`,
+          [product_id, -delta]
+        );
+      }
+
+      await client.query(
+        `INSERT INTO stock_movements (product_id, type, quantity, livraison_id, reason, created_by)
+         VALUES ($1, $2, $3, $4, 'Modification du chargement', $5)`,
+        [product_id, delta > 0 ? 'SORTIE' : 'RETOUR', Math.abs(delta), id, user_id]
+      );
+
+      if (!item) {
+        if (!product.is_active) { await client.query('ROLLBACK'); return { error: `Le produit "${product.name}" n'est plus actif.` }; }
+        await client.query(
+          'INSERT INTO livraison_items (livraison_id, product_id, qte_chargee, prix_ttc) VALUES ($1, $2, $3, $4)',
+          [id, product_id, newQty, product.selling_price_ttc]
+        );
+      } else if (newQty === 0) {
+        await client.query('DELETE FROM livraison_items WHERE id = $1', [item.id]);
+      } else {
+        await client.query('UPDATE livraison_items SET qte_chargee = $2 WHERE id = $1', [item.id, newQty]);
+      }
+    }
+
+    await client.query('COMMIT');
+    return { livraison: await findById(id) };
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;
@@ -932,6 +1023,7 @@ async function countDistributionStats({
 
 module.exports = {
   COMMISSION_RATE,
+  updateItems,
   generateReference,
   create,
   findById,

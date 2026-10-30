@@ -38,6 +38,7 @@ function LivraisonDetailPage() {
   const [terminerSummary, setTerminerSummary] = useState(null);
   const [showConfirmerRetour, setShowConfirmerRetour] = useState(false);
   const [showConfirmSortie, setShowConfirmSortie] = useState(false);
+  const [showReprendre, setShowReprendre] = useState(false);
   const [showArchive, setShowArchive] = useState(false);
   const [showAnnulerDemande, setShowAnnulerDemande] = useState(false);
   const [showConfirmerAnnulation, setShowConfirmerAnnulation] = useState(false);
@@ -277,17 +278,21 @@ function LivraisonDetailPage() {
     }
   }
 
-  async function handleReprendreLivraison() {
+  async function handleReprendreLivraison(e) {
+    e.preventDefault();
     setActionError('');
+    if (!password) { setActionError('Mot de passe requis.'); return; }
     setSubmitting(true);
     try {
-      const data = await apiPut(`/livraisons/${id}/reprendre`, {});
+      const data = await apiPut(`/livraisons/${id}/reprendre`, { password });
       setLivraison(data.livraison);
       setSuccess(data.message);
+      setShowReprendre(false);
     } catch (err) {
       setActionError(err.message);
     } finally {
       setSubmitting(false);
+      setPassword('');
     }
   }
 
@@ -463,8 +468,9 @@ function LivraisonDetailPage() {
   const isAnnule = livraison?.status === 'ANNULE';
   const isCloture = livraison?.status === 'CLOTURE';
   const isCommercial = user?.role === 'COMMERCIAL';
-  const isAdmin = user?.role === 'DIRECTEUR_COMMERCIAL' || user?.role === 'SUPER_ADMIN';
+  const isAdmin = user?.role === 'DIRECTEUR_COMMERCIAL' || user?.role === 'SUPER_ADMIN' || user?.role === 'MAGASINIER';
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const canEditLoad = user?.role === 'SUPER_ADMIN' || user?.role === 'MAGASINIER';
   const isAssignedCommercial = isCommercial && livraison?.commercial_id === user?.id;
   const isSalaire = livraison?.commercial_remuneration_type === 'SALAIRE';
   const ca = computeCA();
@@ -600,10 +606,29 @@ function LivraisonDetailPage() {
           </div>
           <div className="alert-body">
             <strong>Retour à la création</strong>
-            <p>Demandez le retour de la livraison à l'état "Création" (confirmé). Un admin devra confirmer. Les ventes déclarées seront conservées.</p>
+            <p>Demandez le retour à la création pour faire modifier les produits chargés. Un admin devra confirmer. Les ventes déclarées seront conservées.</p>
           </div>
           <button className="btn btn-warning" onClick={() => { setShowRetourCreation(true); setRetourCreationReason(''); setActionError(''); }}>
             Retour à la création
+          </button>
+        </div>
+      )}
+
+      {/* Retour à la création confirmé → modifier le chargement */}
+      {isConfirme && livraison?.returned_to_creation_at && canEditLoad && (
+        <div className="alert-card">
+          <div className="alert-icon" style={{ background: 'var(--color-primary)' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
+              <path d="M12 20h9" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <div className="alert-body">
+            <strong>Retour à la création</strong>
+            <p>Modifiez les produits chargés. Le stock est ajusté selon les différences, puis le commercial confirme pour reprendre la livraison.</p>
+          </div>
+          <button className="btn btn-primary" onClick={() => navigate(`/livraisons/${id}/modifier`)}>
+            Modifier les produits
           </button>
         </div>
       )}
@@ -618,11 +643,10 @@ function LivraisonDetailPage() {
           </div>
           <div className="alert-body">
             <strong>Retour à la création confirmé</strong>
-            <p>Reprenez la livraison pour continuer. Vos ventes déclarées et le stock ne changent pas.</p>
-            {actionError && <div className="login-error">{actionError}</div>}
+            <p>Le chargement est en cours de modification. Vérifiez les produits ci-dessous, puis reprenez la livraison. Vos ventes déclarées sont conservées.</p>
           </div>
-          <button className="btn btn-primary" onClick={handleReprendreLivraison} disabled={submitting}>
-            {submitting ? '...' : 'Reprendre la livraison'}
+          <button className="btn btn-primary" onClick={() => { setShowReprendre(true); setPassword(''); setActionError(''); }}>
+            Reprendre la livraison
           </button>
         </div>
       )}
@@ -1207,7 +1231,7 @@ function LivraisonDetailPage() {
       {!isEnRetour && <div className="detail-section">
         <h2>Produits chargés</h2>
         {(() => {
-          const showVendu = isEnCours || isCloture;
+          const showVendu = isEnCours || isConfirme || isCloture;
           const groupedItems = Object.entries(
             livraison.items.reduce((acc, item) => {
               const cat = item.category || 'Sans catégorie';
@@ -1333,6 +1357,32 @@ function LivraisonDetailPage() {
           <button className="btn btn-primary" onClick={() => setShowConfirmSortie(true)}>
             Confirmer le bon de sortie
           </button>
+        </div>
+      )}
+
+      {/* Reprendre modal */}
+      {showReprendre && (
+        <div className="modal-overlay" onClick={() => setShowReprendre(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <h3 className="modal-title">Reprendre la livraison</h3>
+            <div className="modal-summary">
+              <p>Vous confirmez le chargement de la livraison :</p>
+              <p className="summary-highlight">{livraison.reference}</p>
+              <p>{livraison.items.length} produit(s) — Total: <strong>{formatDT(computeTotal())}</strong></p>
+              <p className="confirm-note">Le chargement ne pourra plus être modifié après la reprise.</p>
+            </div>
+            {actionError && <div className="login-error">{actionError}</div>}
+            <form onSubmit={handleReprendreLivraison}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="reprendre-password">Mot de passe</label>
+                <input id="reprendre-password" type="password" className="form-input" value={password} onChange={(e) => setPassword(e.target.value)} />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowReprendre(false)}>Annuler</button>
+                <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? '...' : 'Confirmer'}</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
@@ -1795,7 +1845,7 @@ function LivraisonDetailPage() {
             <h3 className="modal-title">Retour à la création</h3>
             <div className="modal-summary">
               <p>Vous demandez le retour de la livraison <strong>{livraison?.reference}</strong> à l'état "Création".</p>
-              <p>Un administrateur devra confirmer cette demande. Les ventes déclarées seront conservées.</p>
+              <p>Un administrateur devra confirmer cette demande, puis les produits chargés pourront être modifiés. Les ventes déclarées seront conservées.</p>
             </div>
             {actionError && <div className="login-error">{actionError}</div>}
             <form onSubmit={handleDemanderRetourCreation}>
@@ -1829,7 +1879,7 @@ function LivraisonDetailPage() {
             <h3 className="modal-title">Confirmer le retour à la création</h3>
             <div className="modal-summary">
               <p>Vous allez retourner la livraison <strong>{livraison?.reference}</strong> à l'état <strong>Création (Confirmé)</strong>.</p>
-              <p>Le commercial pourra ensuite reprendre la livraison. Les ventes déclarées et le stock ne changent pas.</p>
+              <p>Les produits chargés pourront alors être modifiés, puis le commercial confirmera pour reprendre la livraison. Les ventes déclarées sont conservées.</p>
               {livraison?.return_reason && (
                 <p style={{ marginTop: 'var(--space-2)', fontStyle: 'italic' }}>
                   Motif du commercial : « {livraison.return_reason} »

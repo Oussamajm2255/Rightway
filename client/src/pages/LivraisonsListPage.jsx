@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 import { formatDateTime } from '../lib/utils';
 import './LivraisonsPage.css';
 
@@ -107,6 +108,8 @@ function renderEcartChip(l) {
 }
 
 function LivraisonsListPage() {
+  const { user } = useAuth();
+  const canCreate = user?.role === 'SUPER_ADMIN' || user?.role === 'MAGASINIER';
   const [livraisons, setLivraisons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -242,9 +245,11 @@ function LivraisonsListPage() {
           <h1 className="page-title">Livraisons</h1>
           <p className="page-subtitle">Toutes les livraisons</p>
         </div>
-        <button className="btn btn-primary" onClick={() => navigate('/livraisons/nouvelle')}>
-          + Nouvelle livraison
-        </button>
+        {canCreate && (
+          <button className="btn btn-primary" onClick={() => navigate('/livraisons/nouvelle')}>
+            + Nouvelle livraison
+          </button>
+        )}
       </div>
 
       <div className="livr-toolbar">

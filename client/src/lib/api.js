@@ -188,3 +188,13 @@ export async function openPdf(pdfPath, livraisonId) {
     window.open(`${API_BASE_RAW}${pdfPath}`, '_blank');
   }
 }
+
+/**
+ * Open a Bénéfices / Statistiques PDF report in a new tab.
+ * params: URLSearchParams holding the current filters.
+ */
+export async function openReportPdf(pdfPath, params) {
+  const { token } = await apiGet('/benefits/report-token');
+  params.set('dtoken', token);
+  window.open(`${API_BASE_RAW}${pdfPath}?${params.toString()}`, '_blank');
+}

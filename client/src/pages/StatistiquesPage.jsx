@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { apiGet } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
+import { apiGet, openReportPdf } from '../lib/api';
 import { formatDate } from '../lib/utils';
-import { presetRange, DATE_PRESETS } from '../lib/datePresets';
+import { presetRange, DATE_PRESETS, QUARTER_PRESETS, quarterStart, quarterEnd } from '../lib/datePresets';
 import { useCategoryPalette } from '../context/CategoryPaletteContext';
 import './BenefitsPage.css';
 
@@ -28,6 +29,9 @@ const PAGE_SIZE = 50;
 const IconChart = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>;
 
 export default function StatistiquesPage() {
+  const { user } = useAuth();
+  const isDirecteur = user?.role === 'DIRECTEUR_COMMERCIAL';
+  const presets = isDirecteur ? QUARTER_PRESETS : DATE_PRESETS;
   const { getColor } = useCategoryPalette();
   const latestRequest = useRef(0);
 
@@ -112,6 +116,23 @@ export default function StatistiquesPage() {
     setDateFrom(r.from);
     setDateTo(r.to);
     setPage(1);
+  }
+
+  async function printReport() {
+    setError('');
+    try {
+      const params = new URLSearchParams();
+      if (tab !== 'commercials') {
+        if (search) params.append('search', search);
+        if (category) params.append('category', category);
+      }
+      if (tab === 'product_commercial' && commercialId) params.append('commercial_id', commercialId);
+      if (dateFrom) params.append('date_from', dateFrom);
+      if (dateTo) params.append('date_to', dateTo);
+      await openReportPdf('/benefits/sales-stats/report/pdf', params);
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
   function openCommercial(id) {
@@ -332,6 +353,7 @@ export default function StatistiquesPage() {
           </div>
         </div>
         <div className="topbar-right">
+          <button className="btn btn-sm btn-export" onClick={printReport}>Rapport PDF</button>
           <button className="btn btn-sm btn-primary" onClick={fetchData}>Actualiser</button>
         </div>
       </div>
@@ -370,7 +392,7 @@ export default function StatistiquesPage() {
             </div>
           )}
           <div className="date-presets">
-            {DATE_PRESETS.map((p) => (
+            {presets.map((p) => (
               <button key={p.key} type="button" className={`preset-btn${datePreset === p.key ? ' active' : ''}`} onClick={() => applyPreset(p.key)}>
                 {p.label}
               </button>
@@ -378,9 +400,9 @@ export default function StatistiquesPage() {
           </div>
           <div className="filter-period">
             <label className="filter-label">Du</label>
-            <input type="date" className="filter-input" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setDatePreset('custom'); setPage(1); }} />
+            <input type="date" className="filter-input" value={dateFrom} min={isDirecteur ? quarterStart(dateTo) : undefined} onChange={(e) => { setDateFrom(e.target.value); setDatePreset('custom'); setPage(1); }} />
             <span className="filter-sep">au</span>
-            <input type="date" className="filter-input" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setDatePreset('custom'); setPage(1); }} />
+            <input type="date" className="filter-input" value={dateTo} max={isDirecteur ? quarterEnd(dateFrom) : undefined} onChange={(e) => { setDateTo(e.target.value); setDatePreset('custom'); setPage(1); }} />
           </div>
         </div>
 

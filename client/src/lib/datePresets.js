@@ -27,3 +27,21 @@ export const DATE_PRESETS = [
   { key: 'year', label: 'Cette année' },
   { key: 'all', label: 'Tout' },
 ];
+
+// Directeur Commercial: one quarter at most
+export const QUARTER_PRESETS = DATE_PRESETS.filter((p) => ['month', 'last_month', '3months'].includes(p.key));
+
+// Earliest start date for a period ending on `to` (today when empty)
+export function quarterStart(to) {
+  const d = to ? new Date(to) : new Date();
+  d.setMonth(d.getMonth() - 3);
+  return toYMD(d);
+}
+
+// Latest end date for a period starting on `from`
+export function quarterEnd(from) {
+  if (!from) return undefined;
+  const d = new Date(from);
+  d.setMonth(d.getMonth() + 3);
+  return toYMD(d);
+}

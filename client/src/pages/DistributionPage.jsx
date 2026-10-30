@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { apiGet } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
+import { presetRange, quarterStart, quarterEnd } from '../lib/datePresets';
 import { formatDateTime, formatDate } from '../lib/utils';
 import './DistributionPage.css';
 
@@ -679,12 +681,16 @@ function DetailPanel({ dossier, onBack }) {
    Main page component
 ═══════════════════════════════════════════════ */
 function DistributionPage() {
+  const { user } = useAuth();
+  const isDirecteur = user?.role === 'DIRECTEUR_COMMERCIAL';
+  const defaultRange = isDirecteur ? presetRange('3months') : { from: '', to: '' };
+
   // ── Filter state ──
   const [reference, setReference]   = useState('');
   const [commercialId, setCommercialId] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [dateFrom, setDateFrom]     = useState('');
-  const [dateTo, setDateTo]         = useState('');
+  const [dateFrom, setDateFrom]     = useState(defaultRange.from);
+  const [dateTo, setDateTo]         = useState(defaultRange.to);
 
   // ── List state ──
   const [livraisons, setLivraisons]     = useState([]);
@@ -779,12 +785,12 @@ function DistributionPage() {
     setReference('');
     setCommercialId('');
     setStatusFilter('ALL');
-    setDateFrom('');
-    setDateTo('');
+    setDateFrom(defaultRange.from);
+    setDateTo(defaultRange.to);
     setPage(1);
   }
 
-  const hasFilters = reference || commercialId || statusFilter !== 'ALL' || dateFrom || dateTo;
+  const hasFilters = reference || commercialId || statusFilter !== 'ALL' || dateFrom !== defaultRange.from || dateTo !== defaultRange.to;
 
   return (
     <div className="dist-page">
@@ -837,6 +843,7 @@ function DistributionPage() {
             type="date"
             className="dist-date-input"
             value={dateFrom}
+            min={isDirecteur ? quarterStart(dateTo) : undefined}
             onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
           />
           <span className="dist-filter-label">au</span>
@@ -845,6 +852,7 @@ function DistributionPage() {
             type="date"
             className="dist-date-input"
             value={dateTo}
+            max={isDirecteur ? quarterEnd(dateFrom) : undefined}
             onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
           />
         </div>

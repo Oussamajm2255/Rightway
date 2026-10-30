@@ -563,16 +563,15 @@ function AppLayout({ children }) {
   } else if (role === 'DIRECTEUR_COMMERCIAL') {
     navItems.push({ to: '/stock', label: 'Stock', icon: 'stock' });
     navItems.push({ to: '/livraisons', label: 'Livraisons', icon: 'livraisons' });
-    navItems.push({ to: '/commercials', label: 'Commerciaux', icon: 'commercials' });
+    navItems.push({ to: '/distribution', label: 'Distribution', icon: 'distribution' });
     navItems.push({ to: '/statistiques', label: 'Statistiques', icon: 'benefits' });
     navItems.push({ to: '/historique', label: 'Historique', icon: 'historique' });
   } else if (role === 'MAGASINIER') {
     navItems.push({ to: '/stock', label: 'Stock', icon: 'stock' });
     navItems.push({ to: '/livraisons', label: 'Livraisons', icon: 'livraisons' });
+    navItems.push({ to: '/distribution', label: 'Distribution', icon: 'distribution' });
   } else if (role === 'COMMERCIAL') {
     navItems.push({ to: '/livraisons', label: 'Mes livraisons', icon: 'livraisons' });
-    navItems.push({ to: '/historique', label: 'Historique', icon: 'historique' });
-    navItems.push({ to: '/settings', label: 'Paramètres', icon: 'settings' });
   }
 
   function getInitials(name) {
@@ -592,6 +591,7 @@ function AppLayout({ children }) {
     if (path.startsWith('/products')) return 'Produits';
     if (path.startsWith('/stock')) return 'Stock';
     if (path.startsWith('/livraisons/nouvelle')) return 'Nouvelle livraison';
+    if (path.startsWith('/livraisons/') && path.endsWith('/modifier')) return 'Modifier le chargement';
     if (path.startsWith('/livraisons/') && path.split('/').length === 3) return 'Détail livraison';
     if (path.startsWith('/livraisons')) return 'Livraisons';
     if (path.startsWith('/distribution')) return 'Distribution';

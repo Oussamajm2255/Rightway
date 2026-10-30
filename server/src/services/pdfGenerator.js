@@ -376,4 +376,344 @@ function generateDossierComplet(livraison, salesLog, { hideCommission = false } 
   return printer.createPdfKitDocument(docDefinition);
 }
 
-module.exports = { generateBonDeSortie, generateBonDeRetour, generateDossierComplet };
+// ============================================================
+// REPORTS (Bénéfices / Statistiques)
+// ============================================================
+const REPORT_BRAND = '#0B3B2E';
+const REPORT_TINT = '#F1F5F3';
+const REPORT_MUTED = '#6c757d';
+
+function groupThousands(digits) {
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
+
+function reportAmount(value) {
+  const n = Number(value) || 0;
+  const [int, dec] = Math.abs(n).toFixed(3).split('.');
+  return `${n < 0 ? '-' : ''}${groupThousands(int)},${dec} DT`;
+}
+
+function reportInt(value) {
+  return groupThousands(String(Number(value) || 0));
+}
+
+function reportPct(value) {
+  return `${(Number(value) || 0).toFixed(1).replace('.', ',')} %`;
+}
+
+function reportDay(value) {
+  const [y, m, d] = String(value).slice(0, 10).split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function reportPeriod(date_from, date_to) {
+  if (date_from && date_to) return `Du ${reportDay(date_from)} au ${reportDay(date_to)}`;
+  if (date_from) return `Depuis le ${reportDay(date_from)}`;
+  if (date_to) return `Jusqu'au ${reportDay(date_to)}`;
+  return 'Toute la période';
+}
+
+function reportNow() {
+  return new Date().toLocaleString('fr-FR', {
+    timeZone: 'Africa/Tunis', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  });
+}
+
+function reportHeader(title, subtitle, width) {
+  return [
+    {
+      columns: [
+        {
+          width: '*',
+          stack: [
+            { text: COMPANY.name, fontSize: 18, bold: true, color: REPORT_BRAND },
+            { text: COMPANY.fullName, fontSize: 8, color: REPORT_MUTED, margin: [0, 4, 0, 0] },
+            { text: `${COMPANY.mf}  |  ${COMPANY.address}`, fontSize: 7, color: REPORT_MUTED, margin: [0, 1, 0, 0] },
+          ],
+        },
+        {
+          width: 'auto',
+          stack: [
+            { text: title, fontSize: 14, bold: true, color: REPORT_BRAND, alignment: 'right' },
+            { text: subtitle, fontSize: 8, color: REPORT_MUTED, alignment: 'right', margin: [0, 3, 0, 0] },
+          ],
+        },
+      ],
+    },
+    { canvas: [{ type: 'line', x1: 0, y1: 0, x2: width, y2: 0, lineWidth: 1.5, lineColor: REPORT_BRAND }], margin: [0, 8, 0, 10] },
+  ];
+}
+
+function reportMeta(pairs) {
+  const cells = pairs.flatMap(([label, value]) => [
+    { text: label, fontSize: 8, bold: true, color: REPORT_MUTED },
+    { text: value, fontSize: 8, color: '#222' },
+  ]);
+  const rows = [];
+  for (let i = 0; i < cells.length; i += 4) {
+    const row = cells.slice(i, i + 4);
+    while (row.length < 4) row.push({ text: '' });
+    rows.push(row);
+  }
+  return {
+    table: { widths: ['auto', '*', 'auto', '*'], body: rows },
+    layout: {
+      hLineWidth: () => 0,
+      vLineWidth: () => 0,
+      fillColor: () => REPORT_TINT,
+      paddingLeft: () => 8,
+      paddingRight: () => 8,
+      paddingTop: () => 4,
+      paddingBottom: () => 4,
+    },
+    margin: [0, 0, 0, 12],
+  };
+}
+
+function reportKpis(tiles, perRow) {
+  const cells = tiles.map(({ label, value }) => ({
+    stack: [
+      { text: label.toUpperCase(), fontSize: 6.5, bold: true, color: REPORT_MUTED },
+      { text: value, fontSize: 11, bold: true, color: REPORT_BRAND, margin: [0, 3, 0, 0] },
+    ],
+  }));
+  const rows = [];
+  for (let i = 0; i < cells.length; i += perRow) {
+    const row = cells.slice(i, i + perRow);
+    while (row.length < perRow) row.push({ text: '' });
+    rows.push(row);
+  }
+  return {
+    unbreakable: true,
+    table: { widths: Array(perRow).fill('*'), body: rows },
+    layout: {
+      hLineWidth: () => 4,
+      vLineWidth: () => 4,
+      hLineColor: () => '#FFFFFF',
+      vLineColor: () => '#FFFFFF',
+      fillColor: () => REPORT_TINT,
+      paddingLeft: () => 8,
+      paddingRight: () => 8,
+      paddingTop: () => 6,
+      paddingBottom: () => 6,
+    },
+    margin: [-4, 0, -4, 8],
+  };
+}
+
+function reportSection(title) {
+  return { text: title, fontSize: 11, bold: true, color: REPORT_BRAND, margin: [0, 8, 0, 5] };
+}
+
+/**
+ * columns: [{ title, width, right }]. The first row carries the section title,
+ * so it repeats on every page and can never be left alone at the bottom of one.
+ */
+function reportTable(title, columns, rows, total) {
+  const align = (col) => (col.right ? 'right' : 'left');
+  const span = columns.length;
+  const titleRow = [
+    { text: title, colSpan: span, fontSize: 11, bold: true, color: REPORT_BRAND, margin: [-4, 4, 0, 3] },
+    ...Array(span - 1).fill({}),
+  ];
+  const headerRow = columns.map((col) => ({ text: col.title, fontSize: 7.5, bold: true, color: '#FFFFFF', alignment: align(col) }));
+  const bodyRows = rows.map((row) => row.map((value, i) => ({ text: value, fontSize: 8, color: '#222', alignment: align(columns[i]) })));
+  const body = [titleRow, headerRow, ...bodyRows];
+
+  if (total) {
+    const cells = [
+      { text: total.label, colSpan: total.span, fontSize: 8, bold: true, color: REPORT_BRAND },
+      ...Array(total.span - 1).fill({}),
+      ...total.values.map((value, i) => ({
+        text: value, fontSize: 8, bold: true, color: REPORT_BRAND, alignment: align(columns[total.span + i]),
+      })),
+    ];
+    body.push(cells);
+  }
+
+  const lastRow = body.length - 1;
+  return {
+    table: {
+      headerRows: 2,
+      keepWithHeaderRows: 1,
+      dontBreakRows: true,
+      widths: columns.map((col) => col.width),
+      body,
+    },
+    layout: {
+      hLineWidth: (i) => (i <= 2 ? 0 : 0.5),
+      vLineWidth: () => 0,
+      hLineColor: () => '#E3E8E5',
+      fillColor: (rowIndex) => {
+        if (rowIndex === 0) return null;
+        if (rowIndex === 1) return REPORT_BRAND;
+        if (total && rowIndex === lastRow) return REPORT_TINT;
+        return rowIndex % 2 === 1 ? '#FAFBFA' : null;
+      },
+      paddingLeft: () => 5,
+      paddingRight: () => 5,
+      paddingTop: () => 3.5,
+      paddingBottom: () => 3.5,
+    },
+    margin: [0, 6, 0, 8],
+  };
+}
+
+function reportFooter(currentPage, pageCount) {
+  return {
+    columns: [
+      { text: `${COMPANY.name} — Document confidentiel`, fontSize: 7, color: REPORT_MUTED },
+      { text: `Page ${currentPage} / ${pageCount}`, fontSize: 7, color: REPORT_MUTED, alignment: 'right' },
+    ],
+    margin: [40, 12, 40, 0],
+  };
+}
+
+function buildReport({ title, pageOrientation, content }) {
+  return printer.createPdfKitDocument({
+    info: { title, author: COMPANY.fullName },
+    pageSize: 'A4',
+    pageOrientation,
+    pageMargins: [40, 36, 40, 42],
+    footer: reportFooter,
+    content,
+  });
+}
+
+function reportFilterPairs({ date_from, date_to, category, search, commercialName, generatedBy }) {
+  const pairs = [
+    ['Période', reportPeriod(date_from, date_to)],
+    ['Généré le', reportNow()],
+    ['Généré par', generatedBy || '—'],
+  ];
+  if (commercialName) pairs.push(['Commercial', commercialName]);
+  if (category) pairs.push(['Catégorie', category]);
+  if (search) pairs.push(['Recherche', search]);
+  return pairs;
+}
+
+function generateBenefitsReport(report) {
+  const { global: g, stock, totals, commercialName } = report;
+  const sold = report.products.filter((p) => Number(p.total_sold) > 0);
+  const depot = Number(stock.depot_ca);
+  const charge = Number(stock.charge_ca);
+  const margin = Number(totals.ca) > 0 ? (Number(totals.benefit) / Number(totals.ca)) * 100 : 0;
+
+  const tiles = [
+    { label: "Chiffre d'affaires total", value: reportAmount(g.ca_total) },
+    { label: 'Bénéfice brut', value: reportAmount(g.benefit_gross) },
+    { label: 'Bénéfice net', value: reportAmount(g.benefit_net) },
+    { label: 'Marge moyenne', value: reportPct(g.margin_avg) },
+    { label: 'Commissions', value: reportAmount(g.commission_total) },
+  ];
+  if (!commercialName) {
+    tiles.push(
+      { label: 'Prélèvements', value: reportAmount(g.prelevement_total) },
+      { label: 'Achats de stock', value: reportAmount(g.stock_purchase_total) },
+    );
+  }
+  tiles.push(
+    { label: 'Écarts', value: reportAmount(g.ecart_total) },
+    { label: 'Produits rentables', value: reportInt(g.profitable_count) },
+  );
+
+  const columns = [
+    { title: 'Code', width: 52 },
+    { title: 'Produit', width: '*' },
+    { title: 'Catégorie', width: 82 },
+    { title: 'Prix achat', width: 62, right: true },
+    { title: 'Prix vente', width: 62, right: true },
+    { title: 'Qté', width: 34, right: true },
+    { title: 'CA', width: 70, right: true },
+    { title: 'Coût', width: 70, right: true },
+    { title: 'Bénéfice', width: 70, right: true },
+    { title: 'Marge', width: 42, right: true },
+  ];
+  const rows = sold.map((p) => [
+    p.id, p.name, p.category || '—',
+    reportAmount(p.purchase_price), reportAmount(p.selling_price_ttc),
+    reportInt(p.total_sold), reportAmount(p.ca), reportAmount(p.cost), reportAmount(p.benefit), reportPct(p.margin_pct),
+  ]);
+
+  return buildReport({
+    title: 'Rapport des bénéfices',
+    pageOrientation: 'landscape',
+    content: [
+      ...reportHeader('RAPPORT DES BÉNÉFICES', 'Analyse de rentabilité par produit', 762),
+      reportMeta(reportFilterPairs(report)),
+      reportSection(commercialName ? `Performance de ${commercialName}` : 'Synthèse financière'),
+      reportKpis(tiles, 5),
+      reportSection('Stock actuel (valeur au prix de vente, à la date du rapport)'),
+      reportKpis([
+        { label: 'Dépôt', value: reportAmount(depot) },
+        { label: 'Chargé dans les véhicules', value: reportAmount(charge) },
+        { label: 'Total', value: reportAmount(depot + charge) },
+      ], 3),
+      reportTable(`Détail par produit (${sold.length} produit(s) vendu(s))`, columns, rows, {
+        label: 'TOTAL',
+        span: 5,
+        values: [reportInt(totals.total_sold), reportAmount(totals.ca), reportAmount(totals.cost), reportAmount(totals.benefit), reportPct(margin)],
+      }),
+    ],
+  });
+}
+
+function generateSalesReport(report) {
+  const { totals, commercialName } = report;
+  const sold = report.products.filter((p) => Number(p.total_sold) > 0);
+  const share = (ca, whole) => reportPct(whole > 0 ? (ca / whole) * 100 : 0);
+
+  const content = [
+    ...reportHeader('RAPPORT DES VENTES', 'Statistiques par produit et par commercial', 515),
+    reportMeta(reportFilterPairs(report)),
+  ];
+
+  const tiles = [
+    { label: "Chiffre d'affaires", value: reportAmount(totals.ca) },
+    { label: 'Quantité vendue', value: reportInt(totals.total_sold) },
+    { label: 'Produits vendus', value: reportInt(sold.length) },
+  ];
+  content.push(reportSection(commercialName ? `Synthèse de ${commercialName}` : 'Synthèse'), reportKpis(tiles, 3));
+
+  if (!commercialName) {
+    const wholeCA = report.commercials.reduce((sum, c) => sum + c.ca, 0);
+    content.push(reportTable('Chiffre d\'affaires par commercial', [
+      { title: 'Commercial', width: '*' },
+      { title: 'Livraisons clôturées', width: 86, right: true },
+      { title: 'Qté vendue', width: 60, right: true },
+      { title: 'CA', width: 90, right: true },
+      { title: 'Part du CA', width: 56, right: true },
+    ], report.commercials.map((c) => [
+      c.full_name, reportInt(c.livraisons), reportInt(c.total_sold), reportAmount(c.ca), share(c.ca, wholeCA),
+    ]), {
+      label: 'TOTAL',
+      span: 1,
+      values: [
+        reportInt(report.commercials.reduce((sum, c) => sum + c.livraisons, 0)),
+        reportInt(report.commercials.reduce((sum, c) => sum + c.total_sold, 0)),
+        reportAmount(wholeCA),
+        '100,0 %',
+      ],
+    }));
+  }
+
+  content.push(reportTable(`${commercialName ? `Ventes de ${commercialName}` : "Chiffre d'affaires par produit"} (${sold.length} produit(s) vendu(s))`, [
+    { title: 'Code', width: 54 },
+    { title: 'Produit', width: '*' },
+    { title: 'Catégorie', width: 86 },
+    { title: 'Prix vente', width: 62, right: true },
+    { title: 'Qté', width: 36, right: true },
+    { title: 'CA', width: 72, right: true },
+    { title: 'Part', width: 40, right: true },
+  ], sold.map((p) => [
+    p.id, p.name, p.category || '—', reportAmount(p.selling_price_ttc), reportInt(p.total_sold), reportAmount(p.ca), share(p.ca, totals.ca),
+  ]), {
+    label: 'TOTAL',
+    span: 4,
+    values: [reportInt(totals.total_sold), reportAmount(totals.ca), '100,0 %'],
+  }));
+
+  return buildReport({ title: 'Rapport des ventes', pageOrientation: 'portrait', content });
+}
+
+module.exports = { generateBonDeSortie, generateBonDeRetour, generateDossierComplet, generateBenefitsReport, generateSalesReport };

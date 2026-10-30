@@ -235,7 +235,7 @@ async function getStockValuation() {
       (SELECT COALESCE(SUM((li.qte_chargee - li.qte_vendue) * li.prix_ttc), 0)::NUMERIC(14,3)
          FROM livraison_items li
          JOIN livraisons l ON li.livraison_id = l.id
-         WHERE l.status IN ('EN_COURS', 'EN_RETOUR') AND l.is_archived = false) AS charge_ca
+         WHERE l.status IN ('CONFIRME', 'EN_COURS', 'EN_RETOUR') AND l.is_archived = false) AS charge_ca
   `);
   return rows[0] || { depot_ca: 0, charge_ca: 0 };
 }

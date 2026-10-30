@@ -569,9 +569,11 @@ function AdminView({ data, navigate, user }) {
         <div>
           <SectionHeader title="Actions rapides" />
           <div className="actions-row">
-            <button className="action-btn action-primary" onClick={() => navigate('/livraisons/nouvelle')}>
-              {Icons.plus} Nouvelle livraison
-            </button>
+            {user.role === 'MAGASINIER' && (
+              <button className="action-btn action-primary" onClick={() => navigate('/livraisons/nouvelle')}>
+                {Icons.plus} Nouvelle livraison
+              </button>
+            )}
             <button className="action-btn action-secondary" onClick={() => navigate('/stock')}>
               {Icons.package} Gérer le stock
             </button>

@@ -3,10 +3,10 @@ const router = express.Router();
 const { authenticate, authorize } = require('../middleware/auth');
 const commercialController = require('../controllers/commercials');
 
-// Commercials data is for owners/directors only — never the magasinier
+// Commercials data is for the owner only
 router.use(authenticate);
 
-router.get('/', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL'), commercialController.getAllCommercials);
-router.get('/history', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL'), commercialController.getHistory);
+router.get('/', authorize('SUPER_ADMIN'), commercialController.getAllCommercials);
+router.get('/history', authorize('SUPER_ADMIN'), commercialController.getHistory);
 
 module.exports = router;

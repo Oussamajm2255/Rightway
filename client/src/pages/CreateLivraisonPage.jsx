@@ -1,6 +1,6 @@
 import { useState, useEffect, Fragment } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { apiGet, apiPost } from '../lib/api';
+import { useNavigate, useParams } from 'react-router-dom';
+import { apiGet, apiPost, apiPut } from '../lib/api';
 import { useCategoryPalette } from '../context/CategoryPaletteContext';
 import './CreateLivraisonPage.css';
 
@@ -22,25 +22,67 @@ function formatDT(value) {
 
 function CreateLivraisonPage() {
   const navigate = useNavigate();
+  const { id: livraisonId } = useParams();
+  const isEdit = !!livraisonId;
   const { getColor } = useCategoryPalette();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(isEdit ? 2 : 1);
   const [commercials, setCommercials] = useState([]);
   const [stock, setStock] = useState([]);
   const [selectedCommercial, setSelectedCommercial] = useState(null);
   const [selectedItems, setSelectedItems] = useState({});
+  const [soldByProduct, setSoldByProduct] = useState({});
+  const [reference, setReference] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
+    async function loadEdit() {
+      const [{ livraison }, stockData] = await Promise.all([
+        apiGet(`/livraisons/${livraisonId}`),
+        apiGet('/stock?below_threshold=999999'),
+      ]);
+      const loaded = Object.fromEntries(livraison.items.map((i) => [i.product_id, i]));
+      // Available = the depot plus what this livraison already holds, at its frozen price
+      const products = stockData.stock.map((s) => {
+        const item = loaded[s.id];
+        return item ? { ...s, quantity: s.quantity + item.qte_chargee, selling_price_ttc: item.prix_ttc } : s;
+      });
+      for (const item of livraison.items) {
+        if (!products.some((p) => p.id === item.product_id)) {
+          products.push({
+            id: item.product_id,
+            barcode: item.barcode,
+            name: item.product_name,
+            category: item.category,
+            selling_price_ttc: item.prix_ttc,
+            quantity: item.qte_chargee,
+          });
+        }
+      }
+      setStock(products.filter((s) => s.quantity > 0));
+      setSelectedCommercial({
+        full_name: livraison.commercial_name,
+        vehicle_name: livraison.vehicle_name,
+        vehicle_plate: livraison.vehicle_plate,
+      });
+      setSelectedItems(Object.fromEntries(livraison.items.map((i) => [i.product_id, i.qte_chargee])));
+      setSoldByProduct(Object.fromEntries(livraison.items.map((i) => [i.product_id, i.qte_vendue])));
+      setReference(livraison.reference);
+    }
+
     async function loadData() {
       try {
+        if (isEdit) {
+          await loadEdit();
+          return;
+        }
         const [comData, stockData] = await Promise.all([
           apiGet('/users/commercials'),
           apiGet('/stock?below_threshold=999999'),
         ]);
-        setCommercials(comData.users);
+        setCommercials(comData.users.filter((u) => u.role === 'COMMERCIAL'));
         setStock(stockData.stock.filter((s) => s.quantity > 0));
       } catch (err) {
         setError(err.message);
@@ -64,15 +106,17 @@ function CreateLivraisonPage() {
 
   function handleQtyChange(productId, qty) {
     const val = parseInt(qty, 10);
+    const sold = soldByProduct[productId] || 0;
     if (isNaN(val) || val < 0) {
       const next = { ...selectedItems };
-      delete next[productId];
+      if (sold > 0) next[productId] = sold;
+      else delete next[productId];
       setSelectedItems(next);
       return;
     }
     const stockItem = stock.find((s) => s.id === productId);
     const max = stockItem ? stockItem.quantity : 0;
-    const clamped = Math.min(val, max);
+    const clamped = Math.max(sold, Math.min(val, max));
     setSelectedItems((prev) => ({ ...prev, [productId]: clamped }));
   }
 
@@ -119,6 +163,11 @@ function CreateLivraisonPage() {
     }));
     setSubmitting(true);
     try {
+      if (isEdit) {
+        await apiPut(`/livraisons/${livraisonId}/items`, { items, password });
+        navigate(`/livraisons/${livraisonId}`);
+        return;
+      }
       const data = await apiPost('/livraisons', {
         commercial_id: selectedCommercial.id,
         items,
@@ -138,14 +187,16 @@ function CreateLivraisonPage() {
   }
 
   const STEP_LABELS = ['Commercial', 'Produits', 'Aperçu', 'Confirmation'];
+  const pageTitle = isEdit ? 'Modifier le chargement' : 'Nouvelle livraison';
+  const pageSubtitle = isEdit ? `Livraison ${reference} — retour à la création` : 'Créez un bon de sortie pour un commercial';
 
   if (loadingData) {
     return (
       <div className="create-livraison">
         <div className="brand-masthead">
           <div>
-            <h1 className="page-title">Nouvelle livraison</h1>
-            <p className="page-subtitle">Créez un bon de sortie pour un commercial</p>
+            <h1 className="page-title">{pageTitle}</h1>
+            <p className="page-subtitle">{pageSubtitle}</p>
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
@@ -160,8 +211,8 @@ function CreateLivraisonPage() {
     <div className="create-livraison">
       <div className="brand-masthead">
         <div>
-          <h1 className="page-title">Nouvelle livraison</h1>
-          <p className="page-subtitle">Créez un bon de sortie pour un commercial</p>
+          <h1 className="page-title">{pageTitle}</h1>
+          <p className="page-subtitle">{pageSubtitle}</p>
         </div>
       </div>
 
@@ -225,7 +276,10 @@ function CreateLivraisonPage() {
       {step === 2 && selectedCommercial && (
         <div className="step-panel">
           <h2 className="step-title">Sélectionnez les produits</h2>
-          <p className="step-hint">Pour {selectedCommercial.full_name}. Seuls les produits avec stock disponible sont affichés.</p>
+          <p className="step-hint">
+            Pour {selectedCommercial.full_name}. Seuls les produits avec stock disponible sont affichés.
+            {isEdit && ' La quantité ne peut pas être inférieure à ce qui est déjà vendu.'}
+          </p>
 
           <div className="products-grid">
             {groupByCategory(stock).map(([category, products]) => (
@@ -245,13 +299,14 @@ function CreateLivraisonPage() {
                         <span className={`ps-stock ${product.quantity < 21 ? 'low' : ''}`}>
                           Stock: {product.quantity}
                         </span>
+                        {soldByProduct[product.id] > 0 && <span>Vendu: {soldByProduct[product.id]}</span>}
                       </div>
                     </div>
                     <div className="ps-qty">
                       <button
                         className="qty-btn"
                         onClick={() => handleQtyChange(product.id, (selectedItems[product.id] || 0) - 1)}
-                        disabled={!selectedItems[product.id]}
+                        disabled={!selectedItems[product.id] || selectedItems[product.id] <= (soldByProduct[product.id] || 0)}
                       >−</button>
                       <input
                         type="number"
@@ -285,7 +340,9 @@ function CreateLivraisonPage() {
           </div>
 
           <div className="step-actions">
-            <button className="btn btn-secondary" onClick={() => setStep(1)}>Retour</button>
+            <button className="btn btn-secondary" onClick={() => (isEdit ? navigate(`/livraisons/${livraisonId}`) : setStep(1))}>
+              {isEdit ? 'Annuler' : 'Retour'}
+            </button>
             <button className="btn btn-primary" onClick={handleGoToPreview}>
               Aperçu du Bon de Sortie
             </button>
@@ -435,13 +492,17 @@ function CreateLivraisonPage() {
       {step === 4 && (
         <div className="step-panel step-confirm">
           <h2 className="step-title">Confirmer la charge</h2>
-          <p className="step-hint">Saisissez votre mot de passe pour valider la création.</p>
+          <p className="step-hint">Saisissez votre mot de passe pour valider {isEdit ? 'la modification' : 'la création'}.</p>
 
           <div className="confirm-summary">
-            <p>Vous allez créer un bon de sortie pour :</p>
+            <p>{isEdit ? `Vous allez modifier le chargement ${reference} de :` : 'Vous allez créer un bon de sortie pour :'}</p>
             <p className="summary-highlight">{selectedCommercial.full_name} — {selectedCommercial.vehicle_name} ({selectedCommercial.vehicle_plate})</p>
             <p>{getSelectedProducts().length} produit(s) — Total: <strong>{formatDT(getTotal())}</strong></p>
-            <p className="confirm-note">Le stock ne sera déduit qu'après confirmation par le commercial.</p>
+            <p className="confirm-note">
+              {isEdit
+                ? 'Le stock est ajusté immédiatement selon les différences. Le commercial devra ensuite confirmer pour reprendre la livraison.'
+                : "Le stock ne sera déduit qu'après confirmation par le commercial."}
+            </p>
           </div>
 
           <form onSubmit={handleConfirm}>
@@ -460,7 +521,7 @@ function CreateLivraisonPage() {
             <div className="step-actions">
               <button type="button" className="btn btn-secondary" onClick={() => setStep(3)}>Retour</button>
               <button type="submit" className="btn btn-primary btn-lg" disabled={submitting}>
-                {submitting ? 'Création...' : 'Confirmer la charge'}
+                {submitting ? 'Enregistrement...' : 'Confirmer la charge'}
               </button>
             </div>
           </form>

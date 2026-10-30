@@ -8,6 +8,7 @@ const { COMMISSION_RATE } = require('../models/livraison');
 const { verifyPassword } = require('../utils/password');
 const pool = require('../db/pool');
 const pdfGenerator = require('../services/pdfGenerator');
+const { quarterRangeError } = require('../utils/quarterRange');
 
 async function createLivraison(req, res) {
   try {
@@ -43,9 +44,7 @@ async function listLivraisons(req, res) {
     // SUPER_ADMIN sees every livraison.
     // DIRECTEUR_COMMERCIAL: last 5 days + active + cloturé with pending écart.
     // COMMERCIAL is scoped to their own deliveries.
-    // MAGASINIER sees only unfinished livraisons from the last 5 days (no history).
     if (req.user.role === 'COMMERCIAL') filters.commercial_id = req.user.id;
-    if (req.user.role === 'MAGASINIER') filters.magasinier_scope = true;
     if (req.user.role === 'DIRECTEUR_COMMERCIAL') filters.directeur_scope = true;
     if (req.user.role !== 'COMMERCIAL' && commercial_id) filters.commercial_id = commercial_id;
     res.json({ livraisons: await livraisonModel.findAll(filters) });
@@ -379,8 +378,47 @@ async function confirmerRetourCreation(req, res) {
   }
 }
 
+async function modifierProduits(req, res) {
+  try {
+    const { items, password } = req.body;
+    if (!password) return res.status(400).json({ error: 'Votre mot de passe est requis pour confirmer.' });
+    const { rows: userRows } = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+    if (!await verifyPassword(password, userRows[0].password_hash)) return res.status(400).json({ error: 'Mot de passe incorrect.' });
+
+    if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ error: 'Veuillez garder au moins un produit.' });
+    for (const item of items) {
+      if (!item.product_id || !Number.isInteger(item.qte_chargee) || item.qte_chargee <= 0) {
+        return res.status(400).json({ error: 'Chaque produit doit avoir un ID et une quantité positive.' });
+      }
+    }
+    if (new Set(items.map((i) => i.product_id)).size !== items.length) {
+      return res.status(400).json({ error: 'Un produit ne peut apparaître qu\'une seule fois.' });
+    }
+
+    const result = await livraisonModel.updateItems(req.params.id, items, req.user.id);
+    if (result.error) return res.status(400).json({ error: result.error });
+
+    const { livraison } = result;
+    await notificationModel.create(
+      livraison.commercial_id,
+      `Le chargement de la livraison ${livraison.reference} a été modifié. Vérifiez-le puis reprenez la livraison.`,
+      livraison.id
+    );
+
+    res.json({ message: 'Chargement modifié avec succès. Le stock a été ajusté.', livraison });
+  } catch (err) {
+    console.error('modifierProduits error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
 async function reprendreLivraison(req, res) {
   try {
+    const { password } = req.body;
+    if (!password) return res.status(400).json({ error: 'Mot de passe requis.' });
+    const { rows: userRows } = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+    if (!await verifyPassword(password, userRows[0].password_hash)) return res.status(400).json({ error: 'Mot de passe incorrect.' });
+
     const resumed = await retourCreationLogModel.reprendre(req.params.id, req.user.id);
     if (!resumed) return res.status(400).json({ error: 'Cette livraison ne peut pas être reprise.' });
 
@@ -661,6 +699,9 @@ async function getDistributionList(req, res) {
       offset,
     };
 
+    const rangeError = quarterRangeError(req.user.role, date_from, date_to);
+    if (rangeError) return res.status(400).json({ error: rangeError });
+
     const [rows, total] = await Promise.all([
       livraisonModel.findAllWithDistributionStats(filters),
       livraisonModel.countDistributionStats(filters),
@@ -685,5 +726,5 @@ async function getDistributionList(req, res) {
   }
 }
 
-module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier, archiveLivraison, demanderAnnulation, confirmerAnnulation, demanderReouverture, confirmerReouverture, demanderRetourCreation, confirmerRetourCreation, reprendreLivraison, declarerAvance, getAvances, accepterAvance, refuserAvance, modifierAvancePaiement, realtimeData, declarerEcart, listEcarts, confirmerEcart, requestPaymentEcart, confirmPaymentEcart, getDistributionList };
+module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier, archiveLivraison, demanderAnnulation, confirmerAnnulation, demanderReouverture, confirmerReouverture, demanderRetourCreation, confirmerRetourCreation, modifierProduits, reprendreLivraison, declarerAvance, getAvances, accepterAvance, refuserAvance, modifierAvancePaiement, realtimeData, declarerEcart, listEcarts, confirmerEcart, requestPaymentEcart, confirmPaymentEcart, getDistributionList };
 

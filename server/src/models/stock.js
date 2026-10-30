@@ -6,7 +6,7 @@ async function getStockLevels({ category, below_threshold } = {}) {
       SELECT li.product_id, SUM(li.qte_chargee)::INT AS in_transit
       FROM livraison_items li
       JOIN livraisons l ON li.livraison_id = l.id
-      WHERE l.status = 'EN_COURS' AND l.is_archived = false
+      WHERE l.status IN ('EN_COURS', 'CONFIRME') AND l.is_archived = false
       GROUP BY li.product_id
     )
     SELECT

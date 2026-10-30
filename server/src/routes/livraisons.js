@@ -25,6 +25,7 @@ const {
   demanderRetourCreation,
   confirmerRetourCreation,
   reprendreLivraison,
+  modifierProduits,
   declarerAvance,
   getAvances,
   accepterAvance,
@@ -51,9 +52,8 @@ function ensureDownloadTokenScope(req, res, next) {
 
 // Ownership guard: restricts per-livraison access by role.
 //  - Download tokens are their own auth mechanism (scope-checked separately)
-//  - SUPER_ADMIN and DIRECTEUR_COMMERCIAL: unrestricted
+//  - SUPER_ADMIN, DIRECTEUR_COMMERCIAL and MAGASINIER: unrestricted
 //  - COMMERCIAL: only their own livraisons
-//  - MAGASINIER: only unfinished livraisons from the last 5 days
 async function requireLivraisonOwnership(req, res, next) {
   if (req.downloadTokenLivraisonId) return next();
   const role = req.user.role;
@@ -70,12 +70,6 @@ async function requireLivraisonOwnership(req, res, next) {
       if (rows[0].commercial_id !== req.user.id) return res.status(403).json({ error: 'Accès refusé.' });
       return next();
     }
-    if (role === 'MAGASINIER') {
-      const finished = ['CLOTURE', 'ANNULE'].includes(rows[0].status);
-      const tooOld = (Date.now() - new Date(rows[0].created_at).getTime()) > 5 * 24 * 3600 * 1000;
-      if (finished || tooOld) return res.status(403).json({ error: 'Accès refusé.' });
-      return next();
-    }
     return next();
   } catch (err) {
     console.error('requireLivraisonOwnership error:', err);
@@ -83,11 +77,11 @@ async function requireLivraisonOwnership(req, res, next) {
   }
 }
 
-router.post('/', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL'), createLivraison);
+router.post('/', authorize('SUPER_ADMIN', 'MAGASINIER'), createLivraison);
 router.get('/', listLivraisons);
 
-// Distribution analytics — SUPER_ADMIN only. Must be before /:id to avoid route collision.
-router.get('/distribution', authorize('SUPER_ADMIN'), getDistributionList);
+// Distribution analytics. Must be before /:id to avoid route collision.
+router.get('/distribution', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL', 'MAGASINIER'), getDistributionList);
 
 router.get('/:id', requireLivraisonOwnership, getLivraison);
 router.put('/:id/confirm-sortie', authorize('COMMERCIAL'), confirmSortie);
@@ -97,15 +91,17 @@ router.put('/:id/archive', authorize('SUPER_ADMIN'), archiveLivraison);
 
 // Annulation flow: commercial requests → directeur confirms
 router.put('/:id/demander-annulation', authorize('COMMERCIAL'), demanderAnnulation);
-router.put('/:id/confirmer-annulation', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL'), confirmerAnnulation);
+router.put('/:id/confirmer-annulation', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL', 'MAGASINIER'), confirmerAnnulation);
 
 // Reopen flow: commercial requests → directeur confirms (Cloture → EN_COURS)
 router.post('/:id/demander-reouverture', authorize('COMMERCIAL'), demanderReouverture);
-router.put('/:id/confirmer-reouverture', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL'), confirmerReouverture);
+router.put('/:id/confirmer-reouverture', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL', 'MAGASINIER'), confirmerReouverture);
 
-// Retour creation flow: commercial requests → directeur confirms (EN_COURS → CONFIRME)
+// Retour creation flow: commercial requests → admin confirms (EN_COURS → CONFIRME),
+// the load is edited, then the commercial resumes (CONFIRME → EN_COURS)
 router.put('/:id/demander-retour-creation', authorize('COMMERCIAL'), demanderRetourCreation);
-router.put('/:id/confirmer-retour-creation', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL'), confirmerRetourCreation);
+router.put('/:id/confirmer-retour-creation', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL', 'MAGASINIER'), confirmerRetourCreation);
+router.put('/:id/items', authorize('SUPER_ADMIN', 'MAGASINIER'), modifierProduits);
 router.put('/:id/reprendre', authorize('COMMERCIAL'), reprendreLivraison);
 
 // Avances (advance payments during EN_COURS)
@@ -132,7 +128,7 @@ router.post('/:id/sales/sync', authorize('COMMERCIAL'), syncOfflineSales);
 
 // End & Retour routes
 router.put('/:id/terminer', authorize('COMMERCIAL'), terminerLivraison);
-router.put('/:id/confirmer-retour', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL', 'COMMERCIAL'), confirmerRetour);
+router.put('/:id/confirmer-retour', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL', 'MAGASINIER', 'COMMERCIAL'), confirmerRetour);
 
 // PDF routes — ownership + download token scope must match the requested livraison
 router.get('/:id/bon-sortie/pdf', requireLivraisonOwnership, ensureDownloadTokenScope, downloadBonSortiePDF);

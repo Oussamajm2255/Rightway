@@ -129,7 +129,7 @@ function AppRoutesInner() {
         path="/commercials"
         element={
           <ProtectedRoute>
-            <RoleGuard roles={['SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL']}>
+            <RoleGuard roles={['SUPER_ADMIN']}>
               <CommercialsPage />
             </RoleGuard>
           </ProtectedRoute>
@@ -177,7 +177,17 @@ function AppRoutesInner() {
         path="/livraisons/nouvelle"
         element={
           <ProtectedRoute>
-            <RoleGuard roles={['SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL']}>
+            <RoleGuard roles={['SUPER_ADMIN', 'MAGASINIER']}>
+              <CreateLivraisonPage />
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/livraisons/:id/modifier"
+        element={
+          <ProtectedRoute>
+            <RoleGuard roles={['SUPER_ADMIN', 'MAGASINIER']}>
               <CreateLivraisonPage />
             </RoleGuard>
           </ProtectedRoute>
@@ -203,7 +213,9 @@ function AppRoutesInner() {
         path="/settings"
         element={
           <ProtectedRoute>
-            <SettingsPage />
+            <RoleGuard roles={['SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL', 'MAGASINIER']}>
+              <SettingsPage />
+            </RoleGuard>
           </ProtectedRoute>
         }
       />
@@ -221,7 +233,7 @@ function AppRoutesInner() {
         path="/distribution"
         element={
           <ProtectedRoute>
-            <RoleGuard roles={['SUPER_ADMIN']}>
+            <RoleGuard roles={['SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL', 'MAGASINIER']}>
               <DistributionPage />
             </RoleGuard>
           </ProtectedRoute>
