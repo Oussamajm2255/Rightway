@@ -1203,11 +1203,11 @@ function LivraisonDetailPage() {
         )}
       </div>
 
-      {/* Original items table */}
-      <div className="detail-section">
+      {/* Original items table — the Bon de Retour already lists them during EN_RETOUR */}
+      {!isEnRetour && <div className="detail-section">
         <h2>Produits chargés</h2>
         {(() => {
-          const showVendu = isEnCours || isEnRetour || isCloture;
+          const showVendu = isEnCours || isCloture;
           const groupedItems = Object.entries(
             livraison.items.reduce((acc, item) => {
               const cat = item.category || 'Sans catégorie';
@@ -1248,7 +1248,7 @@ function LivraisonDetailPage() {
                         </tr>
                         ))}
                         <tr className="cat-subtotal" style={{ background: catCol.bg, borderLeftColor: catCol.bar, borderTopColor: catCol.bar }}>
-                          <td colSpan="5" style={{ color: catCol.text, textAlign: 'center', fontWeight: 700 }}>
+                          <td colSpan="4" style={{ color: catCol.text, textAlign: 'center', fontWeight: 700 }}>
                             Sous-total {cat}
                           </td>
                           <td className="td-qty">{catItems.reduce((s,i) => s + i.qte_chargee, 0)}</td>
@@ -1315,7 +1315,7 @@ function LivraisonDetailPage() {
             </>
           );
         })()}
-      </div>
+      </div>}
 
       {/* Commercial: En attente → Confirm sortie */}
       {isEnAttente && isAssignedCommercial && (
