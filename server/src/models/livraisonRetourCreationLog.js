@@ -34,22 +34,24 @@ async function confirm(livraison_id, confirmed_by) {
       return { error: 'Seules les livraisons en cours peuvent être retournées à la création.' };
     }
 
-    // Revert to CONFIRME (preserve sales consistency)
+    // Close every pending request; without one, nothing may be reverted
     const now = new Date().toISOString();
-    await client.query(
-      `UPDATE livraisons SET status = 'CONFIRME', returned_to_creation_at = $2 WHERE id = $1`,
-      [livraison_id, now]
-    );
-
-    // Update the latest pending retour-creation log
-    await client.query(
+    const { rowCount } = await client.query(
       `UPDATE livraison_retour_creation_log
        SET confirmed_by = $2, confirmed_at = $3
        WHERE livraison_id = $1
-         AND confirmed_by IS NULL
-       ORDER BY requested_at DESC
-       LIMIT 1`,
+         AND confirmed_by IS NULL`,
       [livraison_id, confirmed_by, now]
+    );
+    if (rowCount === 0) {
+      await client.query('ROLLBACK');
+      return { error: 'Aucune demande de retour à la création en attente.' };
+    }
+
+    // Revert to CONFIRME (preserve sales consistency)
+    await client.query(
+      `UPDATE livraisons SET status = 'CONFIRME', returned_to_creation_at = $2 WHERE id = $1`,
+      [livraison_id, now]
     );
 
     await client.query('COMMIT');
@@ -60,6 +62,22 @@ async function confirm(livraison_id, confirmed_by) {
   } finally {
     client.release();
   }
+}
+
+/**
+ * Commercial resumes a livraison returned to création — CONFIRME back to EN_COURS.
+ * Stock is untouched: it was deducted at the first confirmation and never restored.
+ */
+async function reprendre(livraison_id, commercial_id) {
+  const { rowCount } = await pool.query(
+    `UPDATE livraisons SET status = 'EN_COURS'
+     WHERE id = $1
+       AND commercial_id = $2
+       AND status = 'CONFIRME'
+       AND returned_to_creation_at IS NOT NULL`,
+    [livraison_id, commercial_id]
+  );
+  return rowCount > 0;
 }
 
 /**
@@ -78,4 +96,4 @@ async function findByLivraison(livraison_id) {
   return rows;
 }
 
-module.exports = { create, confirm, findByLivraison };
+module.exports = { create, confirm, reprendre, findByLivraison };

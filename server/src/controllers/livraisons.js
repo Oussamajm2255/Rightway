@@ -379,6 +379,25 @@ async function confirmerRetourCreation(req, res) {
   }
 }
 
+async function reprendreLivraison(req, res) {
+  try {
+    const resumed = await retourCreationLogModel.reprendre(req.params.id, req.user.id);
+    if (!resumed) return res.status(400).json({ error: 'Cette livraison ne peut pas être reprise.' });
+
+    const livraison = await livraisonModel.findById(req.params.id);
+    await notificationModel.create(
+      livraison.admin_id,
+      `Le commercial ${req.user.full_name} a repris la livraison ${livraison.reference}.`,
+      livraison.id
+    );
+
+    res.json({ message: 'Livraison reprise avec succès.', livraison });
+  } catch (err) {
+    console.error('reprendreLivraison error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
 // ============================================================
 // AVANCES (advance payment declarations)
 // ============================================================
@@ -666,5 +685,5 @@ async function getDistributionList(req, res) {
   }
 }
 
-module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier, archiveLivraison, demanderAnnulation, confirmerAnnulation, demanderReouverture, confirmerReouverture, demanderRetourCreation, confirmerRetourCreation, declarerAvance, getAvances, accepterAvance, refuserAvance, modifierAvancePaiement, realtimeData, declarerEcart, listEcarts, confirmerEcart, requestPaymentEcart, confirmPaymentEcart, getDistributionList };
+module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier, archiveLivraison, demanderAnnulation, confirmerAnnulation, demanderReouverture, confirmerReouverture, demanderRetourCreation, confirmerRetourCreation, reprendreLivraison, declarerAvance, getAvances, accepterAvance, refuserAvance, modifierAvancePaiement, realtimeData, declarerEcart, listEcarts, confirmerEcart, requestPaymentEcart, confirmPaymentEcart, getDistributionList };
 

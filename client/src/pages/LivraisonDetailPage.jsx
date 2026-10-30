@@ -277,6 +277,20 @@ function LivraisonDetailPage() {
     }
   }
 
+  async function handleReprendreLivraison() {
+    setActionError('');
+    setSubmitting(true);
+    try {
+      const data = await apiPut(`/livraisons/${id}/reprendre`, {});
+      setLivraison(data.livraison);
+      setSuccess(data.message);
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   // Avances handlers
   function handleAvanceFileChange(e) {
     const file = e.target.files[0];
@@ -594,6 +608,25 @@ function LivraisonDetailPage() {
         </div>
       )}
 
+      {/* Commercial: Retour à la création confirmé → Reprendre */}
+      {isConfirme && isAssignedCommercial && (
+        <div className="alert-card">
+          <div className="alert-icon" style={{ background: 'var(--color-primary)' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
+              <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <div className="alert-body">
+            <strong>Retour à la création confirmé</strong>
+            <p>Reprenez la livraison pour continuer. Vos ventes déclarées et le stock ne changent pas.</p>
+            {actionError && <div className="login-error">{actionError}</div>}
+          </div>
+          <button className="btn btn-primary" onClick={handleReprendreLivraison} disabled={submitting}>
+            {submitting ? '...' : 'Reprendre la livraison'}
+          </button>
+        </div>
+      )}
+
       {/* EN_ATTENTE_ANNULATION — Admin must confirm */}
       {isEnAttenteAnnulation && (
         <div className="detail-section">
@@ -614,7 +647,7 @@ function LivraisonDetailPage() {
       )}
 
       {/* Admin: En cours → Confirmer retour à la création */}
-      {isEnCours && isAdmin && (
+      {isEnCours && isAdmin && livraison?.retour_creation_pending && (
         <div className="detail-section">
           <button
             className="btn btn-warning btn-sm"
@@ -1796,7 +1829,7 @@ function LivraisonDetailPage() {
             <h3 className="modal-title">Confirmer le retour à la création</h3>
             <div className="modal-summary">
               <p>Vous allez retourner la livraison <strong>{livraison?.reference}</strong> à l'état <strong>Création (Confirmé)</strong>.</p>
-              <p>Le commercial pourra à nouveau modifier les produits chargés. Les ventes déclarées seront conservées.</p>
+              <p>Le commercial pourra ensuite reprendre la livraison. Les ventes déclarées et le stock ne changent pas.</p>
               {livraison?.return_reason && (
                 <p style={{ marginTop: 'var(--space-2)', fontStyle: 'italic' }}>
                   Motif du commercial : « {livraison.return_reason} »

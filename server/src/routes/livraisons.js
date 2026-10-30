@@ -24,6 +24,7 @@ const {
   confirmerReouverture,
   demanderRetourCreation,
   confirmerRetourCreation,
+  reprendreLivraison,
   declarerAvance,
   getAvances,
   accepterAvance,
@@ -105,6 +106,7 @@ router.put('/:id/confirmer-reouverture', authorize('SUPER_ADMIN', 'DIRECTEUR_COM
 // Retour creation flow: commercial requests → directeur confirms (EN_COURS → CONFIRME)
 router.put('/:id/demander-retour-creation', authorize('COMMERCIAL'), demanderRetourCreation);
 router.put('/:id/confirmer-retour-creation', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL'), confirmerRetourCreation);
+router.put('/:id/reprendre', authorize('COMMERCIAL'), reprendreLivraison);
 
 // Avances (advance payments during EN_COURS)
 router.post('/:id/avances', authorize('COMMERCIAL'), declarerAvance);

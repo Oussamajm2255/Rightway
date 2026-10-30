@@ -150,7 +150,8 @@ async function findById(id) {
   const { rows: livRows } = await pool.query(
     `SELECT l.*,
             c.full_name AS commercial_name, c.vehicle_name, c.vehicle_plate, c.phone AS commercial_phone, c.remuneration_type AS commercial_remuneration_type,
-            a.full_name AS admin_name
+            a.full_name AS admin_name,
+            EXISTS(SELECT 1 FROM livraison_retour_creation_log rl WHERE rl.livraison_id = l.id AND rl.confirmed_by IS NULL) AS retour_creation_pending
      FROM livraisons l
      JOIN users c ON l.commercial_id = c.id
      JOIN users a ON l.admin_id = a.id
