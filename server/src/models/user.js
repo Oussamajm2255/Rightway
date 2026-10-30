@@ -60,7 +60,7 @@ async function create({ full_name, email, password_hash, role, phone, vehicle_na
 }
 
 async function update(id, fields) {
-  const allowed = ['full_name', 'email', 'phone', 'vehicle_name', 'vehicle_plate', 'is_active', 'password_hash', 'remuneration_type', 'salary_amount'];
+  const allowed = ['full_name', 'email', 'phone', 'vehicle_name', 'vehicle_plate', 'role', 'is_active', 'password_hash', 'remuneration_type', 'salary_amount'];
   const sets = [];
   const params = [id];
   let idx = 2;

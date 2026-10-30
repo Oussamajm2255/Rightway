@@ -120,6 +120,23 @@ async function updateUser(req, res) {
       }
     }
 
+    if (req.body.role !== undefined && req.body.role !== targetUser.role) {
+      if (targetUser.role === 'SUPER_ADMIN') {
+        return res.status(403).json({ error: 'Le rôle du Super Admin ne peut pas être modifié.' });
+      }
+      // Only a COMMERCIAL can finish these livraisons: they would stay stuck otherwise
+      if (targetUser.role === 'COMMERCIAL') {
+        const { rows } = await pool.query(
+          `SELECT COUNT(*)::INT AS count FROM livraisons
+           WHERE commercial_id = $1 AND is_archived = false AND status NOT IN ('CLOTURE', 'ANNULE')`,
+          [id]
+        );
+        if (rows[0].count > 0) {
+          return res.status(400).json({ error: `Ce commercial a ${rows[0].count} livraison(s) non terminée(s). Clôturez-les avant de changer son rôle.` });
+        }
+      }
+    }
+
     const fields = {};
     if (req.body.full_name !== undefined) fields.full_name = req.body.full_name;
     if (req.body.email !== undefined) fields.email = req.body.email;

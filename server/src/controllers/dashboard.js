@@ -116,7 +116,7 @@ async function superAdminDashboard(req, res) {
           COALESCE(s.ecoulement, 0)::INT AS ecoulement
         FROM users u
         LEFT JOIN stats s ON s.commercial_id = u.id
-        WHERE u.role = 'COMMERCIAL'
+        WHERE u.role = 'COMMERCIAL' OR s.commercial_id IS NOT NULL
         ORDER BY s.ca DESC NULLS LAST
         LIMIT 5`),
       // Activity feed: recent events — returns STRUCTURED data (type + params).

@@ -261,7 +261,7 @@ async function getCommercialSales({ date_from, date_to } = {}) {
       AND l.status = 'CLOTURE' AND l.is_archived = false
       ${dateWhere}
     LEFT JOIN livraison_items li ON li.livraison_id = l.id
-    WHERE u.role = 'COMMERCIAL' AND (u.is_active OR l.id IS NOT NULL)
+    WHERE (u.role = 'COMMERCIAL' AND u.is_active) OR l.id IS NOT NULL
     GROUP BY u.id, u.full_name
     ORDER BY ca DESC, u.full_name ASC
   `, params);

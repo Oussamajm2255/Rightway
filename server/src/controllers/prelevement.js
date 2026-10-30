@@ -104,12 +104,15 @@ async function deleteCategory(req, res) {
 // ═══════════════════════════════════════════════
 
 // A prelevement's commercial_id is optional ("Général" = no commercial),
-// but when present it must point to an actual COMMERCIAL user — this is
-// what lets Performances Commerciaux attribute the charge back to them.
+// but when present it must point to a COMMERCIAL user, or a former one who
+// still has livraisons — this is what lets Performances Commerciaux
+// attribute the charge back to them.
 async function assertValidCommercialId(commercial_id) {
   if (!commercial_id) return null;
   const { rows } = await pool.query(
-    `SELECT id FROM users WHERE id = $1 AND role = 'COMMERCIAL'`,
+    `SELECT u.id FROM users u
+     WHERE u.id = $1
+       AND (u.role = 'COMMERCIAL' OR EXISTS (SELECT 1 FROM livraisons l WHERE l.commercial_id = u.id))`,
     [commercial_id]
   );
   return rows.length > 0 ? null : 'Commercial introuvable.';

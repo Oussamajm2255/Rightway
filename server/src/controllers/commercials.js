@@ -71,7 +71,7 @@ async function getAllCommercials(req, res) {
     });
 
     // Global KPIs
-    const activeAgents = enriched.filter(c => c.is_active).length;
+    const activeAgents = commercials.filter(c => c.is_active && c.role === 'COMMERCIAL').length;
     const encours = enriched.filter(c => c.status === 'EN_COURS' || c.status === 'EN_RETOUR').length;
     const caGlobal = enriched.reduce((sum, c) => sum + c.ca_total, 0);
     const caCommissionOnly = enriched.filter(c => c.remuneration_type !== 'SALAIRE').reduce((sum, c) => sum + c.ca_total, 0);

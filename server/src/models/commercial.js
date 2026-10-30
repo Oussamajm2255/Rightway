@@ -111,7 +111,7 @@ async function getAllWithStats({ date_from, date_to } = {}) {
       GROUP BY commercial_id
     )
     SELECT
-      u.id, u.full_name, u.vehicle_name, u.vehicle_plate, u.is_active, u.remuneration_type,
+      u.id, u.full_name, u.role, u.vehicle_name, u.vehicle_plate, u.is_active, u.remuneration_type,
       COALESCE(cs.total_livraisons, 0)::INT AS livraisons_total,
       COALESCE(cs.actives, 0)::INT AS livraisons_actives,
       COALESCE(cs.cloturees, 0)::INT AS livraisons_cloturees,
@@ -134,6 +134,7 @@ async function getAllWithStats({ date_from, date_to } = {}) {
     LEFT JOIN commercial_ecart_items cei ON cei.commercial_id = u.id
     LEFT JOIN ecoulement_final ef ON ef.commercial_id = u.id
     WHERE u.role = 'COMMERCIAL'
+      OR EXISTS (SELECT 1 FROM livraisons l WHERE l.commercial_id = u.id AND l.is_archived = false)
     ORDER BY ca_total DESC
   `, params);
 
