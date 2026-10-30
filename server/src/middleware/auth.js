@@ -1,4 +1,4 @@
-const { verifyToken, verifyDownloadToken } = require('../utils/jwt');
+const { verifyToken, verifyDownloadToken, issuedBeforePasswordChange } = require('../utils/jwt');
 const pool = require('../db/pool');
 
 /**
@@ -43,7 +43,7 @@ async function authenticate(req, res, next) {
 
     // Verify user still exists and is active
     const { rows } = await pool.query(
-      'SELECT id, full_name, email, role, is_active FROM users WHERE id = $1',
+      'SELECT id, full_name, email, role, is_active, password_last_changed FROM users WHERE id = $1',
       [decoded.id]
     );
 
@@ -53,6 +53,10 @@ async function authenticate(req, res, next) {
 
     if (!rows[0].is_active) {
       return res.status(403).json({ error: 'Votre compte a été désactivé. Contactez un administrateur.' });
+    }
+
+    if (issuedBeforePasswordChange(decoded, rows[0].password_last_changed)) {
+      return res.status(401).json({ error: 'Session expirée ou invalide. Veuillez vous reconnecter.' });
     }
 
     req.user = {

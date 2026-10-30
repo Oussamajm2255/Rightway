@@ -10,6 +10,7 @@ function UsersPage() {
   const [roleFilter, setRoleFilter] = useState('');
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [passwordChangedFor, setPasswordChangedFor] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
   const [deletingUser, setDeletingUser] = useState(null);
   const [deletePassword, setDeletePassword] = useState('');
@@ -93,9 +94,10 @@ function UsersPage() {
     setEditingUser(null);
   }
 
-  function handleFormSaved() {
+  function handleFormSaved(passwordChangedName) {
     setShowForm(false);
     setEditingUser(null);
+    setPasswordChangedFor(passwordChangedName || null);
     fetchUsers();
   }
 
@@ -319,6 +321,24 @@ function UsersPage() {
       )}
 
       {/* User Form Modal */}
+      {passwordChangedFor && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <h3 className="modal-title">Mot de passe modifié</h3>
+            <div className="modal-summary">
+              <p>Le mot de passe de <strong>{passwordChangedFor}</strong> a bien été changé.</p>
+              <p>Vous devez lui communiquer ce nouveau mot de passe vous-même : il ne lui est pas envoyé automatiquement.</p>
+              <p>Ses sessions ouvertes ont été fermées. L'utilisateur devra se reconnecter avec ce nouveau mot de passe.</p>
+            </div>
+            <div className="modal-actions">
+              <button className="btn btn-primary" onClick={() => setPasswordChangedFor(null)}>
+                J'ai compris
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showForm && (
         <UserFormModal
           user={editingUser}
@@ -407,11 +427,12 @@ function UserFormModal({ user, onClose, onSaved }) {
       if (isEdit) {
         const body = { ...formData };
         if (!body.password) delete body.password;
-        await apiPut(`/users/${user.id}`, body);
+        const data = await apiPut(`/users/${user.id}`, body);
+        onSaved(data.password_changed ? formData.full_name : null);
       } else {
         await apiPost('/users', formData);
+        onSaved();
       }
-      onSaved();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -434,14 +455,14 @@ function UserFormModal({ user, onClose, onSaved }) {
             </div>
             <div className="form-group">
               <label className="form-label">Email *</label>
-              <input name="email" type="email" className="form-input" value={formData.email} onChange={handleChange} />
+              <input name="email" type="email" className="form-input" autoComplete="off" value={formData.email} onChange={handleChange} />
             </div>
           </div>
 
           <div className="form-row">
             <div className="form-group">
               <label className="form-label">Mot de passe {!isEdit && '*'}</label>
-              <input name="password" type="password" className="form-input" value={formData.password} onChange={handleChange} placeholder={isEdit ? 'Laisser vide pour ne pas changer' : ''} />
+              <input name="password" type="password" className="form-input" autoComplete="new-password" value={formData.password} onChange={handleChange} placeholder={isEdit ? 'Laisser vide pour ne pas changer' : ''} />
             </div>
             <div className="form-group">
               <label className="form-label">Rôle *</label>

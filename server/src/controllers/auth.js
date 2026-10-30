@@ -1,6 +1,6 @@
 const pool = require('../db/pool');
 const { hashPassword, verifyPassword } = require('../utils/password');
-const { signToken, verifyToken, canRefreshToken } = require('../utils/jwt');
+const { signToken, verifyToken, canRefreshToken, issuedBeforePasswordChange } = require('../utils/jwt');
 const { validationResult } = require('express-validator');
 const crypto = require('crypto');
 const {
@@ -220,6 +220,11 @@ async function refresh(req, res) {
       decoded = verifyToken(token);
     } catch {
       return res.status(401).json({ error: 'Token invalide.' });
+    }
+
+    const { rows } = await pool.query('SELECT password_last_changed FROM users WHERE id = $1', [decoded.id]);
+    if (rows.length === 0 || issuedBeforePasswordChange(decoded, rows[0].password_last_changed)) {
+      return res.status(401).json({ error: 'Session expirée. Veuillez vous reconnecter.' });
     }
 
     const newToken = signToken({

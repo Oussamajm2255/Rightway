@@ -2,6 +2,7 @@ const { validationResult } = require('express-validator');
 const pool = require('../db/pool');
 const userModel = require('../models/user');
 const { hashPassword, verifyPassword } = require('../utils/password');
+const { revokeAllUserTokens } = require('../utils/refreshToken');
 
 /**
  * GET /api/users
@@ -120,6 +121,11 @@ async function updateUser(req, res) {
       }
     }
 
+    // Their own change goes through /auth/password, which asks for the current one
+    if (req.body.password && targetUser.role === 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Le mot de passe du Super Admin ne peut pas être forcé.' });
+    }
+
     if (req.body.role !== undefined && req.body.role !== targetUser.role) {
       if (targetUser.role === 'SUPER_ADMIN') {
         return res.status(403).json({ error: 'Le rôle du Super Admin ne peut pas être modifié.' });
@@ -173,7 +179,14 @@ async function updateUser(req, res) {
     }
 
     const updated = await userModel.update(id, fields);
-    res.json({ user: updated });
+
+    const password_changed = !!req.body.password;
+    if (password_changed) {
+      await userModel.setPassword(id, await hashPassword(req.body.password));
+      await revokeAllUserTokens(id);
+    }
+
+    res.json({ user: updated, password_changed });
   } catch (err) {
     console.error('updateUser error:', err);
     res.status(500).json({ error: 'Erreur interne du serveur' });

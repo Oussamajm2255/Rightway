@@ -40,6 +40,13 @@ function canRefreshToken(token) {
   }
 }
 
+// A token issued before the user's last password change no longer opens a session.
+// iat has one-second precision, so a login in that same second stays valid.
+function issuedBeforePasswordChange(decoded, passwordLastChanged) {
+  if (!passwordLastChanged) return false;
+  return decoded.iat < Math.floor(new Date(passwordLastChanged).getTime() / 1000);
+}
+
 // ============================================================
 // DOWNLOAD TOKENS — short-lived, purpose-bound tokens for PDF
 // downloads via window.open(). These replace passing the JWT in
@@ -63,4 +70,4 @@ function verifyDownloadToken(token) {
   return decoded;
 }
 
-module.exports = { signToken, verifyToken, decodeToken, canRefreshToken, getSecret, JWT_EXPIRES_IN, signDownloadToken, verifyDownloadToken };
+module.exports = { signToken, verifyToken, decodeToken, canRefreshToken, issuedBeforePasswordChange, getSecret, JWT_EXPIRES_IN, signDownloadToken, verifyDownloadToken };

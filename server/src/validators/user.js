@@ -48,6 +48,10 @@ const updateUserRules = [
     .trim()
     .isEmail().withMessage('Format d\'email invalide.')
     .normalizeEmail(),
+  body('password')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isLength({ min: 8 }).withMessage('Le mot de passe doit comporter au moins 8 caractères.'),
   body('phone')
     .optional({ values: 'falsy' })
     .trim(),

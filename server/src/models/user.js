@@ -85,6 +85,19 @@ async function update(id, fields) {
   return rows[0] || null;
 }
 
+/**
+ * Force a new password. Also unlocks the account: failed attempts on the old
+ * password no longer mean anything.
+ */
+async function setPassword(id, password_hash) {
+  await pool.query(
+    `UPDATE users
+     SET password_hash = $2, password_last_changed = NOW(), failed_login_attempts = 0, locked_until = NULL
+     WHERE id = $1`,
+    [id, password_hash]
+  );
+}
+
 async function deactivate(id) {
   const { rows } = await pool.query(
     'UPDATE users SET is_active = false WHERE id = $1 RETURNING id, full_name, email, role',
@@ -93,4 +106,4 @@ async function deactivate(id) {
   return rows[0] || null;
 }
 
-module.exports = { findAll, findById, findByEmail, create, update, deactivate };
+module.exports = { findAll, findById, findByEmail, create, update, setPassword, deactivate };
