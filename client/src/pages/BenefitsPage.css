@@ -292,8 +292,8 @@ select.filter-input { cursor: pointer; }
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 1000px;
 }
+.benefits-page .data-table { min-width: 1000px; }
 .data-table th {
   font-size: 10px;
   font-weight: 700;
@@ -554,7 +554,7 @@ select.filter-input { cursor: pointer; }
 }
 
 @media (max-width: 900px) {
-  .data-table { min-width: 800px; }
+  .benefits-page .data-table { min-width: 800px; }
   .chart-card { padding: 14px; }
   .chart-card-header h3 { font-size: 12px; }
   .chart-wrap { max-height: 420px; }
@@ -754,7 +754,7 @@ select.filter-input { cursor: pointer; }
   .kpi-card { padding: 10px; }
   .kpi-value { font-size: 15px; }
   .benefits-topbar .topbar-title h1 { font-size: 14px; }
-  .data-table { min-width: 700px; }
+  .benefits-page .data-table { min-width: 700px; }
   .chart-wrap { max-height: 250px; }
 }
 

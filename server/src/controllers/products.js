@@ -1,5 +1,6 @@
 const { validationResult } = require('express-validator');
 const productModel = require('../models/product');
+const { hidePurchasePrice } = require('../utils/hidePurchasePrice');
 
 /**
  * GET /api/products
@@ -9,7 +10,7 @@ async function listProducts(req, res) {
   try {
     const { category, is_active, search } = req.query;
     const products = await productModel.findAll({ category, is_active, search });
-    res.json({ products });
+    res.json({ products: products.map((p) => hidePurchasePrice(req, p)) });
   } catch (err) {
     console.error('listProducts error:', err);
     res.status(500).json({ error: 'Erreur interne du serveur' });
@@ -38,7 +39,7 @@ async function getProduct(req, res) {
     if (!product) {
       return res.status(404).json({ error: 'Produit introuvable.' });
     }
-    res.json({ product });
+    res.json({ product: hidePurchasePrice(req, product) });
   } catch (err) {
     console.error('getProduct error:', err);
     res.status(500).json({ error: 'Erreur interne du serveur' });

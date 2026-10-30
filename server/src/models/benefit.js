@@ -240,4 +240,32 @@ async function getStockValuation() {
   return rows[0] || { depot_ca: 0, charge_ca: 0 };
 }
 
-module.exports = { getGlobalBenefits, getProductBenefits, getStockValuation };
+/**
+ * Sales per commercial, on the same basis as the product figures (CLOTURE
+ * livraisons by closed_at) so both views of a period add up to the same CA.
+ */
+async function getCommercialSales({ date_from, date_to } = {}) {
+  const params = [];
+  let dateWhere = '';
+  if (date_from) { params.push(date_from); dateWhere += ` AND l.closed_at::date >= $${params.length}`; }
+  if (date_to)   { params.push(date_to);   dateWhere += ` AND l.closed_at::date <= $${params.length}`; }
+
+  const { rows } = await pool.query(`
+    SELECT
+      u.id, u.full_name,
+      COUNT(DISTINCT l.id)::INT                                AS livraisons,
+      COALESCE(SUM(li.qte_vendue), 0)::INT                     AS total_sold,
+      COALESCE(SUM(li.qte_vendue * li.prix_ttc), 0)::NUMERIC(14,3) AS ca
+    FROM users u
+    LEFT JOIN livraisons l ON l.commercial_id = u.id
+      AND l.status = 'CLOTURE' AND l.is_archived = false
+      ${dateWhere}
+    LEFT JOIN livraison_items li ON li.livraison_id = l.id
+    WHERE u.role = 'COMMERCIAL' AND (u.is_active OR l.id IS NOT NULL)
+    GROUP BY u.id, u.full_name
+    ORDER BY ca DESC, u.full_name ASC
+  `, params);
+  return rows;
+}
+
+module.exports = { getGlobalBenefits, getProductBenefits, getStockValuation, getCommercialSales };

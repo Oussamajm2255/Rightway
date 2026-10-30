@@ -563,6 +563,8 @@ function AppLayout({ children }) {
   } else if (role === 'DIRECTEUR_COMMERCIAL') {
     navItems.push({ to: '/stock', label: 'Stock', icon: 'stock' });
     navItems.push({ to: '/livraisons', label: 'Livraisons', icon: 'livraisons' });
+    navItems.push({ to: '/commercials', label: 'Commerciaux', icon: 'commercials' });
+    navItems.push({ to: '/statistiques', label: 'Statistiques', icon: 'benefits' });
     navItems.push({ to: '/historique', label: 'Historique', icon: 'historique' });
   } else if (role === 'MAGASINIER') {
     navItems.push({ to: '/stock', label: 'Stock', icon: 'stock' });
@@ -596,6 +598,7 @@ function AppLayout({ children }) {
     if (path.startsWith('/ventes')) return 'Déclaration des ventes';
     if (path.startsWith('/commercials')) return 'Commerciaux';
     if (path.startsWith('/benefits')) return 'Bénéfices & Rentabilité';
+    if (path.startsWith('/statistiques')) return 'Statistiques';
     if (path.startsWith('/prelevements')) return 'Prélèvements';
     if (path.startsWith('/historique')) return 'Historique';
     if (path.startsWith('/parametres')) return 'Paramètres';

@@ -19,6 +19,7 @@ import LoginPage from './pages/LoginPage';
 const UsersPage = lazy(() => import('./pages/UsersPage'));
 const ProductsPage = lazy(() => import('./pages/ProductsPage'));
 const BenefitsPage = lazy(() => import('./pages/BenefitsPage'));
+const StatistiquesPage = lazy(() => import('./pages/StatistiquesPage'));
 const StockPage = lazy(() => import('./pages/StockPage'));
 const LivraisonsListPage = lazy(() => import('./pages/LivraisonsListPage'));
 const CreateLivraisonPage = lazy(() => import('./pages/CreateLivraisonPage'));
@@ -128,8 +129,18 @@ function AppRoutesInner() {
         path="/commercials"
         element={
           <ProtectedRoute>
-            <RoleGuard roles={['SUPER_ADMIN']}>
+            <RoleGuard roles={['SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL']}>
               <CommercialsPage />
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/statistiques"
+        element={
+          <ProtectedRoute>
+            <RoleGuard roles={['SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL']}>
+              <StatistiquesPage />
             </RoleGuard>
           </ProtectedRoute>
         }

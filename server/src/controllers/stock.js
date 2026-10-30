@@ -1,5 +1,6 @@
 const stockModel = require('../models/stock');
 const { verifyPassword } = require('../utils/password');
+const { hidePurchasePrice } = require('../utils/hidePurchasePrice');
 const pool = require('../db/pool');
 
 /**
@@ -10,7 +11,7 @@ async function listStock(req, res) {
   try {
     const { category } = req.query;
     const stock = await stockModel.getStockLevels({ category });
-    res.json({ stock });
+    res.json({ stock: stock.map((s) => hidePurchasePrice(req, s)) });
   } catch (err) {
     console.error('listStock error:', err);
     res.status(500).json({ error: 'Erreur interne du serveur' });
@@ -25,7 +26,7 @@ async function getAlerts(req, res) {
   try {
     const threshold = parseInt(req.query.threshold, 10) || 20;
     const alerts = await stockModel.getStockAlerts(threshold);
-    res.json({ alerts, threshold });
+    res.json({ alerts: alerts.map((a) => hidePurchasePrice(req, a)), threshold });
   } catch (err) {
     console.error('getAlerts error:', err);
     res.status(500).json({ error: 'Erreur interne du serveur' });
