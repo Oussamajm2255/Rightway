@@ -26,6 +26,8 @@ const {
   confirmerRetourCreation,
   reprendreLivraison,
   modifierProduits,
+  demanderRetourEnCours,
+  confirmerRetourEnCours,
   declarerAvance,
   getAvances,
   accepterAvance,
@@ -103,6 +105,10 @@ router.put('/:id/demander-retour-creation', authorize('COMMERCIAL'), demanderRet
 router.put('/:id/confirmer-retour-creation', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL', 'MAGASINIER'), confirmerRetourCreation);
 router.put('/:id/items', authorize('SUPER_ADMIN', 'MAGASINIER'), modifierProduits);
 router.put('/:id/reprendre', authorize('COMMERCIAL'), reprendreLivraison);
+
+// Retour en cours flow: commercial requests → admin confirms (EN_RETOUR → EN_COURS)
+router.put('/:id/demander-retour-en-cours', authorize('COMMERCIAL'), demanderRetourEnCours);
+router.put('/:id/confirmer-retour-en-cours', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL', 'MAGASINIER'), confirmerRetourEnCours);
 
 // Avances (advance payments during EN_COURS)
 router.post('/:id/avances', authorize('COMMERCIAL'), declarerAvance);

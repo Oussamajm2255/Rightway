@@ -49,6 +49,10 @@ function LivraisonDetailPage() {
   const [showRetourCreation, setShowRetourCreation] = useState(false);
   const [showConfirmerRetourCreation, setShowConfirmerRetourCreation] = useState(false);
   const [retourCreationReason, setRetourCreationReason] = useState('');
+  // Retour en cours
+  const [showRetourEnCours, setShowRetourEnCours] = useState(false);
+  const [showConfirmerRetourEnCours, setShowConfirmerRetourEnCours] = useState(false);
+  const [retourEnCoursReason, setRetourEnCoursReason] = useState('');
   const [password, setPassword] = useState('');
   const [actionError, setActionError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -270,6 +274,40 @@ function LivraisonDetailPage() {
       setLivraison(data.livraison);
       setSuccess(data.message);
       setShowConfirmerRetourCreation(false);
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setSubmitting(false);
+      setPassword('');
+    }
+  }
+
+  async function handleDemanderRetourEnCours(e) {
+    e.preventDefault();
+    setActionError('');
+    setSubmitting(true);
+    try {
+      const data = await apiPut(`/livraisons/${id}/demander-retour-en-cours`, { reason: retourEnCoursReason });
+      setLivraison(data.livraison);
+      setSuccess(data.message);
+      setShowRetourEnCours(false);
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleConfirmerRetourEnCours(e) {
+    e.preventDefault();
+    setActionError('');
+    if (!password) { setActionError('Mot de passe requis.'); return; }
+    setSubmitting(true);
+    try {
+      const data = await apiPut(`/livraisons/${id}/confirmer-retour-en-cours`, { password });
+      setLivraison(data.livraison);
+      setSuccess(data.message);
+      setShowConfirmerRetourEnCours(false);
     } catch (err) {
       setActionError(err.message);
     } finally {
@@ -943,6 +981,52 @@ function LivraisonDetailPage() {
         </div>
       );})()}
 
+      {/* Commercial: En retour → Demander le retour en cours */}
+      {isEnRetour && isAssignedCommercial && (
+        <div className="alert-card" style={{ background: 'var(--color-warning-bg)', borderColor: 'var(--color-warning-border)' }}>
+          <div className="alert-icon" style={{ background: 'var(--color-warning)' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
+              <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <div className="alert-body">
+            <strong>Une erreur dans vos ventes ?</strong>
+            <p>
+              {livraison.retour_en_cours_pending
+                ? 'Votre demande de retour en cours a été envoyée. En attente de confirmation par un admin.'
+                : 'Demandez le retour en cours pour corriger vos ventes. Un admin devra confirmer. Vos ventes déclarées seront conservées.'}
+            </p>
+          </div>
+          {!livraison.retour_en_cours_pending && (
+            <button className="btn btn-warning" onClick={() => { setShowRetourEnCours(true); setRetourEnCoursReason(''); setActionError(''); }}>
+              Demander le retour en cours
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Admin: En retour → Confirmer le retour en cours */}
+      {isEnRetour && isAdmin && livraison.retour_en_cours_pending && (
+        <div className="alert-card" style={{ background: 'var(--color-warning-bg)', borderColor: 'var(--color-warning-border)' }}>
+          <div className="alert-icon" style={{ background: 'var(--color-warning)' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
+              <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <div className="alert-body">
+            <strong>Demande de retour en cours</strong>
+            <p>
+              Le commercial demande à corriger ses ventes.
+              {livraison.retour_en_cours_reason && <> Motif : {livraison.retour_en_cours_reason}.</>}
+              {' '}Si vous refusez, confirmez simplement le Bon de Retour.
+            </p>
+          </div>
+          <button className="btn btn-warning" onClick={() => { setShowConfirmerRetourEnCours(true); setPassword(''); setActionError(''); }}>
+            Confirmer le retour en cours
+          </button>
+        </div>
+      )}
+
       {/* Bon de Retour view for EN_RETOUR */}
       {isEnRetour && (
         <div className="detail-section">
@@ -1357,6 +1441,61 @@ function LivraisonDetailPage() {
           <button className="btn btn-primary" onClick={() => setShowConfirmSortie(true)}>
             Confirmer le bon de sortie
           </button>
+        </div>
+      )}
+
+      {/* Demander retour en cours modal (Commercial) */}
+      {showRetourEnCours && (
+        <div className="modal-overlay" onClick={() => setShowRetourEnCours(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
+            <h3 className="modal-title">Demander le retour en cours</h3>
+            <div className="modal-summary">
+              <p>Vous demandez le retour de la livraison <strong>{livraison.reference}</strong> à l'état <strong>En cours</strong> pour corriger vos ventes.</p>
+              <p>Un administrateur devra confirmer cette demande. Vous retrouverez vos ventes déclarées telles quelles.</p>
+            </div>
+            {actionError && <div className="login-error">{actionError}</div>}
+            <form onSubmit={handleDemanderRetourEnCours}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="retour-en-cours-reason">Motif (optionnel)</label>
+                <textarea
+                  id="retour-en-cours-reason"
+                  className="form-input"
+                  rows={3}
+                  value={retourEnCoursReason}
+                  onChange={(e) => setRetourEnCoursReason(e.target.value)}
+                  placeholder="Ex: erreur de quantité sur un produit"
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowRetourEnCours(false)} disabled={submitting}>Annuler</button>
+                <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? '...' : 'Envoyer la demande'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmer retour en cours modal (Admin) */}
+      {showConfirmerRetourEnCours && (
+        <div className="modal-overlay" onClick={() => setShowConfirmerRetourEnCours(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
+            <h3 className="modal-title">Confirmer le retour en cours</h3>
+            <div className="modal-summary">
+              <p>La livraison <strong>{livraison.reference}</strong> repassera à l'état <strong>En cours</strong>.</p>
+              <p>Les ventes déclarées sont conservées et le commercial pourra les corriger. Le stock ne bouge pas. Les confirmations du Bon de Retour sont annulées : il faudra le confirmer à nouveau.</p>
+            </div>
+            {actionError && <div className="login-error">{actionError}</div>}
+            <form onSubmit={handleConfirmerRetourEnCours}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="retour-en-cours-password">Votre mot de passe</label>
+                <input id="retour-en-cours-password" type="password" className="form-input" value={password} onChange={(e) => setPassword(e.target.value)} />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowConfirmerRetourEnCours(false)} disabled={submitting}>Annuler</button>
+                <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? '...' : 'Confirmer'}</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

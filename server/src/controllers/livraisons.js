@@ -3,6 +3,7 @@ const avanceModel = require('../models/livraisonAvance');
 const ecartModel = require('../models/livraisonEcart');
 const reopenLogModel = require('../models/livraisonReopenLog');
 const retourCreationLogModel = require('../models/livraisonRetourCreationLog');
+const retourEnCoursLogModel = require('../models/livraisonRetourEnCoursLog');
 const notificationModel = require('../models/notification');
 const { COMMISSION_RATE } = require('../models/livraison');
 const { verifyPassword } = require('../utils/password');
@@ -437,6 +438,64 @@ async function reprendreLivraison(req, res) {
 }
 
 // ============================================================
+// RETOUR EN COURS (EN_RETOUR → EN_COURS with admin confirmation)
+// ============================================================
+
+async function demanderRetourEnCours(req, res) {
+  try {
+    const { reason } = req.body;
+
+    const livraison = await livraisonModel.findById(req.params.id);
+    if (!livraison) return res.status(404).json({ error: 'Livraison introuvable.' });
+    if (livraison.commercial_id !== req.user.id) return res.status(403).json({ error: 'Cette livraison ne vous est pas assignée.' });
+    if (livraison.status !== 'EN_RETOUR') return res.status(400).json({ error: 'Seules les livraisons en retour peuvent revenir en cours.' });
+    if (livraison.retour_en_cours_pending) return res.status(400).json({ error: 'Une demande est déjà en attente de confirmation.' });
+
+    await retourEnCoursLogModel.create(req.params.id, req.user.id, reason);
+
+    await notificationModel.create(
+      livraison.admin_id,
+      `Le commercial ${req.user.full_name} demande le retour en cours de la livraison ${livraison.reference}.${reason ? ' Motif : ' + reason : ''}`,
+      livraison.id
+    );
+
+    res.status(201).json({
+      message: 'Demande de retour en cours envoyée à l\'administrateur.',
+      livraison: await livraisonModel.findById(req.params.id),
+    });
+  } catch (err) {
+    console.error('demanderRetourEnCours error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+async function confirmerRetourEnCours(req, res) {
+  try {
+    const { password } = req.body;
+    if (!password) return res.status(400).json({ error: 'Mot de passe requis.' });
+
+    const { rows: userRows } = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+    if (!await verifyPassword(password, userRows[0].password_hash)) return res.status(400).json({ error: 'Mot de passe incorrect.' });
+
+    const result = await retourEnCoursLogModel.confirm(req.params.id, req.user.id);
+    if (result.error) return res.status(400).json({ error: result.error });
+
+    const livraison = await livraisonModel.findById(req.params.id);
+    await notificationModel.resolveActionable(livraison.admin_id, livraison.id, 'demande le retour en cours', `Retour en cours confirmé pour la livraison ${livraison.reference}.`);
+    await notificationModel.create(
+      livraison.commercial_id,
+      `Votre demande est confirmée : la livraison ${livraison.reference} est de nouveau en cours. Vous pouvez corriger vos ventes.`,
+      livraison.id
+    );
+
+    res.json({ message: 'Livraison de nouveau en cours. Les ventes déclarées sont conservées.', livraison });
+  } catch (err) {
+    console.error('confirmerRetourEnCours error:', err);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+}
+
+// ============================================================
 // AVANCES (advance payment declarations)
 // ============================================================
 
@@ -726,5 +785,5 @@ async function getDistributionList(req, res) {
   }
 }
 
-module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier, archiveLivraison, demanderAnnulation, confirmerAnnulation, demanderReouverture, confirmerReouverture, demanderRetourCreation, confirmerRetourCreation, modifierProduits, reprendreLivraison, declarerAvance, getAvances, accepterAvance, refuserAvance, modifierAvancePaiement, realtimeData, declarerEcart, listEcarts, confirmerEcart, requestPaymentEcart, confirmPaymentEcart, getDistributionList };
+module.exports = { createLivraison, listLivraisons, getLivraison, confirmSortie, getSales, recordSale, syncOfflineSales, terminerLivraison, confirmerRetour, downloadBonSortiePDF, downloadBonRetourPDF, downloadDossierPDF, getDossier, archiveLivraison, demanderAnnulation, confirmerAnnulation, demanderReouverture, confirmerReouverture, demanderRetourCreation, confirmerRetourCreation, modifierProduits, reprendreLivraison, demanderRetourEnCours, confirmerRetourEnCours, declarerAvance, getAvances, accepterAvance, refuserAvance, modifierAvancePaiement, realtimeData, declarerEcart, listEcarts, confirmerEcart, requestPaymentEcart, confirmPaymentEcart, getDistributionList };
 

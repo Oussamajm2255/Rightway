@@ -285,6 +285,21 @@ CREATE TABLE IF NOT EXISTS livraison_retour_creation_log (
 CREATE INDEX IF NOT EXISTS idx_retour_creation_log_livraison ON livraison_retour_creation_log(livraison_id);
 
 -- ============================================================
+-- LIVRAISON RETOUR EN COURS LOG (EN_RETOUR back to EN_COURS to correct sales)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS livraison_retour_en_cours_log (
+  id SERIAL PRIMARY KEY,
+  livraison_id UUID NOT NULL REFERENCES livraisons(id) ON DELETE CASCADE,
+  requested_by UUID NOT NULL REFERENCES users(id),
+  confirmed_by UUID REFERENCES users(id),
+  reason TEXT,
+  requested_at TIMESTAMPTZ DEFAULT NOW(),
+  confirmed_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_retour_en_cours_log_livraison ON livraison_retour_en_cours_log(livraison_id);
+
+-- ============================================================
 -- COMMERCIAL LOCATIONS (real-time GPS tracking)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS commercial_locations (
