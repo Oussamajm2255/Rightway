@@ -58,7 +58,7 @@ async function superAdminDashboard(req, res) {
       voituresCa,
     ] = await Promise.all([
       // KPI: active users
-      pool.query('SELECT COUNT(*)::INT AS count FROM users WHERE is_active = true'),
+      pool.query('SELECT COUNT(*)::INT AS count FROM users WHERE is_active = true AND is_hidden = false'),
       // KPI: active products
       pool.query('SELECT COUNT(*)::INT AS count FROM products WHERE is_active = true'),
       // KPI: active livraisons
@@ -116,7 +116,7 @@ async function superAdminDashboard(req, res) {
           COALESCE(s.ecoulement, 0)::INT AS ecoulement
         FROM users u
         LEFT JOIN stats s ON s.commercial_id = u.id
-        WHERE u.role = 'COMMERCIAL' OR s.commercial_id IS NOT NULL
+        WHERE (u.role = 'COMMERCIAL' OR s.commercial_id IS NOT NULL) AND u.is_hidden = false
         ORDER BY s.ca DESC NULLS LAST
         LIMIT 5`),
       // Activity feed: recent events — returns STRUCTURED data (type + params).
@@ -150,7 +150,7 @@ async function superAdminDashboard(req, res) {
           'nouveau_commercial' AS type,
           json_build_object('name', full_name) AS params,
           created_at AS event_time
-        FROM users WHERE role = 'COMMERCIAL'
+        FROM users WHERE role = 'COMMERCIAL' AND is_hidden = false
         ORDER BY created_at DESC LIMIT 2)
         UNION ALL
         (SELECT
@@ -239,7 +239,7 @@ async function superAdminDashboard(req, res) {
           COUNT(l.id) FILTER (WHERE l.status IN ('EN_COURS','EN_RETOUR') AND l.is_archived = false)::INT AS actives
         FROM users u
         LEFT JOIN livraisons l ON l.commercial_id = u.id AND l.is_archived = false
-        WHERE u.role = 'COMMERCIAL' AND u.is_active = true AND u.remuneration_type = 'SALAIRE'
+        WHERE u.role = 'COMMERCIAL' AND u.is_active = true AND u.is_hidden = false AND u.remuneration_type = 'SALAIRE'
         GROUP BY u.id, u.full_name
         ORDER BY u.full_name`),
       // Inventory value on hand — stock sitting in the depot, at selling price

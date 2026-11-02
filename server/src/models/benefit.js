@@ -252,7 +252,7 @@ async function getCommercialSales({ date_from, date_to } = {}) {
 
   const { rows } = await pool.query(`
     SELECT
-      u.id, u.full_name,
+      u.id, u.full_name, u.is_hidden,
       COUNT(DISTINCT l.id)::INT                                AS livraisons,
       COALESCE(SUM(li.qte_vendue), 0)::INT                     AS total_sold,
       COALESCE(SUM(li.qte_vendue * li.prix_ttc), 0)::NUMERIC(14,3) AS ca
@@ -261,8 +261,8 @@ async function getCommercialSales({ date_from, date_to } = {}) {
       AND l.status = 'CLOTURE' AND l.is_archived = false
       ${dateWhere}
     LEFT JOIN livraison_items li ON li.livraison_id = l.id
-    WHERE (u.role = 'COMMERCIAL' AND u.is_active) OR l.id IS NOT NULL
-    GROUP BY u.id, u.full_name
+    WHERE (u.role = 'COMMERCIAL' AND u.is_active AND NOT u.is_hidden) OR l.id IS NOT NULL
+    GROUP BY u.id, u.full_name, u.is_hidden
     ORDER BY ca DESC, u.full_name ASC
   `, params);
   return rows;

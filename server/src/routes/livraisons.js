@@ -91,18 +91,18 @@ router.put('/:id/confirm-sortie', authorize('COMMERCIAL'), confirmSortie);
 // Archive (SUPER_ADMIN only)
 router.put('/:id/archive', authorize('SUPER_ADMIN'), archiveLivraison);
 
-// Annulation flow: commercial requests → directeur confirms
+// Annulation flow: commercial requests → Super Admin confirms
 router.put('/:id/demander-annulation', authorize('COMMERCIAL'), demanderAnnulation);
-router.put('/:id/confirmer-annulation', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL', 'MAGASINIER'), confirmerAnnulation);
+router.put('/:id/confirmer-annulation', authorize('SUPER_ADMIN'), confirmerAnnulation);
 
 // Reopen flow: commercial requests → directeur confirms (Cloture → EN_COURS)
 router.post('/:id/demander-reouverture', authorize('COMMERCIAL'), demanderReouverture);
 router.put('/:id/confirmer-reouverture', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL', 'MAGASINIER'), confirmerReouverture);
 
-// Retour creation flow: commercial requests → admin confirms (EN_COURS → CONFIRME),
+// Retour creation flow: commercial requests → Super Admin confirms (EN_COURS → CONFIRME),
 // the load is edited, then the commercial resumes (CONFIRME → EN_COURS)
 router.put('/:id/demander-retour-creation', authorize('COMMERCIAL'), demanderRetourCreation);
-router.put('/:id/confirmer-retour-creation', authorize('SUPER_ADMIN', 'DIRECTEUR_COMMERCIAL', 'MAGASINIER'), confirmerRetourCreation);
+router.put('/:id/confirmer-retour-creation', authorize('SUPER_ADMIN'), confirmerRetourCreation);
 router.put('/:id/items', authorize('SUPER_ADMIN', 'MAGASINIER'), modifierProduits);
 router.put('/:id/reprendre', authorize('COMMERCIAL'), reprendreLivraison);
 

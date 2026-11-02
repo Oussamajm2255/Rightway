@@ -111,7 +111,7 @@ async function getAllWithStats({ date_from, date_to } = {}) {
       GROUP BY commercial_id
     )
     SELECT
-      u.id, u.full_name, u.role, u.vehicle_name, u.vehicle_plate, u.is_active, u.remuneration_type,
+      u.id, u.full_name, u.role, u.is_hidden, u.vehicle_name, u.vehicle_plate, u.is_active, u.remuneration_type,
       COALESCE(cs.total_livraisons, 0)::INT AS livraisons_total,
       COALESCE(cs.actives, 0)::INT AS livraisons_actives,
       COALESCE(cs.cloturees, 0)::INT AS livraisons_cloturees,

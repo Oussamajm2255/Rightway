@@ -626,7 +626,7 @@ function LivraisonDetailPage() {
           </div>
           <div className="alert-body">
             <strong>Annuler la livraison</strong>
-            <p>Demandez l'annulation. Un admin devra confirmer. Le stock sera restauré.</p>
+            <p>Demandez l'annulation. Le Super Admin devra confirmer. Le stock sera restauré.</p>
           </div>
           <button className="btn btn-danger" onClick={() => setShowAnnulerDemande(true)}>
             Annuler la livraison
@@ -644,7 +644,7 @@ function LivraisonDetailPage() {
           </div>
           <div className="alert-body">
             <strong>Retour à la création</strong>
-            <p>Demandez le retour à la création pour faire modifier les produits chargés. Un admin devra confirmer. Les ventes déclarées seront conservées.</p>
+            <p>Demandez le retour à la création pour faire modifier les produits chargés. Le Super Admin devra confirmer. Les ventes déclarées seront conservées.</p>
           </div>
           <button className="btn btn-warning" onClick={() => { setShowRetourCreation(true); setRetourCreationReason(''); setActionError(''); }}>
             Retour à la création
@@ -697,19 +697,19 @@ function LivraisonDetailPage() {
               <path d="M12 9v4M12 17h.01" strokeLinecap="round" />
               <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
             </svg>
-            Demande d'annulation en attente de confirmation par l'Admin.
+            Demande d'annulation en attente de confirmation par le Super Admin.
             {isAssignedCommercial && ' Vous serez notifié après confirmation.'}
           </div>
-          {isAdmin && (
+          {isSuperAdmin && (
             <button className="btn btn-danger" onClick={() => setShowConfirmerAnnulation(true)} style={{ marginTop: 'var(--space-3)' }}>
-              Confirmer l'annulation (Admin)
+              Confirmer l'annulation (Super Admin)
             </button>
           )}
         </div>
       )}
 
       {/* Admin: En cours → Confirmer retour à la création */}
-      {isEnCours && isAdmin && livraison?.retour_creation_pending && (
+      {isEnCours && isSuperAdmin && livraison?.retour_creation_pending && (
         <div className="detail-section">
           <button
             className="btn btn-warning btn-sm"
@@ -718,7 +718,7 @@ function LivraisonDetailPage() {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{flexShrink:0, marginRight:'var(--space-1)'}}>
               <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Confirmer le retour à la création (Admin)
+            Confirmer le retour à la création (Super Admin)
           </button>
           {livraison?.return_reason && (
             <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginTop: 'var(--space-2)' }}>
@@ -1984,7 +1984,7 @@ function LivraisonDetailPage() {
             <h3 className="modal-title">Retour à la création</h3>
             <div className="modal-summary">
               <p>Vous demandez le retour de la livraison <strong>{livraison?.reference}</strong> à l'état "Création".</p>
-              <p>Un administrateur devra confirmer cette demande, puis les produits chargés pourront être modifiés. Les ventes déclarées seront conservées.</p>
+              <p>Le Super Admin devra confirmer cette demande, puis les produits chargés pourront être modifiés. Les ventes déclarées seront conservées.</p>
             </div>
             {actionError && <div className="login-error">{actionError}</div>}
             <form onSubmit={handleDemanderRetourCreation}>

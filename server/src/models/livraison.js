@@ -975,7 +975,7 @@ async function findAllWithDistributionStats({
     params.push(date_to);
   }
 
-  query += ` ORDER BY l.created_at DESC LIMIT $${idx++} OFFSET $${idx++}`;
+  query += ` ORDER BY (l.status = 'EN_COURS') DESC, l.created_at DESC LIMIT $${idx++} OFFSET $${idx++}`;
   params.push(limit, offset);
 
   const { rows } = await pool.query(query, params);

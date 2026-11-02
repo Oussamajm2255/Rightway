@@ -172,6 +172,9 @@ const migrations = [
   )`,
   `CREATE INDEX IF NOT EXISTS idx_retour_creation_log_livraison ON livraison_retour_creation_log(livraison_id)`,
 
+  // Hidden accounts: kept with their history, but never listed in the app
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_hidden BOOLEAN NOT NULL DEFAULT false`,
+
   // Back to EN_COURS from EN_RETOUR, to correct declared sales
   `CREATE TABLE IF NOT EXISTS livraison_retour_en_cours_log (
   id SERIAL PRIMARY KEY,

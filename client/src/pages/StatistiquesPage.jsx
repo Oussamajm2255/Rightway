@@ -91,8 +91,9 @@ export default function StatistiquesPage() {
 
   // The third tab always needs one commercial: start with the best seller
   useEffect(() => {
-    if (tab === 'product_commercial' && !commercialId && commercials.length > 0) {
-      setCommercialId(commercials[0].id);
+    const first = commercials.find((c) => c.id);
+    if (tab === 'product_commercial' && !commercialId && first) {
+      setCommercialId(first.id);
     }
   }, [tab, commercialId, commercials]);
 
@@ -283,12 +284,12 @@ export default function StatistiquesPage() {
               {commercials.length === 0 ? (
                 <tr><td colSpan={5}><div className="empty-state">{loading ? 'Chargement…' : 'Aucun commercial trouvé.'}</div></td></tr>
               ) : commercials.map((c) => (
-                <tr key={c.id}>
+                <tr key={c.id || 'hidden'}>
                   <td className="td-name" data-label="Commercial">{c.full_name}</td>
                   <td className="val-mono right" data-label="Livraisons clôturées">{fmtInt(c.livraisons)}</td>
                   <td className="val-mono right" data-label="Qté Vendue">{fmtInt(c.total_sold)}</td>
                   <td className="val-mono right" data-label="CA">{c.ca > 0 ? fmtDT(c.ca) : <span className="muted">—</span>}</td>
-                  <td className="right"><button className="btn btn-sm btn-outline" onClick={() => openCommercial(c.id)}>Voir les produits</button></td>
+                  <td className="right">{c.id && <button className="btn btn-sm btn-outline" onClick={() => openCommercial(c.id)}>Voir les produits</button>}</td>
                 </tr>
               ))}
             </tbody>
@@ -313,7 +314,7 @@ export default function StatistiquesPage() {
           ) : (
             <>
               {commercials.map((c) => (
-                <article key={c.id} className="ben-card">
+                <article key={c.id || 'hidden'} className="ben-card">
                   <div className="ben-card-top">
                     <div className="ben-card-identity">
                       <span className="ben-card-name">{c.full_name}</span>
@@ -324,7 +325,7 @@ export default function StatistiquesPage() {
                     <div><span>Qté Vendue</span><b>{fmtInt(c.total_sold)}</b></div>
                     <div><span>CA</span><b>{c.ca > 0 ? fmtDT(c.ca) : '—'}</b></div>
                   </div>
-                  <button className="btn btn-sm btn-outline" onClick={() => openCommercial(c.id)}>Voir les produits</button>
+                  {c.id && <button className="btn btn-sm btn-outline" onClick={() => openCommercial(c.id)}>Voir les produits</button>}
                 </article>
               ))}
               <article className="ben-card ben-total-card">
@@ -387,7 +388,7 @@ export default function StatistiquesPage() {
             <div className="filter-group">
               <label className="filter-label">Commercial</label>
               <select className="filter-input" value={commercialId} onChange={(e) => { setCommercialId(e.target.value); setPage(1); }}>
-                {commercials.map((c) => <option key={c.id} value={c.id}>{c.full_name}</option>)}
+                {commercials.filter((c) => c.id).map((c) => <option key={c.id} value={c.id}>{c.full_name}</option>)}
               </select>
             </div>
           )}

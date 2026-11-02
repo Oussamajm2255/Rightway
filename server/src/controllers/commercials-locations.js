@@ -16,6 +16,7 @@ async function getAllLocations(req, res) {
       FROM users u
       LEFT JOIN commercial_locations cl ON u.id = cl.user_id
       WHERE u.role = 'COMMERCIAL'
+        AND u.is_hidden = false
         AND (
           u.location_tracking_enabled = true
           OR COALESCE((SELECT force_location_tracking FROM global_settings WHERE id = 1), false) = true

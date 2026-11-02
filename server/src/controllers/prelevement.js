@@ -293,6 +293,7 @@ async function generateSalaries(req, res) {
       SELECT id, full_name, salary_amount
       FROM users
       WHERE is_active = true
+        AND is_hidden = false
         AND role IN ('COMMERCIAL', 'MAGASINIER')
         AND remuneration_type = 'SALAIRE'
         AND salary_amount > 0

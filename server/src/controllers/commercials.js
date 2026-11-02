@@ -67,17 +67,21 @@ async function getAllCommercials(req, res) {
         net_a_reverser: net,
         completion,
         monthly_ca: monthly,
+        is_hidden: c.is_hidden,
       };
     });
 
+    // Hidden accounts are not listed, but their CA stays in the global figures
+    const visible = enriched.filter(c => !c.is_hidden);
+
     // Global KPIs
-    const activeAgents = commercials.filter(c => c.is_active && c.role === 'COMMERCIAL').length;
-    const encours = enriched.filter(c => c.status === 'EN_COURS' || c.status === 'EN_RETOUR').length;
+    const activeAgents = commercials.filter(c => c.is_active && c.role === 'COMMERCIAL' && !c.is_hidden).length;
+    const encours = visible.filter(c => c.status === 'EN_COURS' || c.status === 'EN_RETOUR').length;
     const caGlobal = enriched.reduce((sum, c) => sum + c.ca_total, 0);
     const caCommissionOnly = enriched.filter(c => c.remuneration_type !== 'SALAIRE').reduce((sum, c) => sum + c.ca_total, 0);
     const commGlobal = Number((caCommissionOnly * COMMISSION_RATE).toFixed(3));
-    const completionAvg = enriched.length > 0
-      ? Math.round(enriched.reduce((sum, c) => sum + c.completion, 0) / enriched.length)
+    const completionAvg = visible.length > 0
+      ? Math.round(visible.reduce((sum, c) => sum + c.completion, 0) / visible.length)
       : 0;
 
     res.json({
@@ -88,7 +92,7 @@ async function getAllCommercials(req, res) {
         commissions: commGlobal,
         completion_avg: completionAvg,
       },
-      commercials: enriched,
+      commercials: visible.map(({ is_hidden, ...c }) => c),
     });
   } catch (err) {
     console.error('getAllCommercials error:', err);

@@ -1,7 +1,7 @@
 const pool = require('../db/pool');
 
 async function findAll({ role, roles, is_active, search } = {}) {
-  let query = 'SELECT id, full_name, email, role, phone, vehicle_name, vehicle_plate, is_active, remuneration_type, salary_amount, last_login_at, created_at FROM users WHERE 1=1';
+  let query = 'SELECT id, full_name, email, role, phone, vehicle_name, vehicle_plate, is_active, remuneration_type, salary_amount, last_login_at, created_at FROM users WHERE is_hidden = false';
   const params = [];
   let idx = 1;
 

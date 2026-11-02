@@ -35,6 +35,7 @@ async function checkAndGenerateSalaries(today) {
     SELECT id, full_name, role, salary_amount
     FROM users
     WHERE is_active = true
+    AND is_hidden = false
     AND remuneration_type = 'SALAIRE'
     AND salary_amount > 0
   `);

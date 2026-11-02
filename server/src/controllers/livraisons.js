@@ -11,6 +11,12 @@ const pool = require('../db/pool');
 const pdfGenerator = require('../services/pdfGenerator');
 const { quarterRangeError } = require('../utils/quarterRange');
 
+// Annulation and retour-à-la-création requests are decided by the Super Admin only
+async function notifySuperAdmins(message, livraisonId) {
+  const { rows } = await pool.query(`SELECT id FROM users WHERE role = 'SUPER_ADMIN' AND is_active = true`);
+  for (const u of rows) await notificationModel.create(u.id, message, livraisonId);
+}
+
 async function createLivraison(req, res) {
   try {
     const { commercial_id, items, password } = req.body;
@@ -243,8 +249,8 @@ async function demanderAnnulation(req, res) {
     const result = await livraisonModel.demanderAnnulation(req.params.id, req.user.id);
     if (result.error) return res.status(400).json({ error: result.error });
 
-    await notificationModel.create(result.livraison.admin_id, `Le commercial ${req.user.full_name} demande l'annulation de la livraison ${result.livraison.reference}.`, result.livraison.id);
-    res.json({ livraison: result.livraison, message: `Demande d'annulation envoyée à l'admin.` });
+    await notifySuperAdmins(`Le commercial ${req.user.full_name} demande l'annulation de la livraison ${result.livraison.reference}.`, result.livraison.id);
+    res.json({ livraison: result.livraison, message: `Demande d'annulation envoyée au Super Admin.` });
   } catch (err) { console.error('demanderAnnulation error:', err); res.status(500).json({ error: 'Erreur interne du serveur' }); }
 }
 
@@ -339,13 +345,12 @@ async function demanderRetourCreation(req, res) {
 
     const log = await retourCreationLogModel.create(req.params.id, req.user.id, reason || null);
 
-    await notificationModel.create(
-      livraison.admin_id,
+    await notifySuperAdmins(
       `Le commercial ${req.user.full_name} demande le retour à la création de la livraison ${livraison.reference}.${reason ? ' Motif : ' + reason : ''}`,
       livraison.id
     );
 
-    res.status(201).json({ log, message: 'Demande de retour à la création envoyée à l\'administrateur.' });
+    res.status(201).json({ log, message: 'Demande de retour à la création envoyée au Super Admin.' });
   } catch (err) {
     console.error('demanderRetourCreation error:', err);
     res.status(500).json({ error: 'Erreur interne du serveur' });
@@ -768,7 +773,7 @@ async function getDistributionList(req, res) {
 
     // Fetch the distinct list of commercials for the filter dropdown
     const { rows: commercials } = await pool.query(
-      `SELECT id, full_name FROM users WHERE role = 'COMMERCIAL' AND is_active = true ORDER BY full_name`
+      `SELECT id, full_name FROM users WHERE role = 'COMMERCIAL' AND is_active = true AND is_hidden = false ORDER BY full_name`
     );
 
     res.json({

@@ -5,6 +5,33 @@ const { signDownloadToken } = require('../utils/jwt');
 const { quarterRangeError } = require('../utils/quarterRange');
 
 const REPORT_TOKEN_SCOPE = 'report';
+const HIDDEN_SELLERS_LABEL = 'Anciens commerciaux';
+
+/**
+ * Sales per commercial for display. Hidden accounts are never named, but their
+ * sales stay in the figures as one line, so the per-commercial view still adds
+ * up to the per-product totals.
+ */
+function commercialRows(rows) {
+  const visible = rows.filter((c) => !c.is_hidden).map((c) => ({
+    id: c.id,
+    full_name: c.full_name,
+    livraisons: c.livraisons,
+    total_sold: c.total_sold,
+    ca: Number(c.ca),
+  }));
+  const hidden = rows.filter((c) => c.is_hidden);
+  if (hidden.length > 0) {
+    visible.push({
+      id: null,
+      full_name: HIDDEN_SELLERS_LABEL,
+      livraisons: hidden.reduce((sum, c) => sum + c.livraisons, 0),
+      total_sold: hidden.reduce((sum, c) => sum + c.total_sold, 0),
+      ca: Number(hidden.reduce((sum, c) => sum + Number(c.ca), 0).toFixed(3)),
+    });
+  }
+  return visible;
+}
 const REPORT_ROW_LIMIT = 100000;
 
 // Never cost, benefit or margin: sorting on them would reveal their order
@@ -126,13 +153,7 @@ async function getSalesStats(req, res) {
         total_sold: p.total_sold,
         ca: Number(p.ca),
       })),
-      commercials: commercials.map((c) => ({
-        id: c.id,
-        full_name: c.full_name,
-        livraisons: c.livraisons,
-        total_sold: c.total_sold,
-        ca: Number(c.ca),
-      })),
+      commercials: commercialRows(commercials),
       total: productData.total,
       totals: { total_sold: productData.totals.total_sold, ca: productData.totals.ca },
       page: pageNum,
@@ -232,12 +253,7 @@ async function downloadSalesReport(req, res) {
         total_sold: p.total_sold,
         ca: Number(p.ca),
       })),
-      commercials: commercials.map((c) => ({
-        full_name: c.full_name,
-        livraisons: c.livraisons,
-        total_sold: c.total_sold,
-        ca: Number(c.ca),
-      })),
+      commercials: commercialRows(commercials),
       totals: { total_sold: productData.totals.total_sold, ca: productData.totals.ca },
     });
     sendReport(res, doc, 'Rapport-Statistiques');

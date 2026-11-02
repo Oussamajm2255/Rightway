@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS users (
   locked_until TIMESTAMPTZ,
   password_last_changed TIMESTAMPTZ,
   last_login_at TIMESTAMPTZ,
+  is_hidden BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
